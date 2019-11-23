@@ -1,7 +1,7 @@
 # busy
 🐙 busy commands set - to manage personal "Genius Assistant" 🌐
 
-[StratumOS]: (https://github.com/StratumOS/StratumOS)
+[StratumOS]: https://github.com/StratumOS/StratumOS
 ### based on [StratumOS]  
 
 basic usage
