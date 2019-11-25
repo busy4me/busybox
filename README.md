@@ -14,3 +14,9 @@ or
 busy [sub_command] [--option=value]... [:place]
 ```
 
+or
+
+``` shell
+busy [sub_command] [--option]
+```
+
