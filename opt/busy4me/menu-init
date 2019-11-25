@@ -1,0 +1,61 @@
+#!/bin/bash
+# Menu html local based....
+SCRIPT=menu-init
+LOGFILE=/var/log/busy4me.log
+
+if [ $USER = "root" ]
+	then
+	echo "Do not run as root! exit..."
+	exit
+fi
+SPOT02="Welcome"
+SPOT02x=40 #BROWSER_02 size x
+SPOT02y=1280 #BROWSER_02 size y 
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $SCRIPT - $line" | tee -a $LOGFILE
+    done
+}
+
+echo "$(date +%F' '%T) $SCRIPT - Start $SCRIPT script ..." >> $LOGFILE
+xdotool search --onlyvisible --name "$SPOT02" windowkill | logline
+
+# Check localhost connection
+timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/80'
+RESULT=$?
+
+if [ $? != "0" ]
+	then
+	echo "localhost webserver no response! exit..." | logline
+		exit
+	else
+		echo 'Menu is starting....' | logline
+		google-chrome --window-size=500,500 --window-position=100,100 --app="http://localhost" & 2>/dev/null
+fi
+
+SPOT02_position_size () {
+xdotool search --sync --onlyvisible --name "$SPOT02" windowunmap windowmap 
+xdotool search --sync --onlyvisible --name "$SPOT02" windowactivate
+xdotool key --delay 200 Ctrl+0 # reset zoom
+xdotool search --sync --onlyvisible --name "$SPOT02" windowsize $SPOT02x $SPOT02y windowmove 0 -20
+xdotool key --delay 100 Alt_L+space l t
+#xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl
+#xdotool search --sync --onlyvisible --name "$SPOT02" windowactivate
+}
+
+SPOT02_probe () {
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+if [ -z "$( xdotool search --onlyvisible --name $SPOT02 )" ]; then
+		echo "$SPOT02 non exists... continue..."
+		sleep 1
+	else
+		echo "$SPOT02 opened successfuly...."
+		SPOT02_position_size
+		break
+fi
+done
+}
+SPOT02_probe
+

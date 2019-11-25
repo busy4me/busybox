@@ -1,0 +1,57 @@
+#!/bin/sh
+# fb config file
+
+sql_engine="sqlite3"
+
+login_source="/opt/busy/fb/fb-login"
+password_source="/opt/busy/fb/fb-password"
+user_name=$(cat "/opt/busy/fb/fb-name")
+user_first_name=$(cat "/opt/busy/fb/fb-first-name")
+user_last_name=$(cat "/opt/busy/fb/fb-last-name")
+login=$(cat "$login_source")
+password=$(cat "$password_source")
+#login_string=$login
+login_string=$(echo $login | tr [:punct:] '_')
+#login_string=$(echo $login_string | tr '@.' '_')
+user_db=/opt/busy/fb/db/fb_$login_string.db
+fb_db=/opt/busy/fb/db/fb.db
+
+LOGFILE=/var/log/busy4me.log
+BR01="google-chrome" # Browser 01
+PROC01="chrome" # process 01
+SPOT01="facebook" # spot 01
+SPOT01url="https://facebook.com" # url 01
+PROJECT="busy4me"
+BUSYUSER="busyman"
+
+profile_id=""
+profile_name="me"
+login_url="http://m.facebook.com"
+fb_login_url="http://facebook.com/login"
+fb_search_url="https://www.facebook.com/search"
+fb_groups_url="https://www.facebook.com/groups"
+my_groups_url="$SPOT01url/$profile_name/groups"
+my_pages_url="$SPOT01url/bookmarks/pages"
+my_pages_url_source="view-source:$SPOT01url/bookmarks/pages"
+about_url="$SPOT01url/$profile_name/about"
+settings_url="$SPOT01url/$profile_name/settings"
+profile_url="$SPOT01url/$profile_name"
+allactivity_url="$SPOT01url/$profile_name/allactivity"
+requests_url="$SPOT01url/friends/requests"
+
+kds=50 # Key Delay Short [miliseconds]
+kd=200 # Key Delay [miliseconds]
+kdl=500 # Key Delay Long [miliseconds]
+tos=1 # Time Out Short zenity messages time out [seconds]
+to=2 # Time Out zenity messages time out [seconds]
+tol=5 # Time Out Long zenity messages time out [seconds]
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT $JOB - $line" | tee -a $LOGFILE
+    done
+}
+
+#echo -e "login="$login "| user_first_name="$user_first_name "| user_last_name="$user_last_name | logline
+#echo -e "login_string = "$login_string | logline
+#echo -e "\e[42m\e[30m user_db = \e[0m\e[32m" $user_db "\e[0m" | logline

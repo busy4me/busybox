@@ -1,0 +1,144 @@
+#!/bin/bash
+
+SCRIPT=fb-walking-around
+LOGFILE=/var/log/busy4me.log
+source /opt/busy4me/fb/fb-config
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE 
+    done
+}
+
+login=$(cat "$login_source")
+echo 'login =' $login | logline
+login_string=$login
+login_string=$(echo $login_string | tr '@' '_')
+echo 'login_string =' $login_string | logline
+user_db="$HOME/busy4me/fb/db/fb_$login_string.db"
+echo 'Use database:' $user_db | logline
+
+
+BR01="google-chrome" # Browser 01
+PROC01="chrome"
+SPOT01="facebook"
+SPOT01url="http://facebook.com"
+
+profile_id=""
+profile_name="me"
+
+my_groups_url="$SPOT01url/$profile_name/groups"
+about_url="$SPOT01url/$profile_name/about"
+profile_url="$SPOT01url/$profile_name"
+profile_allactivity="$SPOT01url/$profile_name/allactivity"
+
+# mouse walking around... with visual efect
+# from A to B
+
+A_x=27
+A_y=53
+xdotool mousemove --sync --clearmodifiers $A_x $A_y
+sleep 0.3
+
+B_x=573
+B_y=17
+xdotool mousemove --sync --clearmodifiers $B_x $B_y
+sleep 0.3
+
+
+xdotool mousemove --sync --clearmodifiers 754 22
+sleep 0.3
+xdotool mousemove --sync --clearmodifiers 759 27
+sleep 0.3
+xdotool mousemove --sync --clearmodifiers 764 32
+sleep 0.3
+
+#xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
+#xdotool key --delay 200 Ctrl+l
+#xdotool type $profile_url
+#xdotool key --delay 200 Return
+#sleep 1
+#
+#xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
+#xdotool key --delay 500 Ctrl+l
+#xdotool type $profile_allactivity
+#xdotool key --delay 200 Return
+#sleep 1
+
+
+#(sleep 2 && wmctrl -F -a "test" -b add,above) & zenity --info --title="test" --text="Walking around..." --timeout 10
+#xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
+
+walking_around_wall () {
+
+kds=50 # Key Delay Short [ms] 
+kd=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
+kd_2=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
+kdl=$((500 + RANDOM % 15 * 100)) # Key Delay Long between 500 and 2000[ms]
+random=$((6 + RANDOM % 10))
+
+xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
+transset -a 0.7 # set lighter window
+xdotool key --delay 500 Ctrl+l
+xdotool type $SPOT01url
+xdotool key --delay 500 Return
+transset -a 0.4 # set darker window
+sleep 2
+xdotool key --delay $kds Down Down Down Down Down Down Down Down Down
+xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up
+xdotool key --delay $kd Down Down Down Page_Down Page_Up
+xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up
+xdotool key --delay $kds Down Down Down Down Down Down Down Down Down
+
+xdotool key --delay 500 Ctrl+f
+xdotool type --delay $kd facebook
+xdotool key --delay $kd Escape keydown Shift Tab keyup Shift Tab Escape
+xdotool key --delay 500 Escape
+xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape 
+xdotool key --delay $kd Down Down Down
+xdotool key --delay $kd_2 Down Down Down
+xdotool key --delay $kdl Down Down Down
+xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape 
+xdotool key --delay $kds Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab
+xdotool key --delay $kd Down Down Down Escape
+xdotool key --delay $kds Tab Tab Tab Tab Tab Tab Tab Escape
+xdotool key --delay $kd Down Down Down
+xdotool key --delay $kd_2 Down Down Down
+xdotool key --delay $kdl Down Down Down
+
+xdotool key --delay 500 Ctrl+f
+xdotool type --delay $kd facebook ©
+xdotool key --delay $kd Escape keydown Shift Tab keyup Shift Tab Escape
+xdotool key --delay $kd_2 Escape
+
+for (( i=1; i<$random; i++ )); do
+        echo 'Tab...'
+        xdotool key --delay $kd_2 Escape Tab;
+        shift 1
+done
+xdotool key --delay $kd Return
+(sleep 2 && wmctrl -F -a "Random click" -b add,above) & zenity --info --title="Random click" --text="Random click after $random Tabs..." --timeout 3
+xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
+sleep 3
+xdotool key --delay $kd Escape Escape
+
+}
+
+loop () {
+iter=500
+for (( i=1; i<$iter; i++ )); do
+    echo "# Active profile is effective..." 
+    echo "$(( (i * 100) /$iter ))%"
+	echo "walking_around_wall..."  $i "step of" $iter | logline
+		walking_around_wall
+	sleep 0.2
+    shift 1
+done
+}
+
+loop
+transset -a 0.7 # set lighter window
+
+
+#done | zenity --progress --title="Walking around test..." --percentage=0 --no-cancel --auto-close
+#(sleep 2 && wmctrl -F -a "Walking around test..." -b add,above) & loop

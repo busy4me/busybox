@@ -1,0 +1,75 @@
+#!/bin/bash
+# check informations about session
+
+SCRIPT=fb-info
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT - $line \e[0m" | tee -a $LOGFILE 
+    done
+}
+
+echo -e "\e[95m this is command fb-info ... \e[0m" | logline
+
+disp=$(echo $DISPLAY)
+echo -e "...script run in DISPLAY $disp" | logline
+
+stop () {
+echo -e "\e[91m ... kill fb-walking-around$DISPLAY screen ...\e[0m"
+screen -S fb-walking-around$DISPLAY -X kill
+xdotool key Escape Escape
+}
+
+start () {
+echo -e "start fb-walking-around in screen $DISPLAY..."
+screen -dmS fb-walking-around$DISPLAY '/opt/busy4me/fb/fb-walking-around'
+}
+
+status () {
+if ! screen -list | grep -q "fb-walking-around$DISPLAY"; then
+	echo -e "\e[31m ... screen fb-walking-around$DISPLAY not exists! \e[0m"
+	else
+	echo -e "\e[32m ... screen fb-walking-around$DISPLAY exists \e[0m"
+fi
+}
+
+
+case $1 in
+	start)
+		screen -ls
+		start
+		status
+		screen -ls
+	;;
+	stop)
+		screen -ls
+		stop
+		status
+		screen -ls
+	;;
+	restart)
+		screen -ls
+		stop
+		screen -ls
+		start
+		screen -ls
+		status
+	;;
+	status)
+		status
+	;;
+	*)
+	echo -e $"\e[32m Usage: \n\
+	fb-info [option]
+	Options:
+	start \n\
+	stop \n\
+	restart \n\
+	status \n\
+	--help - this short help... \e[0m"
+    exit 1
+	;;
+esac
+
+echo -e "...end of script" | logline

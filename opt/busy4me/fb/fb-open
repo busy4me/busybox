@@ -1,0 +1,16 @@
+#!/bin/sh
+
+if [ -z "$( ps -e | grep chrome )" ]
+    then
+		echo "chrome process non exists...."
+		google-chrome --window-position=0,0 http://fb.com & 2>/dev/null
+	else
+		echo "Google chrome is open... "
+		echo "Check if facebook is open?... "
+			if [ -z "$( xdotool search --name "facebook" )" ]
+				then 
+					echo "Facebook webpage window non exists?"
+				else
+					echo "Facebook page opened, visible?" 
+			fi
+fi

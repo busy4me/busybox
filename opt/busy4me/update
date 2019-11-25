@@ -1,0 +1,435 @@
+#!/bin/bash
+# Update all files
+# set -x
+PROJECT="busy4me"
+SCRIPT="update"
+VERSION="1902.01"
+#export PATH=$PATH:/opt/$PROJECT
+BUSYUSER="busyman"
+
+LOGFILE=/var/log/busy4me.log
+BACKUP=/var/backups/busy4me
+BACKUP_2=/var/backups/busy
+source /opt/busy4me/busy-functions # global functions
+source /opt/busy4me/fb/fb-config # fb variables from there
+
+root_check () {
+if [ "$USER" != "root" ]
+	then
+		echo -e "\e[31mRun this script as root! exit...\e[0m"
+		echo "Run this script as root! exit..." | logline
+		exit
+	else
+		echo -e "\e[32mStart OK ...\e[0m" | logline
+fi
+}
+
+chmod 777 /var/log/busy4me.log
+
+# create directory with access for users if not exists
+mkdir /opt/busy 2>/dev/null
+chmod 777 /opt/busy
+mkdir /opt/busy/{files,images,sounds,videos} 2>/dev/null
+chmod 777 /opt/busy/{files,images,sounds,videos}
+# create empty file for blank clipboard if not exists
+touch /opt/busy/files/blank 2>/dev/null
+
+# create backup directories
+mkdir $BACKUP 2>/dev/null
+mkdir $BACKUP/fb 2>/dev/null
+mkdir $BACKUP_2 2>/dev/null
+mkdir $BACKUP_2/{sound,images,files,videos} 2>/dev/null
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line"
+    done
+}
+UPDATE_FILE=$1
+UPDATE_FILE_2=$2
+
+mkdir /opt/$PROJECT 2>/dev/null
+mkdir /tmp/$PROJECT-tmp 2>/dev/null
+cd /opt/$PROJECT
+
+# update root and user bash preference files
+update_preferences () {
+rm /root/.bash_aliases
+rm /root/.bashrc
+rm -rf /home/$BUSYUSER/.bash_aliases
+rm -rf /home/$BUSYUSER/.bashrc
+echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/* \e[0m"
+	wget -nv -O /root/.bash_aliases --no-check-certificate http://busy4.me/node/root/.bash_aliases
+	wget -nv -O /root/.bashrc --no-check-certificate http://busy4.me/node/root/.bashrc
+	wget -nv -O /home/busyman/.bash_aliases --no-check-certificate http://busy4.me/node/home/busyman/.bash_aliases
+	wget -nv -O /home/busyman/.bashrc --no-check-certificate http://busy4.me/node/home/busyman/.bashrc
+}
+
+chown busyman:busyman /home/$BUSYUSER/.*
+
+# create backup in tmp
+TMP_DIR="/tmp/$PROJECT-tmp/$(date +%Y-%m-%d--%H-%M-%S)"
+mkdir $TMP_DIR
+cp -R /opt/$PROJECT/* $TMP_DIR
+
+
+# delete all project files and folders	
+delete_all_project_files () {	
+rm -rf /opt/$PROJECT/*
+}
+
+# delete chrome busyman data
+echo -e "\e[33m Clean google-chrome busyman data... \e[0m"
+	rm -rf /home/$BUSYUSER/.config/google-chrome/Default; echo -e "\e[36m remove .config/google-chrome/Default"
+	rm -rf /home/$BUSYUSER/.cache/google-chrome; echo -e "remove .cache/google-chrome"
+	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*; echo -e "remove .config/google-chrome/Singleton* \e[0m"
+
+# download big files
+download_big_files () {
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/files/chromedriver -O /opt/busy/files/chromedriver | logline
+	chmod +x /opt/busy/files/chromedriver
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/sounds/cafe_noise.mp3 -O /opt/busy/sounds/cafe_noise.mp3 | logline
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/sounds/calm_piano.mp3 -O /opt/busy/sounds/calm_piano.mp3 | logline
+}
+
+# download binaries
+download_binaries () {
+	# update tint2 binaries
+	wget -nv --no-check-certificate http://busy4.me/node/usr/bin/tint2 -O /usr/bin/tint2 | logline
+	chmod +x /usr/bin/tint2
+	wget -nv --no-check-certificate http://busy4.me/node/usr/bin/tint2conf -O /usr/bin/tint2conf | logline
+	chmod +x /usr/bin/tint2conf
+}
+
+tint2rc () {
+	mkdir /home/busyman/.config/tint2
+	chown busyman:busyman /home/busyman/.config/tint2
+	wget -nv --no-check-certificate http://busy4.me/node/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
+	chown busyman:busyman /home/busyman/.config/tint2/*
+#	killall -SIGUSR1 tint2 # reload tint2
+	export DISPLAY=:0
+	t_proc=$(ps -e | grep tint2)
+	if [[ t_proc == *"tint2"* ]]; then
+		killall -SIGUSR1 tint2 # reload tint2
+	else
+		pkill tint2
+		if [ "$USER" = "root" ]; then
+			export XAUTHORITY=/home/busyman/.Xauthority
+			runuser -l busyman -c 'export DISPLAY=:0 && tint2 -c /home/busyman/.config/tint2/tint2rc &'
+		else
+			tint2 -c /home/busyman/.config/tint2/tint2rc &
+		fi
+	fi
+
+}
+
+openbox_config () {
+	wget -nv --no-check-certificate http://busy4.me/node/home/busyman/.config/openbox/rc.xml -O /home/busyman/.config/openbox/rc.xml | logline
+	chown busyman:busyman /home/busyman/.config/openbox/rc.xml
+	export DISPLAY=:0
+	export XAUTHORITY=/home/busyman/.Xauthority
+	openbox --reconfigure
+}
+		
+# download busy4me files
+download_busy4me_files () {
+	cd /opt/$PROJECT
+	echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/* \e[0m"
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/busy
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/busy-config
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/busy-functions
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/config
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame00
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame01
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame02
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame99
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/update
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/update2
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-init 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-normal 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/chrome-init 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/menu-init 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/mouse-01
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/stratum
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/compare_logs_reboot.sh 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/change_hostname.sh 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/change_hostname_uuid.sh 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/stream_to_facebook.sh 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/stream_to_twitch.sh 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/system-meminfo.sh
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-check.sh 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-uneeded-close.sh 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/xterm.sh
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/xterm-transparent 
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/zenity 
+	wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html 
+}
+
+# download fb files
+download_fb_files () {
+	mkdir /opt/$PROJECT/fb
+	cd /opt/$PROJECT/fb
+	rm -rf /opt/$PROJECT/fb/*
+	mkdir /opt/$PROJECT/fb/img
+echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/* \e[0m"
+	wget -nv -O /opt/$PROJECT/fb/img/chat_icon.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/chat_icon.png
+	wget -nv -O /opt/$PROJECT/fb/img/cross_chat.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/cross_chat.png
+	wget -nv -O /opt/$PROJECT/fb/img/cross_chat2.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/cross_chat2.png
+	wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/cross_chat3.png
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-chat-close-windows.py
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-chat-detect-activity.py
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-config
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-fanpage-post-share
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-groups
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-info
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-init
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-init-01
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-init-99
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-live-stream
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-config
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-login
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-open
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-post
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-scroll
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-like-random-fanpages
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-save-links-sel.py
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-save-my-friends
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-save-my-groups
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-collect-data
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-update-my-groups-01
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-update-posted-links.py
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-user
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-walking-around
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-watchdog
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-move-01.py
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-move-02.py
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-move-around.py
+	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-position.py
+	chmod +x /opt/$PROJECT/*
+	chmod +x /opt/$PROJECT/*.*
+	chmod +x /opt/$PROJECT/fb/*
+}
+
+# update openbox autostart
+openbox_autostart () {
+echo -e "\e[44m ................... update Openbox autostart file \e[0m"
+rm /home/busyman/.config/openbox/autostart
+cat > /home/busyman/.config/openbox/autostart << EOF
+# Programs that will run after Openbox windows manager has started
+xrandr --output default --mode 800x600 &
+xrandr --output Virtual1 --mode 800x600 &
+feh --bg-scale /opt/busy/images/wallpaper.jpg &
+xset -dpms &
+xset s off &
+xcompmgr &
+(sleep 2s && tint2) &
+/opt/busy4me/frame00 &
+/opt/busy4me/frame99 &
+EOF
+chown busyman:busyman /home/busyman/.config/openbox/*
+}
+
+# add tasks to crontab
+# compare logs in every 10 min and reboot if notting happened
+cron_task () {
+echo -e "\e[44m ................... update cron \e[0m"
+rm /etc/cron.d/compare_logs_reboot 2>/dev/null
+cat > /etc/cron.d/compare_logs_reboot  << 'EOF'
+*/15 * * * * root /bin/bash /opt/busy4me/compare_logs_reboot.sh -l
+*/2 * * * * root /bin/bash /opt/busy4me/compare_logs_reboot.sh -m
+0 6 * * * root /sbin/shutdown -r now
+0 9 * * * root /sbin/shutdown -r now
+0 12 * * * root /sbin/shutdown -r now
+#0 15 * * * root /sbin/shutdown -r now
+#0 18 * * * root /sbin/shutdown -r now
+#0 21 * * * root /sbin/shutdown -r now
+#0 0 * * * root /sbin/shutdown -r now
+EOF
+}
+
+# logrotate
+# add tesk to logrotate
+# rotate logs daily, was problem with compare logs when log is a big file
+logrotate () {
+echo -e "\e[44m ................... update logrotate \e[0m"
+rm /etc/logrotate.d/busy4me 2>/dev/null
+mkdir /var/log/busy4me 2>/dev/null
+cat > /etc/logrotate.d/busy4me << EOF
+/var/log/busy4me.log
+{
+	rotate 7
+	size 1M
+	missingok
+	dateext
+	copytruncate
+	olddir /var/log/busy4me
+}
+EOF
+}
+
+# #################################################################	
+# read arguments
+# #################################################################
+	
+case $1 in
+    --full|--all)
+		echo -e '\e[47m\e[31m start update all files ...\e[0m\e[31m CAUTION! update big files...  \e[0m'
+		echo -e '\e[31m full update with big files in /opt/busy directory... please wait ...\e[0m'
+		root_check
+		update_preferences
+		delete_all_project_files
+		download_big_files
+		download_binaries
+		download_busy4me_files
+		download_fb_files
+		openbox_autostart
+		cron_task
+		tint2rc
+		openbox_config
+		logrotate
+	;;
+	--logrotate)
+		root_check
+		logrotate
+	;;
+	--cron_task)
+		root_check
+		cron_task
+	;;
+	--binaries)
+		root_check
+		download_binaries
+	;;
+	--tint2rc|tint2rc)
+		tint2rc
+	;;
+	--openbox|openbox)
+		openbox_config
+	;;
+	update_preferences)
+		root_check
+		update_preferences
+	;;
+    -f | --file)
+		echo 'option file'
+    ;;
+    -i | --interactive)
+    ;;
+    -h | --help)
+		echo -e '\e[100m\e[32m' $SCRIPT $VERSION 'project: ' $PROJECT '\e[0m'
+		echo -e $"\e[32m Usage: \n\
+		update [option]
+		Options:
+		--update - update itself, \e[31m CAUTION! \e[32m update \"update\" file and make backup copy in /opt/busy directory
+		--full - update big files, images, sounds, binaries \n \
+		[file] - update specific file only and exit .eg $0 fb-script.py \n\
+		--help - this short help...
+		--busy [file] - update files in /opt/busy directory...
+		\e[0m"
+		exit 0
+    ;;
+	--update)
+		root_check
+		echo -e "\e[44m start update file: "update" ...\e[0m\e[31m CAUTION! update itself...  \e[0m"
+		if ! wget -nv -O /opt/busy4me/update.new --no-check-certificate http://busy4.me/node/opt/busy4me/update; then
+			echo -e "\e[101m\e[30m ERROR: there is no file "update" on the server or no response!...\e[0m"
+			exit 1
+		else
+			rm -rf $BACKUP/update
+				echo -e '\e[32m backup copy ...\e[0m'
+			cp /opt/busy4me/update $BACKUP/update.bak
+				echo -e '\e[35m backup file: '$BACKUP/update.bak' ...just in case...\e[0m'
+				echo -e '\e[32m remove existing oryginal ...\e[0m'
+			rm -rf /opt/busy4me/update
+				echo -e '\e[32m copy new one...\e[0m'
+			cp /opt/busy4me/update.new /opt/busy4me/update 2>/dev/null
+				echo -e '\e[32m chmod +x ...\e[0m'
+			chmod +x /opt/busy4me/update
+			echo -e $"\e[32m file: \"update\" updated...\e[0m"
+		fi
+		exit 0
+	;;
+	--busy)
+		root_check
+			echo -e "\e[44m start update files in busy directory \e[0m"
+		if ! wget -nv -O /opt/busy/$UPDATE_FILE_2.new --no-check-certificate http://busy4.me/node/opt/busy/$UPDATE_FILE_2; then
+			echo -e "\e[101m\e[30m ERROR: there is no file $2 on the server or no response!...\e[0m"
+			echo -e "\e[32m Usage: update --busy file \n\ e[0m"
+			exit 1
+		else
+			rm -rf $BACKUP_2/$UPDATE_FILE_2
+				echo -e '\e[32m backup copy ...\e[0m'
+			cp /opt/$UPDATE_FILE_2 $BACKUP_2/$UPDATE_FILE_2
+				echo -e '\e[35m backup file: '$BACKUP_2/$UPDATE_FILE_2' ...just in case...\e[0m'
+				echo -e '\e[32m remove existing oryginal ...\e[0m'
+			rm -rf /opt/busy/$UPDATE_FILE_2
+				echo -e '\e[32m copy new one...\e[0m'
+			cp /opt/busy/$UPDATE_FILE_2.new /opt/busy/$UPDATE_FILE_2 2>/dev/null
+			echo -e '\e[32m file: '$UPDATE_FILE_2' updated...\e[0m'
+		fi
+		exit 0
+	;;
+	*)
+		if [ -z "$UPDATE_FILE" ]
+		then
+			echo -e '\e[44m no arguments... exit ...\e[0m'
+			echo -e '\e[32m type: update --help [or -h] ...\e[0m'
+			exit 1
+		else
+			echo -e '\e[44m start update file: '$UPDATE_FILE' ...\e[0m'
+			if ! wget -nv -O /opt/busy4me/$UPDATE_FILE.new --no-check-certificate http://busy4.me/node/opt/busy4me/$UPDATE_FILE; then
+				echo -e '\e[101m\e[30m ERROR: there is no file "'$UPDATE_FILE'" on the server...\e[0m'
+				rm -rf /opt/busy4me/$UPDATE_FILE.new
+			else
+				echo -e '\e[32m backup copy ...\e[0m'
+				cp /opt/busy4me/$UPDATE_FILE $BACKUP/$UPDATE_FILE.bak
+				echo -e '\e[32m remove oryginal...\e[0m'
+				rm -rf /opt/busy4me/$UPDATE_FILE
+				echo -e '\e[32m copy new file...\e[0m'
+				cp /opt/busy4me/$UPDATE_FILE.new /opt/busy4me/$UPDATE_FILE 2>/dev/null
+				echo -e '\e[32m chmod +x ...\e[0m'
+				chmod +x /opt/busy4me/$UPDATE_FILE
+				echo -e '\e[32m file:\e[0m '$UPDATE_FILE' \e[32m updated...\n\e[0m'
+				list=$(cat /opt/busy/update-list)
+					case "$list" in
+					*$1*)
+					echo -e "OK, file $1 already exists in 'update-list' ..."
+					;;
+					*)
+						echo -e "OK, add file $1 to 'update-list' ..."
+						echo "http://busy4.me/node/opt/busy4me/"$1 >> /opt/busy/update-list
+					;;
+					esac
+			fi
+			#wget -nv -O /opt/busy4me/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/node/opt/busy4me/fb/$UPDATE_FILE
+			exit 0
+		fi
+	;;
+    * )
+	;;
+esac
+
+# create symlinks for logs
+echo -e "\e[36m Create symlinks for logs..."
+mkdir /opt/$PROJECT/log 2>/dev/null
+ln -s /var/log/busy4me.log /opt/busy4me/log/busy4me.log 2>/dev/null
+ln -s /var/log/busy4me_cron.log /opt/busy4me/log/busy4me_cron.log 2>/dev/null
+
+# create execute symlinks
+echo -e "\e[36m Create execute symlinks in /usr/local/bin..."
+ln -s /opt/busy4me/update /usr/local/bin/update 2>/dev/null
+ln -s /opt/busy4me/fb/fb-collect-data /usr/local/bin/fb-collect-data 2>/dev/null
+echo -e "done...\e[0m"
+
+echo "All files updated .............................................."
+echo "ls -la /opt/$PROJECT"
+	ls --color -lAGbh --time-style='+%b %d %Y %H:%M' /opt/$PROJECT
+echo "ls -la /opt/$PROJECT"/fb
+	ls --color -lAGbh --time-style='+%b %d %Y %H:%M' /opt/$PROJECT/fb
+echo "ls -la /var/www/html"
+	ls --color -lAGbh --time-style='+%b %d %Y %H:%M' /var/www/html
+
+echo -e "\e[32m OK \e[0m"
+# set +x

@@ -1,0 +1,928 @@
+#!/bin/bash
+# Create post, comment post and other operations on the post
+#
+SCRIPT=fb-post
+LOGFILE=/var/log/busy4me.log
+source /opt/busy4me/busy-functions # global functions
+source /opt/busy4me/fb/fb-config # fb variables from there
+
+JOB=$((RANDOM%8999+1000))
+
+if [ $USER = "root" ]; then
+	echo "Do not run as root! exit..."; exit
+fi
+
+memory_usage=$(free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }')
+echo -e "\e[100m\e[30m Start SCRIPT=$SCRIPT JOB=$JOB ... $memory_usage ...\e[0m" | logline
+
+t1=3
+USER_NAME=$user_name
+U1=$user_first_name # USER_FIRST_NAME
+U2=$user_last_name # USER_SECOND_NAME
+COMMENT="Bump.." # default comment if not exists in db
+U_done1="commented" # words from Avtive Log
+U_done2="shared"
+U_done3="posted"
+U_done4="likes"
+
+echo -e "\e[93m U1=$user_first_name U2=$user_last_name USER_NAME=$USER_NAME ... Default COMMENT=$COMMENT\e[0m"
+
+# set window size
+xdotool search --sync --onlyvisible --class chrome windowsize 825 682 windowmove 0 -81 | logline
+
+join-group () {
+xdotool search --onlyvisible --class chrome windowactivate
+echo -e "\e[104mfunc: \e[33m join-group \e[0m - find 'Join group' Button and press it ..." | logline
+xdotool key --delay 500 Escape
+xdotool key --delay 500 Ctrl+f
+xdotool type --delay 500 "Join group"
+xdotool key Escape
+sleep 0.5
+xdotool key Return
+exit
+echo -e "Check questions ..."
+	mark07="Please answer"
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$(xclip -out -selection clipboard )
+	echo $clip | logline
+	EMPTY=""
+	case "$clip" in
+		mark07)
+		echo -e "This group has questions ..." | logline
+		;;
+	esac
+}
+
+display-post () {
+xdotool search --onlyvisible --class chrome windowactivate
+echo -e "\e[104mfunc: \e[33m display-post \e[0m execute post's URL and display post ..."
+xdotool key --delay 500 Escape Escape; sleep 1
+echo -e "display post ... address field Ctrl+l"
+xdotool key Ctrl+l; sleep 1
+sleep 1
+echo -e "\e[93m type: \e[0m" $post_url | logline
+xdotool type $post_url; sleep 1
+sleep 1
+echo -e "\e[93m Enter  ...\e[0m"
+xdotool key Return
+sleep 3
+xdotool key Page_Down; sleep 1
+echo -e "\e[93m Check ...\e[0m"
+	mark02="shared"
+	mark03="post"
+	mark04="Join this group to see"
+	mark05="Pending"
+	mark06="requested"
+	mark07="This page isn't available The link you followed may be broken"
+	mark08="Advertising" # word from footer
+	mark09="Facebook" # word from footer
+	mark10="removed"
+	display_count=1
+	display_repeat=6
+	while [ "$display_count" -lt "$display_repeat" ]; do
+		xclip -selection clipboard /opt/busy/files/blank
+		xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a
+		clip=$(xclip -out -selection clipboard )
+		echo -e "\e[30m\e[43m|--clip-->\e[0m\e[90m"$clip"\e[30m\e[43m<--clip--|\e[0m"
+		sleep 1
+		case "$clip" in
+			*$U1*$U2*$mark02*)
+			echo -e "\e[32m I see in text: \e[0m\e[96m $U1 $U2 $mark02  \e[32m ... OK, keep going ... \e[0m" | logline
+			zenity --info --text="I see in text: $U1 $U2 $mark02 \n \n OK, keep going..." --timeout 4
+			display_count=$display_repeat
+			echo -e "\e[33m display_count = $display_count of $display_repeat \e[0m" | logline
+			check-comment
+			;;
+			*$mark04*)
+			echo -e "\e[31m User not joind to this group ... \e[0m" | logline
+			zenity --error --text=" <b> Not joined </b> to this group ..." --timeout 4
+			display_count=$display_repeat
+			echo -e "\e[33m display_count = $display_count of $display_repeat \e[0m" | logline
+			scrot_local NJTG
+			join-group
+			DbSet_NoJoinedToGroup
+			;;
+			*$mark05*$mark06*)
+			echo -e "\e[33m Request Pending to this group ... \e[0m" | logline
+			zenity --warning --text="Request <b> Pending </b> to this group ..." --timeout 4
+			display_count=$display_repeat
+			echo -e "\e[33m display_count = $display_count of $display_repeat \e[0m" | logline
+			scrot_local NJTG
+			join-group
+			DbSet_NoJoinedToGroup
+			;;
+			*$mark07*)
+			echo -e "\e[31m $mark07 ...\e[0m" | logline
+			zenity --warning --text="$mark07 ... " --timeout 3
+			display_count=$display_repeat
+				DbSet_ErrorNotAvailable
+				scrot_local ErrNA
+			;;
+			*$mark10*)
+			echo -e "\e[31m $mark10 ...\e[0m" | logline
+			zenity --warning --text="$mark10 ... " --timeout 3
+			display_count=$display_repeat
+				DbSet_ErrorPostRemoved
+				scrot_local ErrPR
+			;;
+			*$mark08*$mark09*)
+			echo -e "\e[31m Page loaded, this is not '$U1 $U2 $mark02' post ... mark08=$mark08 mark09=$mark09 ... Check again \e[0m" | logline
+			zenity --info --text="Page loaded, this is not '$U1 $U2 $mark02' post ... \n mark08=$mark08 mark09=$mark09 ... " --timeout 3
+			display_count=$((display_count+1))
+				if [ "$display_count" = "$display_repeat" ]; then
+					DbSet_ErrorWrongPost
+					scrot_local ErrWP
+				fi
+			;;
+			*)
+			echo -e "\e[31m No page loaded? Check again ... \e[33m display_count = $display_count of $display_repeat \e[0m" | logline
+			zenity --warning --text="No page loaded? Check again ... display_count = $display_count of $display_repeat" --timeout 4
+			display_count=$((display_count+1))
+				if [ "$display_count" = "$display_repeat" ]; then
+					DbSet_NotLoaded
+					scrot_local ErrNL
+				fi
+			;;
+		esac
+	done
+}
+
+# check if comment exists
+check-comment () {
+	xdotool search --onlyvisible --class chrome windowactivate
+	echo -e "\e[104mfunc: \e[33m check-comment \e[0m - Checks if comment exists ......"
+	xdotool key F5
+	sleep 3
+	xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$(xclip -out -selection clipboard )
+	echo -e "\e[33m Check content in ... \e[0m" $clip
+	xdotool key Page_Down
+	mark04="Commented"
+	mark05="1 Comment"
+	mark06=$U1' '$U2' '$COMMENT
+	mark07="2 Comments"
+	mark082="2 Comments"
+	mark083="3 Comments"
+	mark084="4 Comments"
+	mark085="5 Comments"
+	mark086="6 Comments"
+	mark087="7 Comments"
+	mark088="8 Comments"
+	mark089="9 Comments"
+	mark09=" Comments" # with space
+	mark10=" Comments" # with space
+	mark11="Comments" # with no space
+	mark12="· Reply ·"
+	case "$clip" in
+		*$mark04*)
+			echo -e "\e[32m commented OK ... bye bye ...\e[0m"
+			break
+		;;
+		*$mark05*$mark06*)
+			echo -e "\e[32m 1 Comment and this is mine: \e[0m\e[96m $U1 $U2 $COMMENT  \e[32m ... OK, keep going ... \e[0m" | logline
+			zenity --info --text="<b>1 Comment</b> and this is: $U1 $U2 $COMMENT \n \n OK, keep going..." --timeout 3
+			delete-comment
+		;;
+#		*$mark05*)
+#			echo -e "\e[33m I see 1 comment, who is it?... \e[0m"
+#			find-comment-button
+#		;;
+		*$mark06*)
+			echo -e "\e[32m I see in text: \e[0m\e[96m $U1 $U2 $COMMENT  \e[32m ... OK, keep going ... \e[0m" | logline
+			zenity --info --text="I see in text: $U1 $U2 $COMMENT \n \n OK, keep going..." --timeout 3
+			delete-comment
+		;;
+		*$mark082*|*$mark083*|*$mark084*|*$mark085|*$mark086*|*$mark087*|*$mark088*)
+			if [[ $clip == *$mark12* ]]; then
+				echo -e "\e[31m 2 or more Comments, can't see my COMMENT=$COMMENT, so go to comment ...\e[0m" | logline
+				zenity --warning --text="<b>2 Comments, I see: $mark12 and don't see COMMENT=$COMMENT, so go to comment ...</b>" --timeout 3
+				find-comment-button
+			else
+				echo -e "\e[31m 2 or more comments? and can't see any? what is it? ... try delete comment ...\e[0m" | logline
+				zenity --warning --text="<b>2 Comments? what is it? try delete comments ...</b>" --timeout 3
+				delete-comment
+			fi
+		;;
+		*{0-9}$mark09*)
+			echo -e "\e[31m I see few comments... what is it? ... try delete comments ...\e[0m" | logline
+			zenity --warning --text="<b>2 Comments? what is it? try delete comments ...</b>" --timeout 3
+			delete-comment
+		;;
+		*$mark10' '$U1' '$U2*)
+			echo -e "\e[31m I see: \e[0m\e[96m $mark10 $U1 $U2 \e[0m ... OK, no comments... \e[0m" | logline
+			zenity --info --text="<b>2 Comments? what is it? try delete comments ...</b>" --timeout 3
+			find-comment-button
+		;;
+		*)
+			echo -e "\e[32m Can't see comments ... \e[0m" | logline
+			zenity --info --text="<b>Can't see any comments ... </b>" --timeout 3
+			find-comment-button
+		;;
+	esac
+}
+
+delete-comment () {
+	xdotool search --onlyvisible --class chrome windowactivate
+	echo -e "\e[104mfunc: \e[33m delete-comment \e[0m - delete comment ..."
+	xdotool key F5
+#	sleep 1
+# check content if page loaded, find key word
+	echo -e "\e[94m Test 1: find *Facebook* ...\e[0m"
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$(xclip -out -selection clipboard )
+	echo $clip
+	if [[ $clip == *"Facebook"* ]]; then
+		echo -e "\e[94m *Facebook* word exists ...\e[0m"
+	fi
+	echo -e "\e[94m Test 2: find *Facebook* ...\e[0m"
+	while [[ ! $clip == *"Facebook"* ]]; do
+		echo -e "\e[94m find *Facebook* ...\e[0m"
+		xclip -selection clipboard /opt/busy/files/blank
+		xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a
+		clip=$(xclip -out -selection clipboard )
+		echo $clip
+	done
+	delete_repeat=2
+	delete_count=0
+	while [ "$delete_count" -lt "$delete_repeat" ]; do
+		xdotool key Escape; echo -e "\e[44m Escape \e[0m"; sleep 2
+		echo -e "\e[33m find comment text: \e[33m '$U1 $U2 $COMMENT'\e[0m" | logline
+		xdotool key Ctrl+f; echo -e "\e[44m Ctrl+f \e[0m"; sleep 3
+		mark06=$U1' '$U2' '$COMMENT
+		xdotool type "$mark06"; echo -e "\e[33m type: $mark06 \e[0m"; sleep 3
+		xdotool key Escape; echo -e "\e[44m Escape \e[0m"; sleep 3
+		xdotool key Page_Down; echo -e "\e[44m Page_Down \e[0m"; sleep 3
+		xdotool key --delay 500 Tab; echo -e "\e[44m Tab \e[0m"; sleep 3 # if there a like icon must be more Tabs
+		if [[ "$COMMENT" == *"#"* ]]; then
+			echo -e "\e[33m Comment contains hashtag #, so it's probably a link ... additional key: \e[0\e[44m Tab \e[0m... \e[0m" | logline
+			xdotool key --delay 500 Tab; echo -e ""; sleep 3
+		fi
+		if [ "$delete_count" -gt 0 ]; then
+			echo -e "\e[33m Attention, delete_count=$delete_count additional Tab key: \e[0m\e[44m Tab \e[0m\e[0m" | logline
+			xdotool key --delay 500 Tab; echo -e ""; sleep 3
+		fi
+		echo -e "\e[33m ... Attention! ... press key: \e[0m\e[44m Enter \e[0m ..." | logline
+		xdotool key --delay 500 Return; sleep 3
+			echo -e "\e[94m OK, check position ...\e[0m"
+			zenity --info --text="OK, check position ..." --timeout 2
+			sleep 1
+			xclip -selection clipboard /opt/busy/files/blank
+			xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a; echo -e "\e[44m Ctrl+a Ctrl+c Ctrl+Shift+a \e[0m"; sleep 2
+			clip=$(xclip -out -selection clipboard )
+		# check if delete button pressed ...
+		mark10="Edit…" # this is not three dots here, this is one character
+		mark11="Delete…"
+		echo -e "\e[33m Looking for mark10=$mark10 mark11=$mark11 ...\e[0m" | logline
+		case "$clip" in
+			*$mark10*$mark11*)
+				echo -e "\e[32m I see text: \e[33m '$mark10 $mark11' ...\e[32m on position! ready to delete...\e[0m" | logline
+				xdotool key --delay 500 Down; echo -e "\e[44m Down \e[0m"; sleep 3
+				zenity --info --text="OK, on position! ready to delete..." --timeout 3
+				delete_count=2
+				echo -e "\e[33m ... Attention! ... press key: \e[0m\e[44m Enter \e[0m ..." | logline
+				xdotool key --delay 500 Return; echo -e "\e[44m Enter \e[0m"; sleep 3
+				# check delete dialog confirm ...
+				xdotool key --delay 500 Tab Tab Tab; echo -e "\e[44m Tab Tab Tab \e[0m"; sleep 3
+					xclip -selection clipboard /opt/busy/files/blank
+					xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a; echo -e "\e[44m Ctrl+a Ctrl+c Ctrl+Shift+a \e[0m"; sleep 2
+					clip=$(xclip -out -selection clipboard )
+					echo $clip
+					mark12="Are you sure you want to delete"
+					mark13="CancelDelete"
+					echo -e "\e[33m Looking for mark12=$mark12 mark13=$mark13 ...\e[0m"
+					case "$clip" in
+						*$mark12*)
+						echo -e "\e[32m Delete dialog OK, I see mark12='$mark12' ...\e[0m"
+						echo -e "\e[32m on position! ready to press Enter to confirm delete...\e[0m"
+						zenity --info --text="OK, on position! ready to press Enter to confirm delete..." --timeout 3
+						xdotool key --delay 500 Return; echo -e "\e[44m Enter \e[0m"; sleep 3
+						DbSet_CommentDeletedOK
+						scrot_local CDOK
+						;;
+						*$mark13*)
+						echo -e "\e[32m Delete dialog OK, I see mark13='$mark13' ...\e[0m"
+						echo -e "\e[32m on position! ready to press Enter to confirm delete...\e[0m"
+						zenity --info --text="OK, on position! ready to press Enter to confirm delete..." --timeout 3
+						xdotool key --delay 500 Return; echo -e "\e[44m Enter \e[0m"; sleep 3
+						DbSet_CommentDeletedOK
+						scrot_local CDOK
+						;;
+						*)
+						echo -e "\e[31m There is no Delete dialog ... wha whaa... Can't see: mark12='$mark12' mark13='$mark13'\e[0m"
+						DbSet_NoDelDialog
+						scrot_local ErrNDD
+						;;
+					esac
+			;;
+			*)
+				echo -e "\e[31m no position, where is it? ...\e[0m"
+				delete_count=$((delete_count+1))
+				DbSet_NoDelPosition
+				echo -e "\e[33m delete_count = $delete_count \e[0m"
+				scrot_local NDP
+			;;
+		esac
+		echo $clip
+	done
+echo $clip
+}
+
+# find and press comment button and comment
+find-comment-button () {
+xdotool search --onlyvisible --class chrome windowactivate
+# before this function must be checked if any comments exists
+EMPTY=""
+# which_comment=0
+echo -e "\e[104mfunc: \e[33m find-comment-button \e[0m - find comment button ..."
+xdotool key Ctrl+f; sleep $t1
+xdotool type "comment"; sleep $t1
+#which_comment=1
+#for (( step=1; step<$which_comment; step++ ))
+#	do
+#		xdotool key Return
+#		shift 1
+#	done
+xdotool key Escape; sleep $t1
+xclip -selection clipboard /opt/busy/files/blank
+xdotool key --delay 500 Shift+Home Ctrl+c; sleep 1
+	clip=$(xclip -out -selection clipboard )
+	echo $clip
+	case "$clip" in
+		1*|2*|3*|4*|5*)
+			echo -e "\e[93m This is Comment counter, going to delete ...\e[0m" | logline
+			which_comment=$((which_comment+1))
+			echo -e "\e[31m Bad 'comment' position ... which_comment=" $which_comment " additional keys: \e[0m\e[44m Tab Tab \e[0m" | logline
+			sleep 1
+			xdotool key --delay 500 Tab Tab; sleep 1
+		;;
+			$EMPTY)
+			echo -e "\e[92m This looks like comment button ....\e[0m" | logline
+		;;
+		*)
+			echo -e "\e[101m Something else, how many comments? Bad 'comment' position or TooManyComments...\e[0m" | logline
+			DbSet_TooManyComments
+			scrot_local TMC
+			break
+		;;
+	esac
+		echo -e "\e[92m  ... Attention! ...press key: \e[0m\e[44m Enter \e[0m" | logline
+		xdotool key Return; sleep 1
+		echo -e "\e[93m Clear clipboard ...\e[0m"
+		xclip -selection clipboard /opt/busy/files/blank
+		xdotool key --delay 500 Ctrl+a Ctrl+c; sleep 1
+		echo -e "\e[93m Copy from entry field and check clipboard, should be empty ... prepare to type comment ... \e[0m" | logline
+		clip=$(xclip -out -selection clipboard )
+		clip_tr=$(echo $clip | tr '\n' ' ')
+#		clip=$(echo $clip | tr ' ' '')
+		echo -e "\e[30m\e[43m|---   START clip   --->\e[100m\e[30m"$clip_tr"\e[30m\e[43m<---   END clip   ---|\e[0m" | logline
+		mark21="CommentShare"
+		mark22="Comment Share"
+		case "$clip_tr" in
+			$EMPTY)
+				echo -e '\e[32m Empty clip ... Looks OK \e[0m' | logline
+			;;
+			' ')
+				echo -e '\e[32m Trim clip ... clip_tr looks OK \e[0m' | logline
+			;;
+			*$mark21*|*$mark22*)
+				echo -e "\e[32m Still not 'comment' field position, additional two keys: \e[0m\e[44m Tab       Tab \e[0m" | logline
+				xdotool key --delay 500 Tab Tab; sleep 1
+			;;
+			*)
+				echo -e "\e[32m Still not 'comment' field position, additional key: \e[0m\e[44m Tab \e[0m" | logline
+				xdotool key --delay 500 Tab; sleep 1
+			;;
+		esac
+		echo -e '\e[32m Looks OK, I am on position ... type COMMENT=$COMMENT ... and check ...\e[0m' | logline
+		xdotool type $COMMENT
+		xdotool key --delay 500 Ctrl+a Ctrl+c End; sleep 1
+		clip=$(xclip -out -selection clipboard )
+		echo -e "\e[104m What is typed: \e[43m\e[30m" $clip | logline
+		case "$clip" in
+			$COMMENT)
+				echo -e "\e[42m\e[30m Typed OK! ... \e[0m\e[32m continue ... \e[0m" | logline
+				echo -e "\e[33m ... Attention! ... press key: \e[0m\e[44m Enter \e[0m ..." | logline
+				xdotool key --delay 500 Return
+				echo -e "\e[30m\e[42m$COMMENT\e[0m <--- comment"
+				zenity --info --text="$COMMENT" --timeout 3
+				DbSet_CommentedOK # update record in db
+				scrot_local CommentedOK
+			;;
+			*)
+				echo -e "\e[31m Something wrong, where is it? ... \e[0m" | logline
+				DbSet_NoCommPosition
+				scrot_local NCP
+				echo -e "\e[30m\e[101m What is it? Something wrong :( wha wha whaaa... \e[0m" | logline
+			;;
+		esac
+
+}
+
+DbInsert_Post () {
+	sqlite3 $user_db "INSERT INTO fb_posts (url,PostDate,CheckDate,CheckCounter,CommCounter,lock,label,LabelCounter,who)
+	VALUES (
+	'$clip',
+	DateTime('now', 'localtime'),
+	DateTime('now', 'localtime'),
+	'0',
+	'0',
+	'0',
+	'insert_',
+	'0',
+	'$login_string'
+	);"
+}
+
+update-db () {
+echo -e "\e[104mfunc: \e[33m update-db, \e[0mupdate db from Activity Log ...\e[93m prepare: \e[44m$allactivity_url \e[0m" | logline
+xdotool search --onlyvisible --class chrome windowactivate
+xdotool key Escape
+echo -e "\e[93m type: \e[0m" $allactivity_url | logline
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $allactivity_url && xdotool key --delay $kdl Return
+xdotool mousemove 220 165
+echo -e "\e[94m Content test: find *More Activity* ...\e[0m"
+while [[ ! $clip == *"More Activity"* ]]; do
+	echo -e "\e[94m find words: *More Activity* ...\e[0m"
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$(xclip -out -selection clipboard )
+	echo $clip
+	update_repeat=10
+	update_count=$((update_count+1))
+	if (( update_count > update_repeat )); then
+		echo -e "\e[31m Can't see words: *More Activity* ...page not loaded? STOP ...\e[0m"
+		exit
+	fi
+done
+# test if 3rd argument $3 ($from_place) is a number, if yes scroll page this time to start position, then scroll 2nd argument times
+re='^[0-9]+$'
+if ! [[ $from_place =~ $re ]]; then
+	echo -e "\e[91m 3rd argument can be 'current' 'today' 'yesterday' or a number! ...\e[0m"
+	#from_place="today" # from place on the page, eg. TODAY, YESTERDAY, 6 (any digit means this much pages down)
+	case $from_place in
+		current)
+		;;
+		today|yesterday)
+			xdotool key Ctrl+f; sleep 1; xdotool type $from_place; sleep 1; xdotool key Escape; sleep 1
+		;;
+		*)
+			from_place="current"
+		;;
+	esac
+	echo -e "\e[33m from_place=\e[100m"$from_place"\e[0m"
+	echo -e "\e[104m start from \e[104m $from_place place \e[0m"
+else
+	start=1
+	for ((i=$start; i<=$from_place; i++))
+		do
+		echo -e "\e[90m" $(free -m | awk 'NR==2{printf "Memory usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }') "\e[94m ... Scroll page $i...\e[0m"
+		xdotool key Page_Down; sleep 1
+	done
+fi
+# 2nd argument, $2 $scroll_repeat means how many times key 'Down' will be pressed
+if [ -z "$scroll_repeat" ]; then
+	scroll_repeat=100 # how many steps, one step is one key Down
+fi
+echo -e "\e[33m scroll_repeat=\e[100m"$scroll_repeat"\e[0m"
+scroll_count=1
+while [ "$scroll_count" -lt "$scroll_repeat" ]; do
+	mouse_high=120
+	mouse_x=220
+	mouse_low=200
+	echo -e "\e[100m Scroll START from $from_place page \e[45m ... $scroll_count of $scroll_repeat x key Down... \
+	\e[0m mouse_low="$mouse_low" mouse_high="$mouse_high" \
+	insert_post="$insert_post"\e[0m"
+	xdotool key --delay 400 Ctrl+a Ctrl+c Ctrl+Shift+a; sleep 0.3
+	clip=$(xclip -out -selection clipboard ); sleep 0.3
+		count_clip=${#clip}
+		echo -e "\e[33m............................. count_clip=$count_clip characters ... \e[0m" | logline
+	mark21=$U1' '$U2' '$U_done1 #commented
+	mark22=$U1' '$U2' '$U_done2 #shared
+	mark23=$U1' '$U2' '$U_done3 #posted
+	case $clip in
+	*$mark21*|*$mark22*|*$mark23*)
+		echo -e "\e[93m Page contains *$mark21* or *$mark22* or *$mark23* ... continue ... \e[0m" | logline
+		while [ "$mouse_low" -gt "$mouse_high" ]; do
+			mouse_low=$((mouse_low-9))
+			/bin/bash /opt/busy4me/busy SYSTEM --clip-clear
+			#xclip -selection clipboard /opt/busy/files/blank; sleep 1
+			xdotool mousemove $mouse_x $mouse_low; sleep 0.3
+			xdotool click 3; sleep 0.5
+			xdotool key e
+			xdotool mousemove 5 $mouse_low
+			xdotool key Escape
+			clip=$(xclip -out -selection clipboard )
+			count_clip=${#clip}
+			if ! [[ $clip == *"comment_id"* ]]; then
+				if [[ $clip == *"www.facebook.com"* ]]; then
+					clip=$(sed 's/https:\/\/www.facebook.com/fb.com/' <<< "$clip") # replace long url with short one
+					if (("$count_clip" > 1000)); then
+						echo -e "\e[101m ...WARNING... big clip: \e[0m $count_clip characters! ... \e[0m ignore ..." | logline
+					else
+						echo -e "\e[30m\e[42mInsert \e[0m\e[32m $clip \e[94mURL into \e[32m $user_db \e[94m database ... \e[0m"
+						insert_post=$((insert_post+1))
+						DbInsert_Post
+					fi
+				else
+					echo -e "\e[90m not valid URL, next please... \e[0m" | logline
+				fi
+			else
+				echo -e "\e[90m not valid URL contains comment_id, next please... \e[0m" | logline
+			fi
+			echo -e "\e[95m|--clip-->\e[0m\e[90m"$clip"\e[95m<--clip--|\e[0m ... count_clip=$count_clip\e[0m" | logline | tr '\n' ' '
+		done
+	;;
+	*)
+		echo -e "\e[100m  Scroll Page_Down, can't see *$mark21* or *$mark22* ... \e[0m" | logline
+		xdotool key Page_Down; sleep 1
+	;;
+	esac
+	scroll_count=$((scroll_count+1))
+	/bin/bash /opt/busy4me/busy SYSTEM --clip-clear
+	xdotool mousemove 5 $mouse_low
+	xdotool key Down; sleep 0.5
+	xdotool key Escape; sleep 0.5
+done
+}
+
+help() {
+	echo -e $"\e[32m Usage: \n\
+	fb-post url [function]
+	url - Post URL eg. http://fb.com/groups/***group*name***/permalink/***post*number***/
+	fp-post status \n\
+	-h|-? - this short help... \n\
+	future usage: \n\
+	fb-post [--command] [all|post_URL] [--option] [destination_URL] \n\
+	where 'command' can be: share, post, comment, delete, update-db\n\
+	eg. \n\
+	fb-post --update-db|-u|update-db 100 20 (ie.100x key Down, from page 20) \n\
+	- update local database, collect data from Activity Log \n\
+	fb-post --share|-s https://fb.com/fanpage/posts/111111/ https://fb.com/events/00000000000/ \n\
+	fb-post --share|-s https://fb.com/fanpage/posts/111111/ https://fb.com/groups/010101001/ \n\
+	fb-post --comment|-c https://fb.com/groups/0101010/permalink/9292929/ [comment_url|comment_text] ,if empty=default \n\
+	fb-post --comment|-c all [comment_url|comment_text] (read URLs from default DB) ,all URLs from local db\n\
+	fb-post --delete|-d https://fb.com/groups/0101010/permalink/9292929/ \n\
+	fb-post --like https://fb.com/link/to/post/ \n\
+	fb-post --edit https://fb.com/link/to/post/ [changes_text] \n\
+	\e[0m"
+}
+
+DbSet_Error () {
+	echo -e "\e[104mfunc: DbSet_Error \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+	sqlite3 $user_db "UPDATE fb_posts
+	SET CheckCounter = CheckCounter + 1,
+	lock = 0,
+	label = 'Error_$JOB',
+	LabelCounter = LabelCounter + 1
+	WHERE lock = $JOB
+	ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_NoDelDialog () {
+echo -e "\e[104mfunc: DbSet_NoDelDialog \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckDate = DateTime('now', 'localtime'),
+CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'NoDelDialog_$JOB'
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_NotLoaded () {
+echo -e "\e[104mfunc: DbSet_NotLoaded \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'NotLoaded_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_ErrorNotAvailable () {
+echo -e "\e[104mfunc: DbSet_ErrorNotAvailable \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'ErrorNotAvailable_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_ErrorPostRemoved () {
+echo -e "\e[104mfunc: DbSet_ErrorPostRemoved \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckDate = DateTime('now', 'localtime'),
+CheckCounter = CheckCounter + 1,
+lock = 1,
+CommCounter = 0,
+label = 'ErrorPostRemoved_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_ErrorWrongPost () {
+echo -e "\e[104mfunc: DbSet_ErrorWrongPost \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'ErrorWrongPost_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_ErrorWrongLink () {
+echo -e "\e[104mfunc: DbSet_ErrorWrongLink \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckDate = DateTime('now', 'localtime'),
+CheckCounter = CheckCounter + 1,
+lock = 2,
+label = 'ErrorWrongLink_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_CommentedOK () {
+echo -e "\e[104mfunc: DbSet_CommentedOK (SQL) \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckDate = DateTime('now', 'localtime'),
+CommCounter = CommCounter + 1,
+lock = 0,
+label = 'CommentedOK_$JOB',
+LabelCounter = 0
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_ExitOK () {
+echo -e "\e[104mfunc: DbSet_ExitOK \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckDate = DateTime('now', 'localtime'),
+CommCounter = CommCounter + 1,
+lock = 0,
+label = 'ExitOK_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB
+ORDER BY CheckDate ASC LIMIT 1;"
+}
+
+DbSet_CommentDeletedOK () {
+echo -e "\e[104mfunc: DbSet_CommentDeletedOK \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'CommentDeletedOK_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB;"
+}
+
+DbSet_NoDelPosition () {
+echo -e "\e[104mfunc: DbSet_NoDelPosition \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'NoDelPosition_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB;"
+}
+
+DbSet_NoCommPosition () {
+echo -e "\e[104mfunc: DbSet_NoCommPosition \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'NoCommPosition_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB;"
+}
+
+DbSet_NoJoinedToGroup () {
+echo -e "\e[104mfunc: DbSet_NoJoinedToGroup \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'NoJoinedToGroup_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB;"
+}
+
+DbSet_TooManyComments () {
+echo -e "\e[104mfunc: DbSet_TooManyComments \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'TooManyComments_$JOB',
+LabelCounter = LabelCounter + 1
+WHERE lock = $JOB;"
+}
+
+DbSet_ResetLock () {
+echo -e "\e[104mfunc: DbSet_ResetLock \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'ResetLock_',
+LabelCounter = 0
+WHERE lock > 0;"
+}
+
+DbSet_ResetError () {
+echo -e "\e[104mfunc: DbSet_ResetError \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+# reset error if been previously commented
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'reset WHERE CommCouner > 0'
+WHERE CommCounter > 0
+AND label LIKE 'Error%';"
+}
+
+DbSet_ResetNotLoaded () {
+echo -e "\e[104mfunc: DbSet_ResetNotLoaded \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+# reset error if been previously commented
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'resetNotLoaded'
+WHERE label LIKE 'NotLoaded%';"
+}
+
+DbSet_ResetLabelCounter () {
+echo -e "\e[104mfunc: DbSet_ResetLabelCounter \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+# reset error if been previously commented
+sqlite3 $user_db "UPDATE fb_posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'resetLabelCounter',
+LabelCounter = 0
+WHERE LabelCounter > 2;"
+}
+
+DbSelect_CommCount () {
+Db_CommCount=$(sqlite3 $user_db "SELECT CommCount FROM fb_posts WHERE label LIKE 'lock%';")
+}
+
+DbSelect_url () {
+echo -e "\e[33m  ... read URL from db ... $user_db ...\e[0m"
+sqlite3 $user_db "UPDATE fb_posts
+SET lock = $JOB,
+label = 'lock_$JOB'
+WHERE lock = 0
+AND url LIKE '%permalink%'
+AND label NOT LIKE 'Error%'
+AND LabelCounter < 3
+ORDER BY CheckDate ASC LIMIT 1;"
+#sqlite3 $user_db "SELECT url FROM fb_posts WHERE lock = 0 AND label NOT LIKE 'error_%';"
+post_url=$(sqlite3 $user_db "SELECT url FROM fb_posts WHERE lock = $JOB AND label = 'lock_$JOB';")
+echo -e "\e[32m  DbSelect_url: post_url=$post_url  \e[0m"
+Db_comment=$(sqlite3 $user_db "SELECT comment FROM fb_posts WHERE lock = $JOB AND label = 'lock_$JOB';")
+echo -e "\e[104mfunc: DbSelect_url \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... post_url=$post_url\e[0m" | logline
+}
+
+screen -ls
+
+Arg_2 () {
+xdotool search --onlyvisible --class chrome windowactivate
+echo -e "\e[104mfunc: Arg_2 \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+case $arg in
+	all|--all)
+	echo -e "\e[33m  argument 'all' ... \e[0m"
+		DbSelect_url # read from database
+			if ! [[ $Db_comment == "" ]]; then
+				COMMENT=$Db_comment
+				echo -e "\e[100m\e[34m use comment from db: Db_comment: \e[34m COMMENT=$Db_comment \e[0m"
+			else
+				echo -e "\e[100m\e[35m Db_comment is empty! ... use default COMMENT=$COMMENT \e[0m" | logline
+			fi
+			if ! [[ $post_url == *"permalink"* ]]; then
+				echo -e "\e[31m  post_url=$post_url not contains 'permalink' ... STOP \e[0m" | logline
+				DbSet_ErrorWrongLink
+				exit
+			else
+				echo -e "\e[32m  OK, contains 'permalink'... \e[0m"
+			fi
+		stop-mouse-move-around
+		stop-walking
+		display-post
+		start-walking
+		status
+	;;
+	join-group)
+	join-group
+	;;
+	check-comment)
+	check-comment
+	;;
+	delete-comment)
+	delete-comment
+	;;
+	stop-walking)
+	stop-walking
+	;;
+	start-walking)
+	start-walking
+	;;
+	*groups*permalink*)
+		post_url=$arg
+		stop-mouse-move-around
+		stop-walking
+		display-post
+		start-walking
+		status
+	;;
+	*)
+		echo -e "\e[31m  ... Bad 2nd argument: \e[0m $arg"
+		help
+	;;
+esac
+}
+
+case $1 in
+	--reset-lock|--ResetLock|ResetLock)
+	DbSet_ResetLock
+	;;
+	--reset-error|--ResetError|ResetError)
+	DbSet_ResetError
+	;;
+	--reset-not-loaded)
+	DbSet_ResetNotLoaded
+	;;
+	--reset-label-counter)
+	DbSet_ResetLabelCounter
+	;;
+	--reset-all)
+	DbSet_ResetLock
+	DbSet_ResetError
+	DbSet_ResetNotLoaded
+	DbSet_ResetLabelCounter
+	;;
+	--update-db|-u|update-db)
+#		pkill fb-post
+		echo -e "\e[33m  ... disable-crontab-job \e[0m"
+		CRON disable
+		stop-mouse-move-around
+		echo -e "\e[33m  ... stop-walking \e[0m"
+		stop-walking
+		scroll_repeat=$2
+		from_place=$3
+		echo -e "\e[33m  ... update-db \e[0m"
+		update-db
+		enable-crontab-job
+	;;
+	--stop-walking)
+	stop-walking
+	;;
+	--start-walking)
+	start-walking
+	;;
+	stop)
+	;;
+	-\?|-h)
+	help
+	;;
+	restart)
+	;;
+	--status|status)
+	status
+	;;
+	--comment|-c)
+	echo -e "\e[33m  bzz bzz ... $0 $1 $2 \e[0m"
+	arg=$2
+	Arg_2 # go to read 2nd argument
+	;;
+	COMMENT)
+	echo -e "\e[33m Action: COMMENT ... \e[0m $0 $1 $2 "
+	arg=$2
+	Arg_2 # go to read 2nd argument
+	;;
+	SHARE)
+	echo -e "\e[33m Action: SHARE ... \e[0m $0 $1 $2 "
+	arg=$2
+	Arg_2 # go to read 2nd argument
+	;;
+	$1)
+		if [[ $1 == *"permalink"* ]]; then
+			post_url=$1
+			stop-mouse-move-around
+			stop-walking
+			display-post
+			start-walking
+		else
+			echo -e "\e[31m  ... Bad argument: \e[0m $1"
+			help
+		fi
+	;;
+	*)
+	help
+    exit 1
+	;;
+esac
+
+echo -e "\e[32m  post_url=$post_url \e[100m\e[30m ... SCRIPT=$SCRIPT JOB=$JOB END \e[0m" | logline

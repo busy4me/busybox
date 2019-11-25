@@ -1,0 +1,20 @@
+#!/bin/sh
+SCRIPT=fb-fanpage-post-share
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE 
+    done
+}
+
+kd=200 # key delay [miliseconds]
+to=2 # zenity messages time out [seconds] 
+login=fblogin@mailprovider.cox
+password=fbpassword
+login_url=http://m.facebook.com
+fanpage01=http://facebook.com/fanpagename
+
+
+
+

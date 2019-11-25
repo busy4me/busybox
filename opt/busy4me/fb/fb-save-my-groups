@@ -1,0 +1,260 @@
+#!/bin/bash
+#Desciption
+#Script saves "Groups You're In" into sqlite local database.
+#Bug: Script doesn't seve groups if the name of group is in two lines in browser.
+
+SCRIPT=fb-save-my-groups
+LOGFILE=/var/log/busy4me.log
+#config file
+source /opt/busy4me/fb/fb-config
+
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE 
+    done
+}
+
+xdotool search --class zenity windowkill
+
+login=$(cat "$login_source")
+echo 'login =' $login | logline
+login_string=$login
+login_string=$(echo $login_string | tr '@.' '_')
+echo 'login_string =' $login_string | logline
+user_db="/opt/busy/fb/db/fb_$login_string.db"
+echo 'Use database:' $user_db | logline
+
+profile_id=""
+profile_name="me"
+
+SPOT01="facebook" # spot 01
+SPOT01url="https://facebook.com" # url 01
+login=fblogin@mail.com
+password=fbpassword
+login_url=http://m.facebook.com
+fb_groups_url="https://www.facebook.com/groups"
+
+my_groups_url="$SPOT01url/$profile_name/groups"
+about_url="$SPOT01url/$profile_name/about"
+profile_url="$SPOT01url/$profile_name"
+
+feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
+xdotool search --onlyvisible --name Settings windowkill
+
+# go to my groups
+xdotool search --onlyvisible --class chrome windowactivate
+transset -a 0.8
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $my_groups_url && xdotool key --delay $kdl Return
+transset -a 0.7
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open $my_groups_url" --timeout 5
+sleep 1
+xdotool search --onlyvisible --class chrome windowactivate
+mark01="Create Group"
+
+my_groups_url_probe () {
+for i in {1..20} ; do
+	xdotool search --onlyvisible --class chrome windowactivate
+	echo "my_groups_url_probe..." | logline
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kds Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard )
+		case "$clip" in
+		*$mark01*)
+		echo "I see groups..." | logline
+		break
+		;;
+		*)
+		echo "Can't see groups... try again..." | logline
+		page_error=$((page_error+1))
+		if [ $page_error -ge 19 ]; then
+			echo "Page error, break script..." | logline
+			exit 1
+		fi
+		;;
+		esac
+	done
+}
+
+my_groups_url_probe
+(sleep 2 && wmctrl -F -a "save_my_groups" -b add,above) & zenity --info --title="save_my_groups" --text="save my groups to local database..." --timeout 8 &
+sleep 1
+#zenity --info --title="Activate chrome" --text="search --onlyvisible --class chrome windowactivate" --timeout $to
+xdotool search --onlyvisible --class chrome windowactivate
+#my_groups_url_probe
+
+mark02="More about you"
+mark02_i=0
+mark03="/groups/"
+mark04="Leave Group"
+mark05="#"
+mark06="reviews"
+mark07="reviews_written"
+
+save_my_groups () {
+iter=5
+for (( i=1; i<$iter; i++ )); do
+    echo "# Pick groups up... step $i"
+    echo "$(( (i * 100) /$iter ))"
+    sleep 0.5
+    shift 1
+done | zenity --progress --title="Pick groups up..." --percentage=0 --no-cancel --auto-close
+echo "save_my_groups start..."
+	echo "Search public...."
+	xdotool search --onlyvisible --class chrome windowactivate
+zenity --info --title="save_my_groups" --text="xdotool key --delay $kdl Tab Tab Tab Tab" --timeout $to
+	xdotool search --onlyvisible --class chrome windowactivate
+	xdotool key --delay $kdl Tab Tab Tab Tab
+    sleep 0.5
+zenity --info --title="save_my_groups" --text="xdotool key --delay $kdl Ctrl+f" --timeout $to
+	xdotool search --onlyvisible --class chrome windowactivate
+	xdotool key --delay $kdl Ctrl+f | logline
+	xdotool type --delay $kdl "Public" | logline
+    sleep 0.5
+zenity --info --title="save_my_groups" --text="xdotool key --delay $kdl Escape" --timeout $to
+	xdotool search --onlyvisible --class chrome windowactivate
+	xdotool key --delay $kdl Escape | logline
+	echo "Tab...."
+    sleep 0.5
+zenity --info --title="save_my_groups" --text="xdotool key --delay $kd Tab" --timeout $to
+	xdotool search --onlyvisible --class chrome windowactivate
+	xdotool key --delay $kd Tab
+    sleep 0.5
+	
+mark06_i=0
+#while (( mark06_i == 0 || not_valid_counter_1 < 10 || not_valid_counter_2 < 10 ))
+while (( mark06_i == 0 ))
+do
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool search --onlyvisible --class chrome windowactivate
+	xdotool key Escape Tab Tab Tab Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab
+	xdotool key --delay $kd Tab
+	xdotool key --delay $kd Shift+F10
+	xdotool key --delay $kd e
+
+	#kill 'settings' window if open, this opening from content menu when Teb goes to Chrome 'top'
+	#Shift+F10 (content menu) +e - is opening 'Edit engine settings'
+	# so we kill settings window
+	#To do: script with 'wmctrl' command to prevent opening other windows..
+
+	settings_window=$(wmctrl -l | grep -i settings | awk '{print $1}')
+	if [ -z $settings_window ]
+	then
+		echo ""
+	else
+		echo -e "\e[31m...kill chrome settings window\e[0m" | logline
+		wmctrl -i -c $(wmctrl -l | grep -i settings | awk '{print $1}')
+	fi
+
+	clip1=$( xclip -out -selection clipboard )
+		case "$clip1" in
+		*$mark05*)
+#		zenity --info --title="clipboard" --text="This is not valid URL \n $clip1 \nNext..." --timeout $tos > /dev/null 2>&1
+		not_valid_counter_1=$((not_valid_counter_1+1))
+		if [ $not_valid_counter_1 -ge 9 ]; then
+			echo -e "\e[90m not valid group URL $not_valid_counter_1 times, break script...\e[0m" | logline
+			exit 1
+		fi
+		echo "Not valid url...not_valid_counter_1: $not_valid_counter_1"
+		;;
+		*$mark03*)
+#		zenity --info --title="clipboard" --text="Group URL OK: \n $clip1" --timeout $tos > /dev/null 2>&1
+		URL_counter=$((URL_counter+1))
+		not_valid_counter_1=0
+		not_valid_counter_2=0
+		kd=200
+		echo -e "\e[33m URL_counter... \e[0m\e[44m $URL_counter \e[0m "
+		echo -e "$clip1" | logline
+		echo -e "\e[32m sqlite3 $user_db INSERT INTO groups... \e[0m"
+			clip1=$(sed 's/https:\/\/www.facebook.com/fb.com/' <<< "$clip1") # replace long url with short one
+			sqlite3 $user_db \
+			"INSERT INTO fb_groups (name,url,members,MyStatus,date,DateId,label,stat1)
+			VALUES (
+			'',
+			'$clip1',
+			'-1',
+			'joined for sure',
+			DateTime('now'),
+			'insert',
+			'fb-save-my-groups',
+			'1'
+			);"
+		;;
+		*)
+#		zenity --info --title="clipboard" --text="What is it?: \n $clip1" --timeout $tos > /dev/null 2>&1
+		not_valid_counter_2=$((not_valid_counter_2+1))
+		if [ $not_valid_counter_2 -ge 2 ]; then
+			xdotool key --delay $kds Page_Down Page_Up
+		fi
+		if [ $not_valid_counter_2 -ge 9 ]; then
+			echo -e "\e[90m not valid group URL $not_valid_counter_2 times, break script...\e[0m" | logline
+			kd=200
+			break
+		fi
+		kd=500
+		echo -e "\e[90m This is not valid group URL... not_valid_counter_2: $not_valid_counter_2\e[0m"
+		;;
+		*$mark06*)
+#		zenity --info --title="clipboard" --text="This the end of Groups page... exit..." --timeout $tol > /dev/null 2>&1
+		echo "This the end of Groups page... mark06 exit..." | logline
+		mark06_i=1
+		break
+		;;
+		*$mark07*)
+#		zenity --info --title="clipboard" --text="This the end of Groups page... exit..." --timeout $tol > /dev/null 2>&1
+		echo "This the end of Groups page... mark07 exit..." | logline
+		mark06_i=1
+		break
+		;;
+		esac
+done
+}
+
+	zenity --info --title="Function" --text="xdotool search --onlyvisible --class chrome windowactivate.... and Function save_my_groups" --timeout $to
+xdotool search --onlyvisible --class chrome windowactivate --timeout $to
+save_my_groups
+
+echo "Saved $URL_counter groups..." | logline
+(sleep 1 && wmctrl -F -a "URL_counter" -b add,above) & zenity --info --title="URL_counter" --text="Saved $URL_counter groups..." --timeout $tol
+
+scroll_to_end () {
+echo "Start scrolling to the end..."
+xdotool search --onlyvisible --class chrome windowactivate
+echo "Set transparent... 0.7"
+transset -a 0.7
+echo "mark02 = $mark02"
+echo "mark02_i = $mark02_i"
+
+while [ $mark02_i -eq 0 ]
+do
+	echo "Scroll page down..." | logline
+	xdotool key --delay $kds Page_Down
+	xclip -selection clipboard /opt/busy/files/blank
+	sleep 0.5
+	xdotool key --delay $kds Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard )
+		case "$clip" in
+		*$mark02*)
+		echo "This is the end of page? I see $mark02"
+			xdotool key --delay $kds Page_Down
+			mark02_i=1
+		;;
+		*)
+		echo "Scroll again...."
+		;;
+		esac
+	echo "# Looking for end mark02......... "
+done
+}
+
+#scroll_to_end
+
+echo "$count01"
+
+echo "Stop scrolling...."
+#close Settings window (I do not know why is opening every time)
+#xdotool search --onlyvisible --name Settings windowkill
+
+transset -a 0.7
+echo "stop $SCRIPT" | logline
+

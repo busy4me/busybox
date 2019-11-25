@@ -1,0 +1,37 @@
+#!/bin/bash
+SCRIPT=xterm-transparent
+LOGFILE=/var/log/busy4me.log
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" >> $LOGFILE 
+    done
+}
+kd=400 # key delay [miliseconds]
+to=2 # zenity messages time out [seconds] 
+
+echo "remove transparent xterm...."
+zenity --info --title="transparent" --text="remove window transparent..." --timeout $to
+xdotool search --sync --onlyvisible --class xterm windowactivate
+transset -a 1
+wmctrl -i -r $(wmctrl -l | grep -i busyman@ | awk '{print $1}') -b remove,above
+
+echo "pkill xterm...."
+zenity --info --title="kill xterm" --text="kill all xterm windows..." --timeout $to
+xdotool search --onlyvisible --class xterm windowkill
+sleep 1
+#pkill --signal TERM -f xterm >/dev/null | logline
+
+echo "open transparent xterm...."
+zenity --info --title="open xterm" --text="open xterm maximized..." --timeout $to
+xterm -maximize & 2>/dev/null
+echo "wait for xterm and set window on top...."
+xdotool search --sync --onlyvisible --class xterm windowactivate
+
+echo "move & set always on top...."
+xdotool search --sync --onlyvisible --name busyman windowsize 825 1280 windowmove 0 -81
+xdotool key --delay $kd Alt_L+space m key Left Return
+wmctrl -i -r $(wmctrl -l | grep -i busyman@ | awk '{print $1}') -b add,above
+
+echo "set transparent xterm...."
+zenity --info --title="transparent" --text="set window transparent..." --timeout $to
+transset -a 0

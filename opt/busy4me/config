@@ -1,0 +1,12 @@
+#!/bin/bash
+#config file
+PROJECT="busy4me"
+BR01="google-chrome" # Browser 01
+PROC01="chrome" # process 01
+SPOT01="facebook" # spot 01
+SPOT01url="http://facebook.com" # url 01
+SPOT02url="http://localhost"
+SPOT03="terminal"
+BR01x=825 #BROWSER_01 size x
+BR01y=682 #BROWSER_01 size y 
+BUSYUSER="busyman"

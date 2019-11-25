@@ -1,0 +1,141 @@
+#!/bin/bash
+#set -x
+
+SCRIPT=fb-live-stream
+LOGFILE=/var/log/busy4me.log
+source /opt/busy4me/fb/fb-config
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
+    done
+}
+
+login=$(cat "$login_source")
+echo 'login =' $login | logline
+login_string=$login
+login_string=$(echo $login_string | tr '@' '_')
+echo 'login_string =' $login_string | logline
+user_db="/opt/busy/fb/db/fb_$login_string.db"
+echo 'Use database:' $user_db | logline
+
+BR01="google-chrome" # Browser 01
+PROC01="chrome"
+SPOT01="facebook"
+SPOT01url="https://facebook.com"
+profile_id=""
+profile_name="me"
+my_groups_url="$SPOT01url/$profile_name/groups"
+about_url="$SPOT01url/$profile_name/about"
+profile_url="$SPOT01url/$profile_name"
+profile_allactivity="$SPOT01url/$profile_name/allactivity"
+
+# enter profile_url
+xdotool key --delay $kd Escape
+xdotool key --delay 500 Escape Ctrl+l
+sleep 1
+xdotool key --delay 500 Ctrl+a
+xdotool type --delay 200 $profile_url
+xdotool key --delay 500 Return
+sleep 3
+
+live_video_run () {
+
+kds=50 # Key Delay Short [ms] 
+kd=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
+kd_2=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
+kdl=$((500 + RANDOM % 15 * 100)) # Key Delay Long between 500 and 2000[ms]
+random=$((6 + RANDOM % 10)) # random number between 6 and 16
+
+res="640x480" # stream resolution
+socket="\"rtmp://live-api-s.facebook.com:80/rtmp/1090678404439088?s_ps=1&s_sw=0&s_vt=api-s&a=Abya9SHT4dW-E4Aa\""
+
+mark00="Live Video"
+mark01="temporarily restricted"
+mark02="Life Events"
+mark03="Connect Your Live Stream"
+mark04="Go Live"
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+Shift+a
+	sleep 1
+	clip=$(xclip -out -selection clipboard )
+	# save clipboard to file
+	echo -e '\e[33m' $clip '\e[0m'> /opt/busy/clipboard/$(date +%Y-%m-%d--%H-%M-%S)-clip
+		case "$clip" in
+		*$mark03*)
+		echo -e "\e[32m Live Video page openened successfuly... waiting for stream... \e[0m" | logline
+		zenity --info --title="Live Video dialog page" --text="Live Video page openened successfuly... \n waiting for stream..." --timeout 5
+		sleep 2
+		# run streaming
+		ffmpeg -f x11grab -s $res -i :0 -i /opt/busy/sounds/cafe_noise.mp3 -acodec libfdk_aac -ar 44100 -b:a 128k -pix_fmt yuv420p -profile:v baseline -s $res -bufsize 6000k -vb 400k -maxrate 1500k -deinterlace -vcodec libx264 -preset veryfast -g 10 -r 10 -qscale 1 -f flv "rtmp://live-api-s.facebook.com:80/rtmp/1090678404439088?s_ps=1&s_sw=0&s_vt=api-s&a=Abya9SHT4dW-E4Aa" &
+		sleep 5
+		;;
+		*$mark04*)
+		echo -e "\e[32m Live Video page openened successfuly... stream ffmpeg is ready \e[0m" | logline
+		zenity --info --title="Live Video dialog page" --text="Live Video stream is ready... \n \n ... next step: Go Live" --timeout 5
+		xdotool key --delay 300 Ctrl+f
+		xdotool type --delay $kd 'Go Live'
+		xdotool key --delay 500 Return
+		sleep 1
+		xdotool key --delay 500 Escape
+		zenity --info --title="Live Video dialog page..." --text="I am on Go Live button... Enter?..." --timeout 3
+		sleep 2
+		xdotool key --delay 500 Return
+		zenity --info --title="Live Video dialog page..." --text="Yes, Enter" --timeout 3
+		break
+		;;
+		*$mark02*)
+		xdotool key --delay 500 Escape F5
+		sleep 2
+		;;
+		*$mark00*)
+		xdotool key --delay 300 Escape Ctrl+f
+		xdotool type --delay $kd 'Live Video'
+		xdotool key --delay 500 Return
+		sleep 1
+		xdotool key --delay 500 Escape
+		sleep 2
+		xdotool key --delay 500 Return
+		zenity --info --title="Live Video dialog" --text="Open Live Video dialog..." --timeout 2
+		sleep 2
+		xdotool key --delay 500 Tab
+		sleep 2
+		xdotool key --delay 500 Return
+		sleep 2
+		;;
+		*$mark01*)
+			for i in {1..20}
+			do
+				echo -e '\e[95m \e[5m temporarily restricted from liking posts ...PAUSE... \e[0m' | logline
+			done
+		;;
+		*)
+			echo -e "\e[35m Can\'t see Live Video... \e[92m \e[5m test OK ...again...\e[0m" | logline
+			xdotool key Escape F5
+		;;
+		*)
+		echo -e "\e[35m Error... \e[92m \e[5m break...\e[0m" | logline
+		zenity --info --title="Error ... ...." --text="Error ...\n Break ..." --timeout 2
+		sleep 2
+		break
+		;;
+		esac
+}
+
+loop () {
+# how many steps to do
+iter=1000
+for (( step=1; step<$iter; step++ )); do
+    echo "Check page..." 
+    echo "$(( (i * 100) /$iter ))%"
+	echo -e "\e[32m Check page with Live Video...\e[91m"  $step "\e[32mstep of\e[91m" $iter "\e[0m" | logline
+		live_video_run
+	sleep 0.2
+    shift 1
+done
+}
+
+loop
+
+
+#set +x

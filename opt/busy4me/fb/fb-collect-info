@@ -1,0 +1,315 @@
+#!/bin/bash
+#collect profile data, name, about etc.
+SCRIPT=fb-collect-info
+. /opt/busy4me/fb/fb-config
+
+DbSelect_group_url () {
+echo -e "\e[104mfunc: DbSelect_group_url \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... group_url=$group_url\e[0m" | logline
+echo -e "\e[33m  ... read URL from db ... $user_db ...\e[0m"
+group_url=$(sqlite3 $user_db "SELECT url FROM groups WHERE admins IS NULL ORDER BY date ASC LIMIT 1;")
+}
+
+DbSet_admins () {
+echo -e "\e[104mfunc: DbSet_admins (SQL) \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... admins=1 ... privacy=$privacy\e[0m" | logline
+sqlite3 $user_db "UPDATE groups
+SET name = '$group_name',
+members = '$members_number',
+admins = '1',
+MyStatus = '$MyStatus',
+date = DateTime('now'),
+DateId = 'check admins',
+privacy = '$privacy',
+description = '$description'
+WHERE url LIKE '$group_url';"
+}
+
+DbSet_admins_zero () {
+echo -e "\e[104mfunc: DbSet_admins_zero (SQL) \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... admins=0 ... privacy=$privacy \e[0m" | logline
+sqlite3 $user_db "UPDATE groups
+SET name = '$group_name',
+members = '$members_number',
+admins = '0',
+MyStatus = '$MyStatus',
+date = DateTime('now'),
+DateId = 'collect info',
+privacy = '$privacy',
+description = '$description'
+WHERE url LIKE '$group_url';"
+}
+
+DbSet_NotLoaded () {
+echo -e "\e[104mfunc: DbSet_NotLoaded (SQL) \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... admins=0 ... privacy=$privacy \e[0m" | logline
+sqlite3 $user_db "UPDATE groups
+SET name = 'unknown',
+members = '0',
+admins = '0',
+date = DateTime('now'),
+DateId = 'collect info',
+label = 'NotLoaded'
+WHERE url LIKE '$group_url';"
+}
+
+DbSet_NotAvailable () {
+echo -e "\e[104mfunc: DbSet_NotAvailable (SQL) \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... admins=0 ... privacy=$privacy \e[0m" | logline
+sqlite3 $user_db "UPDATE groups
+SET name = 'unknown',
+members = '0',
+admins = '0',
+date = DateTime('now'),
+DateId = 'collect info',
+label = 'NotAvailable'
+WHERE url LIKE '$group_url';"
+}
+
+open_group_url () {
+xdotool search --onlyvisible --class chrome windowactivate
+suffix=$1
+group_url=$group_url$suffix
+xdotool key --delay $kdl Escape
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $group_url && xdotool key --delay $kdl Return
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open '$group_url'" --timeout 5
+sleep 2
+}
+
+open_group_url_members () {
+xdotool search --onlyvisible --class chrome windowactivate
+group_url_members=$group_url"members"
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $group_url_members && xdotool key --delay $kdl Return
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open '$group_url'" --timeout 2
+sleep 2
+}
+
+pending_validation () {
+mark11="Pending"
+xclip -selection clipboard /opt/busy/files/blank
+xdotool key --delay $kdl Ctrl+a Ctrl+c Ctrl+Shift+a
+clip=$( xclip -out -selection clipboard)
+	case "$clip" in
+		*"$mark11"*)
+			echo -e "\e[42m . \e[0m\e[32m Pending OK \e[0m" | logline
+			MyStatus="pending 1"
+		;;
+		*)
+			echo -e "\e[41m . \e[0m\e[31m Pending status not valid ... \e[0m" | logline
+			MyStatus="unknown"
+		;;
+	esac	
+}
+
+join_group () {
+mark10="Join Group"
+xdotool search --onlyvisible --class chrome windowactivate
+xdotool key --delay $kdl Escape Ctrl+f && xdotool type --delay $kdl 'Join Gro' && xdotool key --delay $kdl Escape
+xdotool key --delay $kdl Shift+End
+xclip -selection clipboard /opt/busy/files/blank
+xdotool key --delay $kdl Ctrl+c
+clip=$( xclip -out -selection clipboard)
+	case "$clip" in
+		*"$mark10"*)
+			echo -e "\e[43m . \e[0m\e[33m On position: mark10=$mark10 \e[0m" | logline
+			xdotool key --delay $kdl Return
+			sleep 5
+			MyStatus="pending 0"
+			xclip -selection clipboard /opt/busy/files/blank
+			xdotool key --delay $kdl Ctrl+a Ctrl+c Ctrl+Shift+a
+			clip=$( xclip -out -selection clipboard )
+			if [[ $clip == *"Choose How to Join"* ]]; then
+				xdotool key --delay $kdl Ctrl+f && xdotool type --delay $kdl 'cancel' && xdotool key --delay $kdl Escape
+				xdotool key --delay $kdl Tab Return
+				sleep 5
+			fi
+		;;
+		*)
+			echo -e "\e[41m . \e[0m\e[31m Wrong position? mark10=$mark10 ... exit 1 \e[0m" | logline
+			break
+		;;
+	esac
+}
+
+group_url_probe () {
+for i in {1..20} ; do
+	mark03="Public"
+	mark04="Closed"
+	mark05="Secret"
+	mark06="DNS_PROBE_FINISHED_NXDOMAIN"
+	mark07="Sorry, something went wrong"	
+	mark08="There are no admins"
+	mark09="Sorry, this content isn't available at the moment"
+#	if [[ $privacy == $mark03 ]] || [[ $privacy == $mark04 ]] || [[ $privacy == $mark05 ]]; then
+#		break
+#	else
+	echo -e "\e[43m  \e[0m\e[33m check privacy ... name ... members ...\e[0m" | logline
+		xdotool search --onlyvisible --class chrome windowactivate
+		echo -e "group_url_probe..." | logline
+		xclip -selection clipboard /opt/busy/files/blank
+		xdotool key --delay $kdl Ctrl+a Ctrl+c Ctrl+Shift+a
+		clip=$( xclip -out -selection clipboard | tr -d \')
+		echo -e "\e[30m\e[43m|---   START clip   --->\e[100m\e[30m"$clip"\e[30m\e[43m<---   END clip   ---|\e[0m"
+		clip_tr=$(echo $clip | tr '\n' '...')
+		echo -e "\e[30m\e[43m|---   START clip_tr -->\e[100m\e[30m"$clip_tr"\e[30m\e[43m<---   END clip   ---|\e[0m"
+			case "$clip" in
+				*"$mark09"*)
+					echo -e "\e[41m NotLoaded \e[0m\e[31m Error: mark09=$mark09 ... exit 1 \e[0m" | logline
+					DbSet_NotAvailable
+					break
+				;;
+				*"$mark07"*)
+					echo -e "\e[41m Error \e[0m\e[31m Error: mark07=$mark07 ... exit 1 \e[0m" | logline
+					DbSet_NotLoaded
+					break
+				;;
+				*$mark06*)
+					echo -e "\e[41m  \e[0m\e[31m Error: This site can’t be reached ... DNS_PROBE_FINISHED_NXDOMAIN ... exit 1 \e[0m" | logline
+					break
+				;;
+				*$mark03" group"*)
+					privacy=$mark03
+					echo -e "\e[43m  \e[0m\e[95m privacy=\e[33m$privacy ... open members ...\e[0m" | logline
+					open_group_url_members
+					sleep 6
+					break
+				;;
+				*$mark04" group"*)
+					privacy=$mark04
+					group_name=$(echo $clip | sed 's/.*Settings\ //' | sed 's/Closed\ group.*//')
+					echo -e "\e[44m  \e[0m\e[96m group_name=\e[33m$group_name \e[0m"
+					members_number=$(echo $clip | sed 's/.*Members\ \·\ //' | sed 's/Admins.*//')
+					echo -e "\e[100m  \e[0m\e[96m members_number=\e[33m$members_number \e[0m"
+					if [[ $clip == *"Group Type"* ]]; then
+						description=$(echo $clip | sed 's/.*Description//' | sed 's/Group\ Type.*//')
+					else
+						description=$(echo $clip | sed 's/.*Description//' | sed 's/See\ More.*//')
+					fi
+					echo -e "\e[100m  \e[0m\e[96m description=\e[90m$description \e[0m"
+					if ! [[ $clip == *"Description"* ]]; then
+						description="no description"
+						echo -e "\e[100m  \e[0m\e[96m description=\e[33m$description \e[0m"
+					fi
+					if [[ $clip == *"Group created"* ]]; then
+						history=$(echo $clip | sed 's/.*Group\ created\ on\ //' | sed 's/See\ More.*//')
+						echo -e "\e[45m  \e[0m\e[96m history=\e[33m Group created on $history \e[0m"
+					fi
+					break
+				;;
+				*$mark05" group"*)
+					privacy=$mark05
+					break
+				;;
+				*)
+					echo -e "\e[95m Loading ... \e[0m\e[90m check group privacy ...\e[0m" | logline
+					page_error=$((page_error+1))
+					if [ $page_error -ge 19 ]; then
+						echo -e "\e[41m   \e[0m\e[31m can't see group privacy ......\e[0m" | logline
+						break
+					fi
+				;;
+			esac
+			xclip -selection clipboard /opt/busy/files/blank
+#	fi
+done
+
+echo -e "\e[43m  \e[0m\e[95m privacy=\e[33m$privacy ... \e[0m" | logline
+
+for i in {1..20} ; do
+	mark01="Admins"
+	mark02="Facebook"
+	mark08="There are no admins"
+	mark09="Sorry, this content isn't available at the moment"
+	mark21="Joined"
+	mark22="Pending"
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kdl Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard | tr -d \')
+	if [[ $privacy == "Public" ]]; then
+		group_name=$(echo $clip | sed 's/.*Account\ Settings\ //' | sed 's/Public\ group.*//')
+		members_number=$(echo $clip | sed 's/.*Facebook\ ©//' | sed 's/Find\ a\ member.*//')
+		members_number=$(echo $members_number | sed 's/.*Members//')
+		echo -e "\e[44m  \e[0m\e[95m group_name=\e[33m$group_name \e[0m"; sleep 1
+		echo -e "\e[100m  \e[0m\e[95m members_number=\e[33m$members_number \e[0m"; sleep 1
+	fi
+	case "$clip" in
+		*"$mark22"*)
+			echo -e "\e[43m . \e[0m\e[33m MyStatus: mark22=$mark22 ... \e[0m" | logline
+			MyStatus="pending 2"
+			DbSet_admins
+			break
+		;;
+		*"$mark21"*)
+			echo -e "\e[43m . \e[0m\e[33m MyStatus: mark21=$mark21 ... \e[0m" | logline
+			MyStatus="joined"
+			DbSet_admins
+			break
+		;;
+		*"$mark09"*)
+			echo -e "\e[41m NotLoaded \e[0m\e[31m Error: mark09=$mark09 ... exit 1 \e[0m" | logline
+			MyStatus="not available"
+			DbSet_NotAvailable
+			break
+		;;
+		*"$mark08"*)
+			echo -e "\e[43m no admins \e[0m\e[33m Detected: mark08=$mark08 ... \e[0m" | logline
+#			join_group
+#			pending_validation
+			DbSet_admins_zero
+			break
+		;;
+		*"$mark07"*)
+			echo -e "\e[41m Error \e[0m\e[31m Error: mark07=$mark07 ... exit 1 \e[0m" | logline
+			DbSet_NotLoaded
+			break
+		;;
+		*$mark01*)
+			echo -e "\e[42m  \e[0m\e[32m Page loaded: mark: *$mark01* ... DbSet_admins ... \e[0m" | logline
+			MyStatus="discover"
+			DbSet_admins
+			break
+		;;
+		*$mark02*)
+			echo -e "\e[42m  \e[0m\e[32m Page loaded: mark: *$mark02* ... can't see *$mark01* \e[0m" | logline
+#			join_group
+#			pending_validation
+			DbSet_admins_zero
+			break
+		;;
+		*)
+			echo -e "\e[90m try open page again...\e[0m" | logline
+			page_error=$((page_error+1))
+			if [ $page_error -ge 19 ]; then
+				echo -e "\e[41m   \e[0m\e[31m can't load the group ... Page error, break script...\e[0m" | logline
+				exit 1
+			fi
+		;;
+	esac
+	xclip -selection clipboard /opt/busy/files/blank
+done
+}
+
+case $1 in
+	--collect-info)
+	if [[ $2 == '--loop' ]]; then
+		while true; do
+			echo -e "\e[43m   \e[0m\e[33m... group_url=$group_url"
+			MyStatus="reset"
+			DbSelect_group_url
+			open_group_url
+			group_url_probe
+		done
+	else
+		DbSelect_group_url
+		open_group_url
+		group_url_probe
+	fi
+	;;
+	--join-group)
+	join_group
+	pending_validation
+	;;
+	--pending-validation)
+	pending_validation
+	;;
+	*)
+	;;
+esac
+
+
+echo -e "\e[33m END of script... \e[0m" | logline

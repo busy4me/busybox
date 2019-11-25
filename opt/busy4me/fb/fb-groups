@@ -1,0 +1,212 @@
+#!/bin/bash
+#Desciption
+#Script saves "Groups You're In" into sqlite local database.
+#Bug: Script doesn't seve groups if the name of group is in two lines in browser.
+
+SCRIPT=fb-groups
+source /opt/busy4me/fb/fb-config
+
+xdotool search --class zenity windowkill
+xdotool search --onlyvisible --name Settings windowkill
+
+discover_groups () {
+# go to groups list
+category=$1
+fb_groups_url="$fb_groups_url/?category="$category
+echo -e " .... arguments: $0 $1 $2 \e[32m category=\e[33m$category  \e[0m" | logline
+xdotool search --onlyvisible --class chrome windowactivate
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $fb_groups_url && xdotool key --delay $kdl Return
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open $fb_groups_url" --timeout 5
+sleep 1
+}
+
+groups_with_key () {
+# go to groups list
+key=$1
+fb_search_url="$fb_search_url/?q="$key"&searchtype=groups"
+echo -e " .... arguments: $0 $1 $2 \e[32m key=\e[33m$key  \e[0m" | logline
+xdotool search --onlyvisible --class chrome windowactivate
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $fb_search_url && xdotool key --delay $kdl Return
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open '$fb_search_url'" --timeout 5
+sleep 1
+}
+
+groups_with_key_random () {
+# go to groups list
+table=$1
+description=$(sqlite3 $user_db "SELECT description FROM groups WHERE description NOT LIKE '' ORDER BY date DESC LIMIT 1;" | tr -d '[:digit:][:punct:]')
+random_word=$(shuf -n1 -e $description | tr -d '[:space:]')
+key=$random_word
+echo -e " .... choose from \e[32mtable=\e[33m$table \e[0m... \e[32m random_word=\e[33m$random_word \e[0m" | logline
+fb_search_url="$fb_search_url/?q="$random_word"&searchtype=groups"
+echo -e " .... arguments: $0 $1 $2 \e[32m key=\e[33m$key  \e[0m" | logline
+xdotool search --onlyvisible --class chrome windowactivate
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $fb_search_url && xdotool key --delay $kdl Return
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open '$fb_search_url'" --timeout 5
+sleep 1
+}
+
+groups_url_probe () {
+for i in {1..20} ; do
+	mark01="Create Group"
+	mark02="Filter Results"
+	xdotool search --onlyvisible --class chrome windowactivate
+	echo "my_groups_url_probe..." | logline
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kds Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard )
+		case "$clip" in
+			*$mark01*|*$mark02*)
+				echo -e "\e[42m :) \e[0m\e[32m I see page with mark: $mark01*|*$mark02*...\e[0m" | logline
+				break
+			;;
+			*)
+				echo -e "\e[90m Can't see groups... try again...\e[0m" | logline
+				page_error=$((page_error+1))
+				if [ $page_error -ge 19 ]; then
+					echo "Page error, break script..." | logline
+					exit 1
+				fi
+			;;
+			esac
+	done
+}
+
+function save_groups() {
+key=$1
+mark02="More about you"
+mark02_i=0
+mark03="/groups/"
+mark04="Leave Group"
+mark05="#"
+mark06="reviews"
+mark07="reviews_written"
+if [[ $key == '' ]]; then
+		echo -e "\e[33m key ergument is empty ....................use 'Create' word ...\e[0m"
+		mark08="Create"
+		tab_key=20
+	else
+		echo -e "\e[32m key ergument: \e[33m$key \e[0m"
+		mark08=$key
+		tab_key=10
+fi
+xdotool search --onlyvisible --class chrome windowactivate
+xdotool key --delay $kdl Tab Tab Tab Tab; sleep 0.5
+xdotool key --delay $kdl Ctrl+f | logline
+xdotool type --delay $kdl $mark08 | logline; sleep 0.5
+xdotool key --delay $kdl Escape | logline
+echo "Tab...."; sleep 0.5
+for (( t=1; t<$tab_key; t++ )); do
+	xdotool key --delay $kd Tab
+done
+	
+mark06_i=0
+while (( mark06_i == 0 )); do
+	xdotool search --onlyvisible --class chrome windowactivate
+	xdotool key --delay $kd Escape Tab
+	xdotool key --delay $kd Shift+F10
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kd e
+
+	settings_window=$(wmctrl -l | grep -i settings | awk '{print $1}')
+	if [ -z $settings_window ]
+	then
+		echo ""
+	else
+		echo "...kill chrome settings window" | logline
+		wmctrl -i -c $(wmctrl -l | grep -i settings | awk '{print $1}')
+	fi
+
+	clip1=$( xclip -out -selection clipboard )
+		case "$clip1" in
+			*$mark05*)
+				not_valid_counter_1=$((not_valid_counter_1+1))
+				if [ $not_valid_counter_1 -ge 6 ]; then
+					echo -e "\e[90m not valid group URL $not_valid_counter_1 times, break script...\e[0m" | logline
+					exit 1
+				fi
+				echo "Not valid url...not_valid_counter_1: $not_valid_counter_1"
+			;;
+			*$mark03*)
+				URL_counter=$((URL_counter+1))
+				not_valid_counter_1=0
+				not_valid_counter_2=0
+				kd=200
+				echo -e "\e[33m URL_counter... \e[0m\e[44m $URL_counter \e[0m "
+				echo -e "$clip1" | logline
+				echo -e "\e[32m sqlite3 $user_db INSERT INTO groups... \e[0m"
+					clip1=$(sed 's/\?.*//' <<< "$clip1") # delete all after ? mark
+					clip1=$(sed 's/https:\/\/www.facebook.com/fb.com/' <<< "$clip1") # replace long url with short one
+					sqlite3 $user_db \
+					"INSERT INTO groups (name,url,members,MyStatus,date,DateId,KeyWord)
+					VALUES (
+					'',
+					'$clip1',
+					'',
+					'discover',
+					DateTime('now'),
+					'insert',
+					'$key'
+					);"
+			;;
+			*)
+		#		zenity --info --title="clipboard" --text="What is it?: \n $clip1" --timeout $tos > /dev/null 2>&1
+				not_valid_counter_2=$((not_valid_counter_2+1))
+				if [ $not_valid_counter_2 -ge 2 ]; then
+					xdotool key --delay $kds Page_Down Page_Up
+				fi
+				if [ $not_valid_counter_2 -ge 11 ]; then
+					echo -e "\e[90m not valid group URL $not_valid_counter_2 times, break script...\e[0m" | logline
+					kd=200
+					break
+				fi
+				kd=500
+				echo -e "\e[90m This is not valid group URL... not_valid_counter_2: $not_valid_counter_2\e[0m"
+			;;
+			*$mark06*)
+		#		zenity --info --title="clipboard" --text="This the end of Groups page... exit..." --timeout $tol > /dev/null 2>&1
+				echo "This the end of Groups page... mark06 exit..." | logline
+				mark06_i=1
+				break
+			;;
+			*$mark07*)
+		#		zenity --info --title="clipboard" --text="This the end of Groups page... exit..." --timeout $tol > /dev/null 2>&1
+				echo "This the end of Groups page... mark07 exit..." | logline
+				mark06_i=1
+				break
+			;;
+		esac
+done
+}
+
+case $1 in
+	category|--category|-cat|-c)
+		if ! [[ $2 == '' ]]; then
+			echo -e "\e[42m # \e[0m\e[32m execute with argument: \e[0m\e[95m $1 $2 \e[33m\e[0m"
+			discover_groups $2
+			groups_url_probe
+			save_groups $2
+		else
+			echo -e "\e[41m # incomplete argument ... \e[0m\e[95m $1 $2 \e[33m\e[0m"
+		fi
+	;;
+	--key)
+	groups_with_key $2
+	groups_url_probe
+	save_groups $key
+	;;
+	--key-random)
+	groups_with_key_random $2
+	groups_url_probe
+	save_groups $key
+	;;
+	'')
+	echo -e "\e[41m # \e[0m\e[31m empty argument ... \e[0m\e[95m $1 \e[33m\e[0m"
+	;;
+	*)
+	echo -e "\e[41m # wrong argument ... \e[0m\e[95m $1 \e[33m\e[0m"
+	;;
+esac
+
+echo "stop $SCRIPT" | logline
+

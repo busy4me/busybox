@@ -1,0 +1,25 @@
+#!/bin/bash
+SCRIPT=google-chrome-transparent
+LOGFILE=/var/log/busy4me.log
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" >> $LOGFILE 
+    done
+}
+
+echo "pkill xterm...." | logline
+#pkill --signal TERM -f xterm >/dev/null | logline
+echo "open transparent xterm...." | logline
+google-chrome & 2>/dev/null
+echo "check if open by xdotool...." | logline
+xdotool search --sync --onlyvisible --class google-chrome | logline
+echo "check id of xterm...." | logline
+#xterm_id=(wmctrl -l | grep -i google-chrome | awk '{print $1}')
+echo "xterm_id: $xterm_id" | logline
+echo "set transparent xterm...." | logline
+#transset -t $xterm_id 0.5 | logline
+echo "set window on top...." | logline
+xdotool search --sync --onlyvisible --class chrome windowactivate | logline
+echo "set transparent xterm...." | logline
+transset -a 0.5 | logline
+

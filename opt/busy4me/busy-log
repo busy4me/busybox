@@ -1,0 +1,13 @@
+#!/bin/bash
+
+d=$(date +%F' '%T)
+echo -e "\e[33m d=\e[32m"$d
+sleep 2
+cat /var/log/busy4me.log | grep '2019-06-05 22:'
+
+echo "====="
+echo -e "\e[33m d=\e[32m"$d
+cat /var/log/busy4me.log | grep '$d'
+
+echo -e "\e[0m current date: \e[0m"
+date +%F' '%T

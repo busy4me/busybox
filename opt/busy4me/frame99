@@ -1,0 +1,49 @@
+#!/bin/bash
+# Framework 99 ....
+# init all scripts one by one
+
+SCRIPT=frame99
+LOGFILE=/var/log/busy4me.log
+
+if [ $USER = "root" ]
+	then
+	echo "Do not run as root! exit..."
+	exit
+fi
+
+if [ -f /opt/busy4me/config ];then
+    . /opt/busy4me/config
+	else
+	echo "There is no config file!... stop." | logline
+		exit 0
+fi
+
+logline() {
+    while IFS= read -r line; do
+echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
+    done
+}
+
+# disable crontab job
+crontab -l | sed "/^[^#].*export DISPLAY=:99 && \/opt\/busy4me\/fb\/fb-post -c all/s/^/#/" | crontab -
+crontab -l | sed "/^[^#].*export DISPLAY=:99 && \/opt\/busy4me\/busy/s/^/#/" | crontab -
+
+# fb-init-99 runs Xvfb in display :99, ffmpeg on port 9000 and chrome with facebook
+# echo "Run fb-init-99 at the screen shell session..." | logline
+# screen -dmS fb-init-99 '/opt/busy4me/fb/fb-init-99'
+echo "Run fb-init-99" | logline
+/bin/bash /opt/busy4me/fb/fb-init-99
+
+
+# login only when login files exists
+
+echo "Start /opt/busy4me/fb/fb-login-02 on screen 99..." | logline
+/bin/bash $(export DISPLAY=:99 && /opt/busy4me/fb/fb-login)
+
+# sleep 180
+# enable crontab job 
+crontab -l | sed "/^#.*export DISPLAY=:99 && \/opt\/busy4me\/fb\/fb-post -c all/s/^#//" | crontab -
+crontab -l | sed "/^#.*export DISPLAY=:99 && \/opt\/busy4me\/busy/s/^#//" | crontab -
+
+echo "Stop $SCRIPT..." | logline
+

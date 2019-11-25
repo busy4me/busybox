@@ -1,0 +1,37 @@
+#!/bin/bash
+# window runs in xpra
+
+SCRIPT=fb-init-01
+LOGFILE=/var/log/busy4me.log
+
+kd=400 # key delay [miliseconds]
+to=2 # zenity messages time out [seconds] 
+BR01="google-chrome" # Browser 01
+PROC01="chrome" # process 01
+SPOT01="facebook" # spot 01
+SPOT01url="http://facebook.com" # url 01
+BR01x=825 #BROWSER_01 size x
+BR01y=682 #BROWSER_01 size y 
+
+		FAKEUSER="bu01-fake-chrome-user"
+		CHROMEROOT=$HOME/.chromeroot
+		mkdir -p ${CHROMEROOT}
+		export PROFILE="${CHROMEROOT}/${FAKEUSER}-chrome-profile"
+		export DISK_CACHEDIR="${CHROMEROOT}/${FAKEUSER}-chrome-profile-cache"
+		export DISK_CACHESIZE=4096
+		export MEDIA_CACHESIZE=4096
+		rm -rf ${PROFILE}
+		rm -rf ${DISK_CACHEDIR}
+	# run browser
+		export DISPLAY=:01 && $BR01 --user-data-dir=${PROFILE} --disk-cache-dir=${DISK_CACHEDIR} --disk-cache-size=${DISK_CACHESIZE} \
+		--media-cache-size=${MEDIA_CACHESIZE} \
+		--window-size="800,600" \
+		--window-position="0,0" \
+		--incognito \
+		--disable-notifications \
+		--mute-audio \
+		--disable-device-discovery-notifications \
+		--no-first-run \
+		--no-default-browser-check \
+		--disable-translate \
+		$SPOT01url & 2>/dev/null

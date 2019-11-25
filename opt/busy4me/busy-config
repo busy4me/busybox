@@ -1,0 +1,21 @@
+#!/bin/bash
+# global functions used in every sripts
+# updated with Atom
+# XAUTHORITY needs for root
+XAUTHORITY="/home/busyman/.Xauthority"
+LOGFILE=/var/log/busy4me.log
+
+UPDATE="auto" # auto update on start
+
+# save line to log
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
+    done
+}
+
+logline_cron() {
+	while IFS= read -r line; do
+	echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE_CRON
+	done
+}

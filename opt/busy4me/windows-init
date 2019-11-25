@@ -1,0 +1,97 @@
+#!/bin/sh
+# Autoupdate if changed...
+# Upgrade if needed...
+# curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
+SCRIPT=windows-init
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
+	done
+}
+
+if [ $USER = "root" ]
+	then
+	echo "Do not run as root! exit..." | logline
+	exit 0
+	else
+	echo "Start $SCRIPT script..." | logline
+fi
+
+if [ -f /opt/busy4me/config ];then
+    . /opt/busy4me/config
+	else
+	echo "There is no config file!... stop." | logline
+	exit 0
+fi
+	
+source ./config
+
+# Clean google-chrome busyman data... just in case...
+echo "Clean google-chrome busyman data..." | logline
+	rm -rf /home/$BUSYUSER/.config/google-chrome/Default
+	rm -rf /home/$BUSYUSER/.cache/google-chrome
+	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*
+	
+#activate SPOT01 window
+#xdotool windowactivate $(xdotool search --onlyvisible --class $PROC01 | head -n 1)
+
+# open transparent xtrminal
+echo "pkill xterm... cancelled temporary..." | logline
+#xdotool search --onlyvisible --class xterm windowkill | logline
+#echo "open transparent xterm...." | logline
+#xterm -maximize & 2>/dev/null
+#echo "wait for xterm and set window on top...." | logline
+#xdotool search --sync --onlyvisible --class xterm windowactivate | logline
+#echo "Always on top...." | logline
+#wmctrl -i -r $(wmctrl -l | grep -i busyman@ | awk '{print $1}') -b add,above
+#echo "set transparent xterm...." | logline
+#transset -a 0 | logline
+
+#kill all SPOT01 windows
+echo "$Close all $BR01 & $SPOT01 ... continue..." | logline
+xdotool search --onlyvisible --class "$BR01" windowkill | logline
+xdotool search --onlyvisible --class "$SPOT01" windowkill | logline
+pkill --oldest chrome | logline
+/usr/bin/pkill --oldest --signal TERM -f chrome | logline
+sleep 2 | logline
+
+# check if BR01 is open?
+
+BR01_position_size () {
+xdotool search --sync --onlyvisible --class chrome windowunmap windowmap | logline
+xdotool search --sync --onlyvisible --class chrome windowsize 825 600 windowmove 0 -1200 | logline
+xdotool search --sync --onlyvisible --class chrome windowactivate | logline
+sleep 1 | logline
+xdotool key --delay 200 Ctrl+0 | logline
+sleep 1 | logline
+xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline
+xdotool search --sync --onlyvisible --class chrome windowsize $BR01x $BR01y windowmove 0 -81 | logline
+xdotool key Alt_L+space m | logline
+xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
+xdotool key --delay 100 Return | logline
+}
+
+BR01_probe () {
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+if [ -z "$( xdotool search --onlyvisible --class chrome )" ]; then
+		echo "open $BR01... continue..." | logline
+		sleep 1
+	else
+		echo "$BR01 opened successfuly..." | logline
+		BR01_position_size
+		break
+fi
+done
+}
+
+# open browser 01...
+echo "open $BR01..." | logline
+
+$BR01 --window-size="800,600" --window-position="0,0" --incognito --mute-audio --disable-notifications --disable-device-discovery-notifications --no-first-run --no-default-browser-check --disable-translate $SPOT02url & 2>/dev/null | logline
+BR01_probe
+
+xdotool search --sync --onlyvisible --class chrome windowactivate | logline
+transset -a 0.7

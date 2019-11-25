@@ -1,0 +1,30 @@
+#!/bin/bash
+WID1=`xdotool search --onlyvisible "Google Chrome" | head -1`
+xdotool windowactivate --sync $WID1
+xdotool key --clearmodifiers ctrl+l Delete type --delay 100 "http://m.facebook.com"
+xdotool key --clearmodifiers Return
+sleep 1
+xdotool key --clearmodifiers ctrl+f
+sleep 1
+xdotool key --clearmodifiers Delete
+sleep 1
+xdotool type --delay 500 "address"
+sleep 1
+xdotool key --clearmodifiers --delay 500 Return
+sleep 1
+xdotool key --clearmodifiers Escape
+sleep 1
+xdotool key --clearmodifiers Tab
+sleep 1
+xdotool key --clearmodifiers Shift+Tab
+sleep 1
+xdotool type --delay 500 "fb-login"
+sleep 1
+xdotool key --clearmodifiers Tab
+sleep 1
+xdotool type --delay 500 "password"
+sleep 1
+xdotool key --clearmodifiers Return
+sleep 1
+WID2=`xdotool search "xterm" | head -1`
+xdotool windowactivate --sync $WID2

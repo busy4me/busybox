@@ -1,0 +1,28 @@
+#!/bin/sh
+# edit with ftp-edit in Atom
+
+if [ $USER = "root" ]
+	then
+	echo "Do not run this script as root! exit..."
+	exit
+fi
+
+BR01="google-chrome" # Browser 01
+PROC01="chrome"
+SPOT01="facebook"
+SPOT01url="http://facebook.com"
+SPOT02="xterm"
+SPOT03="terminal"
+
+BR01x=825 #BROWSER_01 size x
+BR01y=1280 #BROWSER_01 size y
+
+xdotool search --sync --onlyvisible --class chrome windowunmap windowmap
+xdotool search --sync --onlyvisible --class "$PROC01" windowsize $BR01x $BR01y windowmove 0 600
+xdotool search --sync --onlyvisible --class chrome windowactivate
+xdotool key --delay 100 Ctrl+0
+xdotool key --delay 100 Ctrl+minus Ctrl+minus Ctrl+minus
+xdotool search --sync --onlyvisible --class chrome windowsize $BR01x $BR01y windowmove 0 -81
+xdotool key Alt_L+space m
+xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl
+xdotool key --delay 100 Return

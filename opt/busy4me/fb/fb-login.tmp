@@ -1,0 +1,510 @@
+#!/bin/bash
+
+SCRIPT=fb-login02
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE 
+    done
+}
+
+# move mouse away...
+echo "move mouse away...." | logline
+xdotool mousemove 0 0
+# update date before login....
+echo "update date before login...." | logline
+ntpdate -s time.nist.gov | logline &&
+ 
+kds=50 # Key Delay Short [miliseconds]
+kd=250 # Key Delay [miliseconds]
+kdl=500 # Key Delay Long [miliseconds]
+tos=1 # Time Out Short zenity messages time out [seconds] 
+to=1 # Time Out zenity messages time out [seconds] 
+tol=5 # Time Out Long zenity messages time out [seconds] 
+login=fblogin@email.com
+password=fbpassword
+login_url=http://m.facebook.com
+fb_login_url=http://facebook.com/login
+
+shake () {
+xdotool key --delay 200 Page_Down End Page_Up Home
+}
+
+echo "is it mobile login page\?"
+
+SPOT01="facebook" # spot 01
+SPOT01url="http://facebook.com" # url 01
+#xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
+xdotool search --onlyvisible --class chrome | logline
+xdotool search --onlyvisible --class chrome windowactivate | logline
+xdotool search --onlyvisible --name "$SPOT01" | logline
+xdotool search --onlyvisible --name "$SPOT01" windowactivate | logline
+#xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+echo "...refresh current page"
+xdotool key --delay 200 Ctrl+l Ctrl+a | logline
+xdotool key --delay 200 Return
+echo "...sleep 5s"
+sleep 5
+echo "...select and copy"
+xdotool key --delay 200 Ctrl+a Ctrl+c | logline
+echo "...all selected"
+echo "...unselect"
+xdotool key --delay 200 Ctrl+Shift+a | logline
+clip=$( xclip -out -selection clipboard )
+echo "...zenity"
+zenity --info --title="clipboard" --text="$clip" --timeout $to
+echo "...END"
+
+echo "is it english?"
+echo "is it logged?"
+mark01='Create an account' #special sign from the MAIN LOGIN site
+mark02='Create New Account' #special sign from the MAIN LOGIN site
+case "$clip" in 
+    *$mark01*) 
+	echo "Main login page...Not logged"
+	zenity --info --title="clipboard" --text="Mine login page...not logged..." --timeout $to
+  ;;
+    *$mark02*) 
+	echo "Mobile login page...Not logged"
+	zenity --info --title="clipboard" --text="Mobile login page...not logged..." --timeout $to
+  ;;
+    *)
+	zenity --question --title="Status" --text="What is the page status?" --timeout $to
+  ;;
+esac
+
+# open mobile page...
+xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+xdotool key --delay 200 Ctrl+l | logline
+xdotool type $login_url
+xdotool key --delay 200 Return
+
+
+empty01=""
+mark02='Forgotten'
+mark03='Help Centre'
+mark04='Facebook'
+mark05='https://m.facebook.com'
+mark06='Cookies Policy'
+mark07="What's on your mind"
+mark08="Log in with one tap"
+mark09="Save your password now to make logging in even easier."
+mark10="Enter email address or phone number"
+mark11="Enter password"
+mark12="temporarily locked"
+mark13="Tap to log in"
+
+# empty file for blank clipboard
+touch /opt/busy/files/blank
+
+# login data insert by zenity dialog
+login_insert () {
+    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,180,90,440,250 & zenity --forms --title="Login" --text="busy4me automation:\n\Social Media Assistant: \n\ ...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login" --add-entry="Password" --width 450 --height 300)
+	accepted=$?
+	if ((accepted != 0)); then
+		echo -e "\e[32m Start again...\e[0m" | logline
+		zenity --info --title="Prepare to login" --text="Social Media Assistant:\n You must be logged before use busy4me ..." --timeout 3
+		login_start
+	fi
+
+	login=$(awk -F, '{print $1}' <<<$OUTPUT)
+	password=$(awk -F, '{print $2}' <<<$OUTPUT)
+	echo $login | tee /opt/busy/fb/fb-login
+	echo $password | tee /opt/busy/fb/fb-password
+# validation
+	case login in 
+		*@*|*0*)
+		echo -e "email or number OK ..."
+		;;
+		*)
+		echo -e "login must be an email or telephone number ..."
+		zenity --warning --title="Wrong login" --text="Social Media Assistant:\n login must be an email or telephone number ..." --timeout 3
+		login_start
+		;;
+	esac
+}
+
+login_start () {
+	echo "Check login................................................"
+	login_source="/opt/busy/fb/fb-login"
+	password_source="/opt/busy/fb/fb-password"
+	login=$(cat "$login_source")
+	password=$(cat "$password_source")
+
+	if [ -s $login_source ];then
+		echo -e "\e[32m file $login_source exists and is not empty \e[0m" | logline
+		break
+	else
+		echo -e "\e[31m There is no login file, create one \e[0m" | logline
+		mkdir -p /opt/busy/fb | logline
+		mkdir -p /opt/busy/scrot | logline
+		touch /opt/busy/fb/fb-login | logline
+		touch /opt/busy/fb/fb-password | logline
+		login_insert
+	fi
+
+	zenity --info --title="Prepare to login" --text="Prepare to login as $login" --timeout 3
+
+	sleep 1 && wmctrl -r "Login" -b add,above &
+	(
+	echo "1" ; sleep 1
+	echo "20" ; sleep 1
+	echo "40" ; sleep 1
+	echo "60" ; sleep 2
+	echo "70" ; sleep 2
+	echo "80" ; sleep 2
+	echo "90" ; sleep 2
+	echo "100" ; sleep 1
+	) | OUTPUT=$(zenity --progress \
+	  --title="Login" \
+	  --text="Prepare to login as: $login \n\ Can be cancelled and changed at this time only. \n\ Click Cancel if you need login as different user." \
+	  --percentage=0 \
+	  --width 400 \
+	  --height 100 \
+	  --auto-close \
+	  --auto-kill)
+	accepted=$?
+	if ((accepted != 0)); then
+		echo "Login insert start..."
+		login_insert
+	fi
+
+	(( $? != 0 )) && zenity --error --text="Error in zenity command. Start again ..."
+}
+
+login_start
+
+login_string=$login
+echo $login_string | logline
+login_string=$(echo $login_string | tr '@' '_')
+login_string=$(echo $login_string | tr '.' '_')
+echo 'login_string =' $login_string | logline
+
+# create sqlite database
+# there can be more databases, each for one user
+user_db="/opt/busy/fb/db/fb_$login_string.db"
+
+# change hostname and minion_id
+hostnamectl set-hostname $login_string
+echo $login_string > /etc/salt/minion_id
+rm /etc/salt/pki/minion/minion.*
+rm /etc/salt/pki/minion/minion_master.*
+service salt-minion restart &
+
+# create sqlite3 local database
+if [ -s $user_db ];then
+	rows=$(sqlite3 $user_db  "SELECT COUNT (*) FROM groups";)
+	echo "Base $login_string.db exists. There is " $rows " rows. Continue..." | logline
+    break
+else
+	echo "There is no $login_string database, create: $login_string.db" | logline
+	mkdir -p /opt/busy/fb/db
+
+	sqlite3 /opt/busy/fb/db/fb_$login_string.db \
+	"SELECT 1;"
+
+#create sqlite3 table 'groups'
+	sqlite3 /opt/busy/fb/db/fb_$login_string.db \
+	"CREATE TABLE groups (
+	id INTEGER UNIQUE PRIMARY KEY,
+	name TEXT,
+	url TEXT UNIQUE,
+	members TEXT,
+	lang TEXT
+	);"
+
+#create sqlite3 table 'friends'
+	sqlite3 /opt/busy/fb/db/fb_$login_string.db \
+	"CREATE TABLE friends (
+	id INTEGER UNIQUE PRIMARY KEY,
+	name TEXT,
+	url TEXT UNIQUE,
+	members TEXT,
+	lang TEXT
+	);"
+	
+# TEST =========================================================================== TEST
+	sqlite3 /opt/busy/fb/db/fb_test.db \
+	"CREATE TABLE groups (
+	id INTEGER UNIQUE PRIMARY KEY,
+	name TEXT,
+	url TEXT UNIQUE,
+	members TEXT,
+	lang TEXT
+	);"
+
+	sqlite3 /opt/busy/fb/db/fb_darek_test.db \
+	"SELECT 1;"
+	
+	sqlite3 /opt/busy/fb/db/fb_darek_test.db \
+	"INSERT INTO groups (
+	name,url,members
+	) 
+	VALUES (
+	'Grupa testowa nr.1 Zażółć gęślą jaźń',
+	'https://facebook.com/groups/1234567890',
+	'23456'
+	);"
+
+	sqlite3 /opt/busy/fb/db/fb_darek_test.db \
+	"SELECT * FROM groups";
+	
+# END TEST =======================================================================	
+# test data:	
+	sqlite3 $user_db \
+	"INSERT INTO groups (name,url,members,lang) VALUES ('Group name...bleble','https://facebook.com/groups/1234567890','23456','eng');"
+
+	sqlite3 $user_db \
+	"SELECT COUNT (*) FROM groups";
+fi
+	
+
+
+# check if mobile facebook page is open
+page_probe () {
+for i in {1..2000} ; do
+	echo "page_probe..."
+	zenity --info --title="page_probe" --text="page_probe..." --timeout 1
+	xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard )
+		case "$clip" in
+		*$mark10*)
+			echo "Login page without password...''$mark10''"
+			zenity --info --title="page_probe" --text="Login page without password...''$mark10''" --timeout $tol
+			xdotool key --delay $kd Ctrl+f && xdotool type $mark10 && xdotool key --delay $kd Escape
+			sleep 2
+			xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
+			clip=$( xclip -out -selection clipboard )
+			if [ $clip = $empty01 ]
+				then
+				echo "This is empty clipboard, is it entry field? ..."
+				zenity --info --title="Webpage content" --text="This is empty clipboard, is it entry field? ..." --timeout $to
+				xdotool type --delay $kd $login
+				xdotool key --delay $kd Ctrl+a Ctrl+c End
+					clip=$( xclip -out -selection clipboard )
+					if [ $clip = $login ]
+					then
+					xdotool key --delay $kd Return
+					echo "Enter $login ..."
+					zenity --info --title="Webpage content" --text="Enter $login ..." --timeout $to
+					xdotool key --delay $kd Shift+Tab Ctrl+a Ctrl+c 
+					clip2=$( xclip -out -selection clipboard )
+						case "$clip2" in
+						*mark11*)
+						xdotool key --delay $kd Tab && xdotool type $password && xdotool key Return
+						zenity --info --title="Enter..." --text="Password, Enter." --timeout $tol
+							;;
+						*)
+						echo "Error, can not put password?..."
+						;;	
+						esac
+					else
+						echo "Error, is this entry field? ..."
+						zenity --info --title="Webpage content" --text="Error, is this entry field? ..." --timeout $to
+					fi
+			fi
+#			/bin/bash /opt/busy4me/fb/fb-scroll &
+			exit 0
+		;;
+		*$mark09*)
+			echo "Logged successfuly... save-device page"
+			zenity --info --title="page_probe" --text="Logged successfuly...save-device page" --timeout $tol
+			xdotool key --delay $kd Ctrl+l && xdotool type --delay $kds $SPOT01url && xdotool key Return
+#			/bin/bash /opt/busy4me/fb/fb-scroll &
+			exit 0
+		;;
+		*$mark08*|*$mark07*)
+			echo "Logged successfuly..."
+			zenity --info --title="page_probe" --text="Logged successfuly..." --timeout $tol
+			xdotool key --delay $kd Ctrl+l && xdotool type --delay $kds $SPOT01url && xdotool key Return
+#			/bin/bash /opt/busy4me/fb/fb-scroll &
+			exit 0
+		;;
+		*$mark02*)
+			echo "Login page OK..."
+			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark02\"... go to login..." --timeout $tos
+			break
+		;;
+		*$mark03*)
+			echo "Login page OK..."
+			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark03\"... go to login..." --timeout $tos
+			break
+		;;
+		*$mark12*)
+			repeat=148 # cron check log every 5min - 300sec, so this loop 148x2=296 sec
+			while true
+				do
+				echo -e '\e[92mrepeat = ' $repeat | logline
+				echo -e "\e[0m"
+					for (( message=1; message<$repeat; message++ ))
+					do
+						echo "Account $mark12... STOP"
+						zenity --info --title="page_probe" --text="Account $mark12... STOP \n\
+						step $message of $repeat... \n\
+						Infinite Loop" --timeout 	$tos
+						sleep 2
+						shift 1
+					done
+			done
+				
+		;;
+		*$mark13*)
+			xdotool key --delay $kd Ctrl+l
+			xdotool type $fb_login_url
+			xdotool key --delay $kd Return
+			echo "Login in cache... Tap to login... Switch to fb_login_url"
+			zenity --info --title="Tap to login" --text="Login in cache... Tap to login... Switch to fb_login_url" --timeout $tol
+			break
+		;;		
+		*)
+			echo "probe again..."
+			zenity --info --title="page_probe" --text="probe again..." --timeout $tos
+		;;
+		esac
+done
+}
+page_probe
+
+xclip -selection clipboard /opt/busy/files/blank
+echo "login_saved_detect start"
+login_saved_detect () {
+	xdotool key --delay $kd Shift+Tab Ctrl+a Ctrl+c
+	clip=$( xclip -out -selection clipboard )
+	if [ $clip = $login ]
+	then
+		xdotool key --delay $kd Tab
+		xdotool type --delay $kd $password
+		xdotool key --delay $kd Return
+		echo "Login as $login ... "
+	fi
+}
+login_saved_detect
+
+# do login...
+xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+
+xclip -selection clipboard /opt/busy/files/blank
+echo "entry_detect start"
+entry01=0
+
+entry_detect () {
+xdotool key --delay $kd Ctrl+l Ctrl+a Ctrl+c
+clip=$( xclip -out -selection clipboard )
+if [ $clip = mark05 ]
+then
+	echo "This is mobile login page URL OK...  $mark05"
+fi
+while [ $entry01 -lt 2 ]
+do
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard )
+	
+	case "$clip" in
+		*$mark07*)
+			echo "Logged successfuly... switch to fb.com"
+			zenity --info --title="page_probe" --text="Logged successfuly... switch to fb.com ..." --timeout $tol
+			xdotool key --delay $kd Ctrl+l
+			xdotool type $SPOT01url
+			xdotool key --delay $kd Return
+#			/bin/bash /opt/busy4me/fb/fb-scroll &
+			exit 0
+		;;
+		*$mark04*)
+		echo "The content with $mark04 .."
+		zenity --info --title="Webpage content" --text="The content with word: $mark04 .. ..." --timeout $to
+		;;
+		*$mark05*)
+		echo "This is URL entry bar with $mark05 address."
+		zenity --info --title="Url entry bar" --text="This is URL entry bar with $mark05 address." --timeout $to
+		;;
+		$empty01)
+		echo "This is empty clipboard, is it entry field? ..."
+		zenity --info --title="Webpage content" --text="This is empty clipboard, is it entry field? ..." --timeout $to
+		entry01=$((entry01+1))
+		echo "entry01 = $entry01"
+		#zenity --info --title="entry" --text="entry01 = $entry01" --timeout $to
+		;;
+		*)
+		echo "This is something else ... what is it?"
+		#zenity --info --title="Webpage content" --text="This is something else ... what is it?" --timeout $to
+		;;
+		
+	esac
+done
+}
+entry_detect
+echo "This is End of $SCRIPT script"
+zenity --info --title="End" --text="This is entry field... password?" --timeout $to
+xdotool key --delay $kd Shift+Tab
+xdotool type --delay $kd $login
+xdotool key --delay $kd Tab
+xdotool type --delay $kd $password
+xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a Shift+Tab
+clip=$( xclip -out -selection clipboard )
+
+case "$clip" in
+	*SHOW*)
+	echo "Looks good? Enter?..."
+	zenity --info --title="Ok" --text="Looks good? Enter?..." --timeout $tos
+	xdotool key --delay $kd Return
+	echo "... yes, Enter."
+	zenity --info --title="Ok" --text="Yes, Enter." --timeout $tol
+		# check page if login ok, maybe blocked locked account
+			sleep 5
+			xclip -selection clipboard /opt/busy/files/blank
+			xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
+			clip2=$( xclip -out -selection clipboard )
+		case "$clip2" in
+		*$mark12*)
+			repeat=250 # cron check log every 5min - 300sec, so this loop 290 sec
+			while true
+				do
+				echo -e 'repeat = ' $repeat | logline
+				echo -e ""
+					for (( message=1; message<$repeat; message++ ))
+					do
+						echo "Account $mark12... STOP"
+						date_now=$(date)
+						zenity --info --title="page_probe" --text="Account $mark12... STOP \n\
+						step $message of $repeat... \n\
+						$date_now \n\
+						Infinite Loop" --timeout $tos
+#						sleep 1
+						shift 1
+					done
+			done
+				
+		;;
+		*)
+			zenity --info --title="page_probe" --text="Looks OK \n\
+						next step..." --timeout	$tol
+						sleep 5
+
+		;;
+		esac
+
+	;;
+	*)
+	echo -e "\e[31m Something wrong? Can not see indicator: SHOW...\e[0m"
+	zenity --info --title="Ok" --text="Something wrong? Can not see SHOW..." --timeout $tol
+	# again
+	echo "Try login again ..."
+	login_start
+	# exit 0
+	;;
+esac
+
+xdotool key --delay $kd Ctrl+l Ctrl+a
+xdotool type --delay $kd $login_url
+xdotool key --delay $kd Return
+echo "Select URL bar and enter $login_url..."
+zenity --info --title="Select URL bar" --text="Select URL bar and enter $login_url..." --timeout $tol
+page_probe
+
+echo "This is End of $SCRIPT script"
+zenity --info --title="End" --text="This is End of $SCRIPT script" --timeout $to
+

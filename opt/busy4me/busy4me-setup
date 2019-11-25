@@ -1,0 +1,105 @@
+#!/bin/bash
+# version 0.1 with login manager....  old version....
+# Setup busy4.me in user "busyman" home directory
+#
+# Install dependencies
+# X (the display server)
+# openbox Windows Manager
+# google-chrome Google Chrome as www browser
+# PulseAudio for sound (not used)
+# 
+
+# check version
+
+uname -a
+
+# add user and group "busyman" and 'admin"
+ADMIN_USER=admin
+USER=busyman
+
+getent group $ADMIN_USER || (
+    sudo su -c "groupadd $ADMIN_USER"
+    sudo su -c "useradd $ADMIN_USER -s /bin/bash -m -g $ADMIN_USER"
+)
+
+getent group $USER || (
+    sudo su -c "groupadd $USER"
+    sudo su -c "useradd $USER -s /bin/bash -m -g $USER"
+)
+
+apt-get update && apt-get install -y wget curl
+apt-get install -y software-properties-common python-software-properties
+wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+apt-get update && apt-get install -y --no-install-recommends xorg lightdm
+apt-get install -y --no-install-recommends openbox google-chrome-stable
+apt-get -y install pulseaudio
+sudo usermod -a -G audio $USER
+
+# setup autologin
+bash -c 'cat > /usr/share/xsessions/$USER.desktop' << EOF
+[Desktop Entry]
+Version=1.0
+Name=$USER
+Exec=default
+Icon=
+Type=Application
+EOF
+
+# Below use if you want to use chrome as desktop only, there is no window manager and xtool get crazy
+#[Desktop Entry]
+#Encoding=UTF-8
+#Name=Kiosk
+#Comment=Start a Chrome-based kiosk session
+#Exec=/usr/bin/google-chrome
+#TryExec=/usr/bin/google-chrome
+#Icon=google-chrome
+
+bash -c 'cat > /usr/share/lightdm/lightdm.conf.d/99-$USER.conf' << EOF
+[Seat:*]
+user-session=$USER
+EOF
+
+bash -c 'cat > /etc/lightdm/lightdm.conf' << EOF
+[Seat:*]
+autologin-guest=false
+autologin-user=$USER
+autologin-user-timeout=0
+EOF
+
+
+
+# install sikulix with java and dependiences OpenCV, Tesseract 3.0.2+, wmctrl, xdotool
+apt-get install opencv
+apt-get install libopencv-dev python-opencv
+libopencv-dev --version
+opencv -v
+pkg-config --cflags opencv
+pkg-config --libs opencv
+pkg-config --modversion opencv
+apt-get install tesseract-ocr
+apt-get install java-jre
+apt-get install default-jre
+java -version
+update-alternatives --config java
+wget https://launchpad.net/sikuli/sikulix/1.1.1/+download/sikulixsetup-1.1.1.jar
+java -jar sikulixsetup-1.1.1.jar
+
+# setup node.js for local webserver, service pm2, 
+curl -sL https://deb.nodesource.com/setup_6.x | bash -
+apt-get install nodejs
+npm install -g pm2
+systemctl status pm2-root
+systemctl daemon-reload
+systemctl daemon-reexec
+pm2 show
+
+
+
+
+# install miniupnpc (command:  apt install upnpc) to open extended port on UPNP routers
+apt-get install miniupnpc
+
+
+
+
+

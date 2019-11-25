@@ -1,0 +1,32 @@
+#!/bin/bash
+
+SCRIPT=busy-id
+LOGFILE=/var/log/busy4me.log
+source /opt/busy4me/busy-functions # global functions
+source /opt/busy4me/fb/fb-config # fb variables from there
+
+echo echo -e "\e[42m ... show ID\e[0m on DISPLAY="$DISPLAY | logline
+
+
+#sleep 1 && wmctrl -r "ID" -b add,above -e 1,180,90,440,250 & zenity --forms --title="ID" --text="this is ID" --width 200 --height 200
+title="ID"
+
+#zenity --info --title=$title --text="this is ID" --width 200 --height 200 &
+sleep 5|tee >(zenity --title=$title --progress --pulsate --no-cancel --auto-close --width=600 --height=400 --text='ID: 100 211 890')
+
+#<span foreground="blue" font="32">Some\nbig text</span>\n\n<i>(it is also blue)</i>
+zenity --notification --window-icon="info" --text="There are system updates necessary!"
+	
+echo -e "\e[33m check="$check "\e[0m"
+
+while ! [ "$check" ]
+do
+	check=$(xdotool search --onlyvisible --name $title)
+	echo -e "\e[35m check="$check " ... window not exists? ...\e[0m"
+done
+
+echo -e "\e[36m title="$title "\e[0m"
+
+wmctrl -r $title -e 1,180,90,440,250
+wmctrl -r $title -b add,above
+exit 0

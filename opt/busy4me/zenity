@@ -1,0 +1,18 @@
+#!/bin/bash
+SCRIPT=zentiy
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $SCRIPT - $line" >> $LOGFILE 
+    done
+}
+
+ask01=$(zenity --entry)
+
+zenity --info --title="ask01" --text="$ask01"
+
+ask02=$(zenity --list --title="choose your mode" --column="mode" "Demo mode" "Real mode")
+zenity --info --title="ask01" --text="The program is in $ask02"
+
+ 

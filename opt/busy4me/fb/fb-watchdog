@@ -1,0 +1,35 @@
+#!/bin/bash
+# watchdog see what is going on in session window
+set -x
+
+SCRIPT=fb-watchdog
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT - $line \e[0m" | tee -a $LOGFILE 
+    done
+}
+
+echo "$(date +%F' '%T) $USER $SCRIPT start.............................................." 
+echo "start..." | logline
+
+if [ $USER = "root" ]
+	then
+	echo "Do not run as root! exit..." | logline
+	exit
+fi
+
+xdotool key Ctrl+a Ctrl+c Ctrl+Shift+a
+echo $(xclip -out -selection clipboard ) > /opt/busy/watchdog
+
+# filter content by regex method and extract info
+# - joined users
+# - time
+# - stream is active?
+# - bitrate and others for statistics
+
+# save joinded users to sqlite database
+
+
+set +x

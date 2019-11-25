@@ -1,0 +1,145 @@
+#!/bin/bash
+# Change one string to another in filed
+#
+
+SCRIPT=sql-change
+LOGFILE=/var/log/busy4me.log
+source /opt/busy4me/busy-functions # global functions
+source /opt/busy4me/fb/fb-config # fb variables from there
+
+JOB=$((RANDOM%8999+1000))
+
+if [ $USER = "root" ]; then
+	echo "Do not run as root! exit..."; exit
+fi
+
+echo -e "\e[95m ... Start SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+
+help() {
+	echo -e $"\e[32m Usage: \n\
+	sql-change string1 string2 database.table \n\
+	- update local database, collect data from Activity Log \n\
+	eg. \n\
+	sql-change https://www.facebook.com/ fb.com/ \n\
+	\e[0m"
+} 
+
+DbSet_ResetError () {
+echo -e "\e[104mFunction: DbSet_ResetError \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+sqlite3 $user_db "UPDATE posts
+SET CheckCounter = CheckCounter + 1,
+lock = 0,
+label = 'Reset___$JOB\_$login_string'
+WHERE lock = $JOB;"
+}
+
+DbSelect_url () {
+echo -e "\e[104mFunction: DbSelect_url \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+echo -e "\e[33m  ... read URL from db ... $user_db ...\e[0m"
+sqlite3 $user_db "UPDATE posts
+SET lock = $JOB,
+label = 'lock_$JOB\_$login_string'
+WHERE lock = 0
+AND url LIKE '%permalink%'
+AND label NOT LIKE 'error_%'
+ORDER BY CheckDate ASC LIMIT 1;"
+#sqlite3 $user_db "SELECT url FROM posts WHERE lock = 0 AND label NOT LIKE 'error_%';"
+post_url=$(sqlite3 $user_db "SELECT url FROM posts WHERE lock = $JOB AND label = 'lock_$JOB\_$login_string';")
+echo -e "\e[32m  DbSelect_url: post_url=$post_url  \e[0m"
+}
+
+screen -ls
+
+Arg_2 () {
+echo -e "\e[104mFunction: Arg_2 \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... \e[0m" | logline
+case $arg in
+	all)
+	echo -e "\e[33m  argument 'all' ... \e[0m"
+		DbSelect_url # read from database
+			if ! [[ $post_url == *"permalink"* ]]; then
+				echo -e "\e[31m  post_url=$post_url not contains 'permalink' ... STOP \e[0m" | logline
+				DbSet_ErrorWrongLink
+				exit
+			else 	
+				echo -e "\e[32m  OK, contains 'permalink'... \e[0m"
+			fi
+		stop-mouse-move-around
+		stop-walking
+		display-post
+		start-walking
+		status
+	;;
+	join-group)
+	join-group
+	;;
+	check-comment)
+	check-comment
+	;;
+	delete-comment)
+	delete-comment
+	;;
+	stop-walking)
+	stop-walking
+	;;
+	start-walking)
+	start-walking
+	;;
+	*groups*permalink*)
+		post_url=$arg
+		stop-mouse-move-around
+		stop-walking
+		display-post
+		start-walking
+		status
+	;;
+esac
+}
+
+case $1 in
+	--update-db|-u|update-db)
+		stop-mouse-move-around
+		stop-walking
+		scroll_repeat=$2
+		from_place=$3
+		update-db
+	;;
+	--stop-walking)
+	stop-walking
+	;;
+	--start-walking)
+	start-walking
+	;;
+	stop)
+	;;
+	-\?|-h)
+	help
+	;;
+	restart)
+	;;
+	status)
+	status
+	;;
+	--comment|-c)
+	echo -e "\e[33m  bzz bzz ... $0 $1 $2 \e[0m"
+	arg=$2
+	Arg_2 # go to read 2nd argument
+	;;
+	$1)
+		if [[ $1 == *"permalink"* ]]; then
+			post_url=$1
+			stop-mouse-move-around
+			stop-walking
+			display-post
+			start-walking
+		else
+			echo -e "\e[31m  ... Bad argument: \e[0m $1"
+			help
+		fi
+	;;
+	*)
+	help
+    exit 1
+	;;
+esac
+
+echo -e "\e[95m ... END of SCRIPT=$SCRIPT JOB=$JOB \e[0m" | logline

@@ -1,0 +1,187 @@
+#!/bin/bash
+# window runs in virtual framebuffer Xvfb
+
+SCRIPT=fb-init-99
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT - $line \e[0m" | tee -a $LOGFILE 
+    done
+}
+
+echo "$(date +%F' '%T) $USER $SCRIPT start.............................................." 
+echo "start..." | logline
+
+if [ $USER = "root" ]
+	then
+	echo "Do not run as root! exit..." | logline
+	exit
+fi
+
+if [ -f /opt/busy4me/fb/fb-config ];then
+    . /opt/busy4me/fb/fb-config
+	else
+	echo "There is no fb_config file!... stop." | logline
+	echo "There is no fb_config file!... stop."
+	exit 0
+fi
+
+kd=400 # key delay [miliseconds]
+to=2 # zenity messages time out [seconds] 
+BR01="google-chrome" # Browser 01
+PROC01="chrome" # process 01
+SPOT01="facebook" # spot 01
+SPOT01url="http://facebook.com" # url 01
+BR01x=825 #BROWSER_01 size x
+BR01y=682 #BROWSER_01 size y 
+
+cd $HOME
+disp=":99"
+# close display 
+echo "close " $disp
+# how to kill particular display?
+# kill existing Xvfb session
+pkill Xvfb
+sleep 5
+pkill ffmpeg
+sleep 5
+
+# run Xvfb & stream by ffmpeg
+# Xvfb :99 -screen 0 800x600x16 -ac +extension GLX +extension RANDR +render -noreset &
+Xvfb :99 -screen 0 800x600x16 -ac +extension GLX +extension RANDR +extension RENDER -noreset &
+
+#
+# from xpra help:
+# How to run the headless X server. Default:
+#                        '/usr/bin/Xorg -noreset -nolisten tcp +extension GLX
+#                        +extension RANDR +extension RENDER -auth $XAUTHORITY
+#                        -logfile ${XPRA_LOG_DIR}/Xorg.${DISPLAY}.log
+#                        -configdir ${HOME}/.xpra/xorg.conf.d -config
+#                        /etc/xpra/xorg.conf'.
+#
+# xpra insted xvfb, test with xpra
+
+# xpra start :99 --bind-tcp=0.0.0.0:6699 --html=on --pulseaudio=no --notifications=no --start="xrandr -s 800x600"
+
+# ffmpeg -d option: daemon
+export DISPLAY=:99 && ffmpeg -d -f x11grab -s 800x600 -r 10 -i :99 -an -q 10 -f mjpeg - | nc -lp 9000 &
+export DISPLAY=:99 && ffmpeg -d -f x11grab -s 800x600 -r 10 -i :99 -an -q 10 -f mjpeg - | nc -lp 9001 &
+sleep 1
+# close any windows and errors
+echo -e "\e[95m \e[5m close SPOT01 $SPOT01 ... \e[0m" | logline
+echo "close SPOT01 $SPOT01"
+export DISPLAY=:99 && xdotool search --onlyvisible --name "SPOT01" windowkill
+export DISPLAY=:99 && xdotool search --onlyvisible --class "PROC01" windowkill
+export DISPLAY=:99 && xdotool key Escape Escape
+export DISPLAY=:99 && zenity --info --title="kill window ..." --text="kill window... $SPOT01... " --timeout $to
+sleep 1
+export DISPLAY=:99 && xdotool key Alt+F4
+sleep 1
+echo -e "\e[95m \e[5m close PROC01 $PROC01 ... ... ... \e[0m" | logline
+echo ""
+export DISPLAY=:99 && xdotool search --onlyvisible --class "PROC01" windowkill
+export DISPLAY=:99 && zenity --info --title="kill window ... ... ..." --text="kill window... $SPOT01... ..." --timeout $to
+export DISPLAY=:99 && xdotool key Alt+F4
+
+spot01_position_size () {
+export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="spot01_position_size \n\ \n\ ...75%" --timeout $to
+export DISPLAY=:99 && xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
+sleep 1
+echo "reset zoom...."
+export DISPLAY=:99 && xdotool key --delay $kd Ctrl+0 | logline # reset zoom
+export DISPLAY=:99 && sleep 1
+export DISPLAY=:99 && zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
+export DISPLAY=:99 && echo "set zoom to 75%...."
+export DISPLAY=:99 && xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
+export DISPLAY=:99 && xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove 0 -81 | logline
+# better position in Xvfb and bigger size to not see chat dialogs
+export DISPLAY=:99 && xdotool search --sync --onlyvisible --name "$SPOT01" windowsize 825 902 windowmove 0 -72 | logline
+export DISPLAY=:99 && zenity --info --title="zoom" --text="move window...." --timeout $to
+export DISPLAY=:99 && echo "move window...."
+export DISPLAY=:99 && xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+f type "Open Window With Facebook" | logline
+sleep 1
+export DISPLAY=:99 && xdotool key Escape | logline
+export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="End..." --timeout $to
+}
+
+SPOT01_probe () {
+while  [ 1 ]; do
+export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="SPOT01_probe $SPOT01" --timeout $to
+	if [ -z "$( export DISPLAY=:99 && xdotool search --onlyvisible --name "$SPOT01" )" ]
+	then
+		export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="Waiting \n\ for \n\ SPOT01 $SPOT01 ..." --timeout $to
+		echo "Waiting for SPOT01 $SPOT01 ..." | logline
+	else
+		export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="SPOT01 $SPOT01 opened successfuly \n\ \n\ ... ..." --timeout $to
+		echo "$date Window with SPOT01 $SPOT01 opened successfuly...." | logline
+		echo "Move and resize window...." | logline
+		spot01_position_size
+		exit 1
+		#break
+fi	
+echo "sleep 5s ..." | logline
+sleep 5
+done
+}
+
+PROC01_probe () {
+while  [ 1 ]; do
+	export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="PROC01_probe... $PROC01... " --timeout $to
+	if [ -z "$( export DISPLAY=:99 && xdotool search --onlyvisible --class "$PROC01" )" ]
+		then
+export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="$PROC01 non exists... open  $PROC01 browser... " --timeout $to
+		echo "$PROC01 non exists... open  $PROC01 browser..." | logline
+	# run browser with fake user 'bu99'
+		FAKEUSER="bu99-fake-chrome-user"
+		CHROMEROOT=$HOME/.chromeroot
+		rm -r ${CHROMEROOT}
+		mkdir -p ${CHROMEROOT}
+		export PROFILE="${CHROMEROOT}/${FAKEUSER}-chrome-profile"
+		export DISK_CACHEDIR="${CHROMEROOT}/${FAKEUSER}-chrome-profile-cache"
+		export DISK_CACHESIZE=4096
+		export MEDIA_CACHESIZE=4096
+	# delete google-chrome fake user data... just in case...
+		echo "delete google-chrome fake user ${FAKEUSER} data..." | logline
+		rm -rf ${PROFILE}
+		rm -rf ${DISK_CACHEDIR}
+	# run browser
+		export DISPLAY=:99 && $BR01 --user-data-dir=${PROFILE} --disk-cache-dir=${DISK_CACHEDIR} --disk-cache-size=${DISK_CACHESIZE} \
+		--media-cache-size=${MEDIA_CACHESIZE} \
+		--window-size="800,600" \
+		--window-position="0,0" \
+		--incognito \
+		--disable-notifications \
+		--mute-audio \
+		--disable-device-discovery-notifications \
+		--no-first-run \
+		--no-default-browser-check \
+		--disable-translate \
+		--process-per-site \
+		--disable-sync-preferences \
+		--disable-gpu \
+		--disable-plugins \
+		--disable-plugins-discovery \
+		--disable-preconnect \
+		--dns-prefetch-disable \
+		--no-experiments \
+		--no-pings \
+		--no-referrers \
+		--disable-infobars \
+		--disable-session-crashed-bubble \
+		$SPOT01url & 2>/dev/null | logline
+	else
+		export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="$date \n\ class with $PROC01 opened successfuly...." --timeout $to
+		echo "$date class with $PROC01 opened successfuly...." | logline
+		echo "check SPOT...." | logline
+		SPOT01_probe
+		# break
+		exit 1
+	fi
+export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="sleep 5s... " --timeout $to
+echo "sleep 5s ..." | logline
+sleep 5
+done
+}
+
+PROC01_probe

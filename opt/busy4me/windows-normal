@@ -1,0 +1,14 @@
+#!/bin/sh
+xdotool key --clearmodifiers Alt_L+Tab
+xdotool search --sync --onlyvisible --class "google-chrome" windowmove 0 0
+xdotool search --sync --onlyvisible --class "google-chrome" windowsize 400 200
+xdotool search --sync --onlyvisible --class "google-chrome" windowactivate
+
+# maximize window by xdtool, doesn't work properly in google-chrome 
+xdotool search --sync --onlyvisible --class "google-chrome" windowsize $(xdotool getactivewindow) 100% 100%
+
+# maximize window by wmctrl, 
+#wmctrl -r :ACTIVE: -b toggle,maximized_vert,maximized_horz
+
+
+

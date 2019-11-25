@@ -1,0 +1,30 @@
+#!/bin/bash
+interval=0.001
+steps=10
+x_start=20
+y_start=20
+x_stop=400
+y_stop=200
+
+echo seq $x_start $interval $x_stop
+
+mouse_x (){
+for ((x=$x_start; x <= $x_stop ; x++))
+do
+	xdotool mousemove $x $y_start
+sleep $interval
+done
+}
+
+mouse () {
+for x in $(seq $x_start $steps $x_stop)
+do
+	for y in $(seq $y_start $steps $y_stop)
+	do
+		xdotool mousemove $x $y
+		sleep $interval
+	done
+done
+}
+
+mouse

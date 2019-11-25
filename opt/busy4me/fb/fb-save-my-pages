@@ -1,0 +1,132 @@
+#!/bin/bash
+# Desciption: script saves user's fanpages sqlite local database.
+SCRIPT=fb-save-my-pages
+source /opt/busy4me/fb/fb-config
+echo -e "\e[34m login=$login login_string=$login_string \e[0m database: $user_db" | logline
+
+clean_windows () {
+xdotool search --class zenity windowkill
+xdotool search --onlyvisible --name Settings windowkill
+}
+
+my_pages_url_open () {
+xdotool search --onlyvisible --class chrome windowactivate
+transset -a 0.8
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $my_pages_url && xdotool key --delay $kdl Return
+transset -a 0.7
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open $my_pages_url" --timeout 5
+xdotool search --onlyvisible --class chrome windowactivate
+}
+
+my_pages_url_source_open () {
+xdotool search --onlyvisible --class chrome windowactivate
+transset -a 0.8
+xdotool key --delay $kdl Escape Ctrl+l && xdotool type --delay $kds $my_pages_url_source && xdotool key --delay $kdl Return
+transset -a 0.7
+(sleep 2 && wmctrl -F -a "page_probe" -b add,above) & zenity --info --title="page_probe" --text="Open $my_pages_url_source" --timeout 5
+xdotool search --onlyvisible --class chrome windowactivate
+}
+
+my_pages_url_probe () {
+mark01="Create a Page"
+for i in {1..20} ; do
+	xdotool search --onlyvisible --class chrome windowactivate
+	echo -e "\e[33m my_pages_url_probe... \e[0m" | logline
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kds Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard )
+		case "$clip" in
+		*"$mark01"*)
+		echo -e "\e[42m\e[30mOK->\e[0m\e[93m I see mark01=$mark01 ... \e[0m" | logline
+		break
+		;;
+		*)
+		echo -e "\e[33m Can't see pages url page ... try again... \e[0m" | logline
+		page_error=$((page_error+1))
+		if [ $page_error -ge 19 ]; then
+			echo -e "\e[41m\e[30m ERROR->\e[0m Can't see pages url page ... \e[31m Page error, break script..." | logline
+			exit 1
+		fi
+		;;
+		esac
+	done
+}
+
+my_pages_url_source_probe () {
+mark01="</body></html>"
+for i in {1..20} ; do
+	xdotool search --onlyvisible --class chrome windowactivate
+	echo -e "\e[33m my_pages_url_source_probe... \e[0m" | logline
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kdl Ctrl+a Ctrl+c Ctrl+Shift+a
+	clip=$( xclip -out -selection clipboard )
+		case "$clip" in
+		*"$mark01"*)
+		echo -e "\e[42m\e[30mOK->\e[0m\e[93m I see mark01=$mark01 ... \e[0m" | logline
+		break
+		;;
+		*)
+		echo -e "\e[33m Can't see pages url source ... try again... \e[0m" | logline
+		page_error=$((page_error+1))
+		if [ $page_error -ge 19 ]; then
+			echo -e "\e[41m\e[30m ERROR->\e[0m Can't see pages url source ... \e[31m Page error, break script..." | logline
+			exit 1
+		fi
+		;;
+		esac
+	done
+}
+
+xdotool search --onlyvisible --class chrome windowactivate
+
+save_my_pages () {
+	echo -e " \e[44m\e[30mINFO->\e[0m\e[96m ... save my pages ... \e[0m"
+	xclip -selection clipboard /opt/busy/files/blank
+	xdotool key --delay $kdl Ctrl+a Ctrl+c Ctrl+Shift+a
+	/bin/bash /opt/busy4me/fb/fb-save-my-pages --open-my-pages
+	rm /opt/busy/files/clip-$SCRIPT
+	xclip -out -selection clipboard >> /opt/busy/files/clip-$SCRIPT
+	clip=$( xclip -out -selection clipboard )
+	clip=$(echo $clip | sed 's/facebook\.com\/marketplace//g')
+	clip=$(echo $clip | sed 's/facebook\.com\/career//g')
+	clip=$(echo $clip | sed 's/facebook\.com\/help//g')
+	url_count=0
+	while [[ $clip == *"facebook"* ]]; do
+		url_count=$((url_count+1))
+#		title=$(echo $clip | sed -n 's/.*\(title\:\"[ a-z0-9A-Z\.\-\_]\{1,\}\+\)\"\,target.*$/\1/p')
+#		short=$(echo $clip | sed -n 's/.*\(facebook\.com\/[a-z0-9A-Z\.\-\_]\{1,\}\+\)\/?ref.*$/\1/p')
+		title=$(echo $clip | sed -n 's/.*\(title\:\"[ a-z0-9A-Z\.\-\_\,]\{1,\}\+\)\"\,target.*$/\1/p' | sed 's/title\:\"//')
+		short=$(echo $clip | sed -n 's/.*\(facebook\.com\/[a-z0-9A-Z\.\-\_]\{1,\}\+\)\/?ref.*$/\1/p' | sed 's/facebook\.com\///')
+		zenity --info --title="save_my_pages" --text="Save my pages in progress .... \n\
+		- saved: $url_count pages \n\
+		page:\n\
+		\$short=$short\n\
+		\$title=$title" --timeout 3
+		echo -e "\e[44m $url_count \e[0m\e[33m \$short=\e[33m$short \e[0m \$title=\e[36m$title \e[0m"
+		clip=$(echo $clip | sed "s/$short/**********************/g")
+		clip=$(echo $clip | sed "s/$title/**********************/g")
+	done
+	
+	case $clip in
+	esac
+}
+echo -e "\e[32m Saved $URL_counter groups..." | logline
+
+case $1 in
+	--help)
+		echo -e "$0 $1 not ready yet .... "
+	;;
+	--open-my-pages)
+		my_pages_url_open
+	;;
+	*)
+		clean_windows
+		my_pages_url_open
+		my_pages_url_probe
+		my_pages_url_source_open
+		my_pages_url_source_probe
+		save_my_pages
+		transset -a 0.7
+		echo "stop $SCRIPT" | logline
+	;;
+esac
