@@ -1,0 +1,24 @@
+#!/bin/bash
+# Update all files
+# export PATH=$PATH:/root
+SCRIPT=init-update
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $SCRIPT - $line" >> $LOGFILE
+    done
+}
+
+cd /root | logline
+rm -rf /root/init-* | logline
+echo "download https://busy4.me/init-* files....." | logline
+wget -nv --no-check-certificate https://busy4.me/init-0 -O /root/init-0 >> $LOGFILE
+wget -nv --no-check-certificate https://busy4.me/init-1 -O /root/init-1 >> $LOGFILE
+wget -nv --no-check-certificate https://busy4.me/init-3 -O /root/init-3 >> $LOGFILE
+wget -nv --no-check-certificate https://busy4.me/init-dialog -O /root/init-dialog | logline
+wget -nv --no-check-certificate https://busy4.me/init-update -O /root/init-update | logline
+chmod +x /root/init-* | logline
+cd /root
+echo "Files in root catalog updated ........"
+ls -la /root

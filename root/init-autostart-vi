@@ -1,0 +1,11 @@
+	#!/bin/bash
+# Setup busy4.me in user "busyman" home directory
+
+sudo apt-get install -y wget
+
+rm /home/vi/.profile
+cat > /home/vi/.profile  << EOF
+[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && 
+EOF
+chown $BUSYUSER:$BUSYUSER /home/busyman/.profile
+
