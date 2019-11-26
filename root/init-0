@@ -19,7 +19,7 @@ logline() {
 
 echo -e "\e[32m $(date +%F' '%T) $SCRIPT - Start init-0 script ...\e[0m" >> $LOGFILE
 
-lsb_release -a | logline
+lsb_release -a  2>/dev/null | logline
 uname -a | logline
 
 if [ $USER != "root" ]
@@ -29,8 +29,8 @@ if [ $USER != "root" ]
 fi
 
 busyuser=busyman
-groupadd $busyuser
-useradd $busyuser -s /bin/bash -m -g $busyuser
+groupadd $busyuser 2>/dev/null
+useradd $busyuser -s /bin/bash -m -g $busyuser 2>/dev/null
 
 # allow execute crontab for busyuser
 cat > /etc/cron.allow << EOF
@@ -67,9 +67,9 @@ echo 'deb http://ftp.debian.org/debian jessie main' >> /etc/apt/sources.list
 sleep 1
 echo -e "\e[35m configure grub........................................................ \e[0m"
 sleep 1
-sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g' /etc/default/grub
-sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash"/g' /etc/default/grub
-update-grub
+sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g' /etc/default/grub 2>/dev/null
+sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash"/g' /etc/default/grub 2>/dev/null
+update-grub 2>/dev/null
 sleep 1
 echo -e "\e[37m do not show messages durring boot........\e[0m" | logline
 echo -e "\e[36m Disable blank console... \e[0m" | logline
@@ -199,16 +199,21 @@ ls -la /root
 my_ip=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' '; echo)
 echo -e "\e[45m\e[2m You can connect by ssh to IP:\e[93m $my_ip\e[2m on port:\e[93m 22 \e[0m"
 echo -e "\e[93m All done... To install X server and web browser, execute ./init-1 command ........\e[0m"
-echo -e "\e[44m\e[97m Would you like to install X server and all stuff now? \n \e[0m\e[97mtype \e[92m\"yes\"\e[97m or \e[93m\"no\"\e[0m ...\e[0m"
-read install_next
-case install_next
-  yes)
-  ./init-1
-  ;;
-  no)
-  ./init-1
-  ;;
-  *)
-  echo -e "\e[91m Wrong input, type \e[92m\"yes\", \e[93m\"no\"\e[0m or Ctr+c to break ...\e[0m"
-  ;;
-esac
+echo -e "\e[44m\e[97m Would you like to install X server and all stuff now? ...\e[0m"
+echo -e "\e[97mtype \e[92m\"yes\"\e[97m or \e[93m\"no\"\e[0m ...\e[0m"
+while ! [[ install_next = "yes" || install_next = "no" ]]; do
+  read install_next
+  case $install_next in
+    "yes")
+      ./init-1
+      exit
+    ;;
+    "no")
+      echo -e "\e[93m OK, bye for now ...\e[0m"
+      exit
+    ;;
+    *)
+      echo -e "\e[91m Wrong input, type \e[92m\"yes\", \e[93m\"no\"\e[0m or Ctr+c to break ...\e[0m"
+    ;;
+  esac
+done
