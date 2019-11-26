@@ -1,6 +1,6 @@
 #!/bin/bash
 # Prepare fresh minimal, clean distro Debian 8 in this case
-# wget --no-check-certificate https://busy4.me/init/init-0
+# wget --no-check-certificate https://busy4.me/init-0
 # chmod 755 ./init-0
 # ./init-0
 
@@ -13,7 +13,7 @@ LOGFILE=/var/log/busy4me.log
 
 logline() {
     while IFS= read -r line; do
-        echo "$(date +%F' '%T) $SCRIPT - $line" >> $LOGFILE 
+        echo "$(date +%F' '%T) $SCRIPT - $line" >> $LOGFILE
     done
 }
 
@@ -161,7 +161,7 @@ chown $busyuser:$busyuser /home/busyman/.profile
 
 autostart_root () {
 cat > /root/.profile  << EOF
-[[ $(tty) = /dev/tty2 ]] && setterm -blank 0 -powersave off && 
+[[ $(tty) = /dev/tty2 ]] && setterm -blank 0 -powersave off &&
 EOF
 }
 
@@ -191,12 +191,24 @@ echo -e "\e[0m"
 
 echo -e "\e[36m Download init-* files.........\e[0m"
 wget -nv --no-check-certificate https://busy4.me/init-1 -O /root/init-1
-wget -nv --no-check-certificate https://busy4.me/init-update -O /root/init-update
-wget -nv --no-check-certificate https://busy4.me/init-dialog -O /root/init-dialog
+wget -nv --no-check-certificate https://busy4.me/init-2 -O /root/init-2
 chmod +x /root/init-*
 cd /root
 ls -la /root
 
-echo -e "\e[44m All done... To install Xorg and browser run /root/init-1 command ........\e[0m"
-
-
+my_ip=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' '; echo)
+echo -e "\e[45m\e[2m You can connect by ssh to IP:\e[93m $my_ip\e[2m on port:\e[93m 22 \e[0m"
+echo -e "\e[93m All done... To install X server and web browser, execute ./init-1 command ........\e[0m"
+echo -e "\e[44m\e[97m Would you like to install X server and all stuff now? \n \e[0m\e[97mtype \e[92m\"yes\"\e[97m or \e[93m\"no\"\e[0m ...\e[0m"
+read install_next
+case install_next
+  yes)
+  ./init-1
+  ;;
+  no)
+  ./init-1
+  ;;
+  *)
+  echo -e "\e[91m Wrong input, type \e[92m\"yes\", \e[93m\"no\"\e[0m or Ctr+c to break ...\e[0m"
+  ;;
+esac
