@@ -110,7 +110,7 @@ busy --subscribe="https://somethingcool.co" :1
 
 ## --db
 ``` shell
---db[=add] --table[="database.table"] # drop table in database
+--db[=add] --table[="database.table"] # add table in database
 ```
 ``` shell
 --db[=drop] --table[="database.table"] # drop table in database
