@@ -96,7 +96,7 @@ busy --invite[=roy_visar_db.fb_friends] --url="https://socialportal.com/group_na
 
 ## --subscribe
 ``` shell
---subscribe[="URL"] # to subscribe
+busy --subscribe[="URL"] # to subscribe
 ```
 ⭐️ EXAMPLE: Active profile will subscribe
 ``` shell
@@ -105,24 +105,24 @@ busy --subscribe="https://somethingcool.co" :1
 
 ## --cron
 ``` shell
---cron[=on|=off|=status] # to operate in crontab
+busy --cron[=on|=off|=status] # to operate in crontab
 ```
 
 ## --db
 ``` shell
---db[=add] --table[="database.table"] # add table in database
+busy --db[=add] --table[="database.table"] # add table in database
 ```
 ``` shell
---db[=drop] --table[="database.table"] # drop table in database
+busy --db[=drop] --table[="database.table"] # drop table in database
 ```
 ``` shell
---db[=add] --record[="database.table.record"] # add record in database
+busy --db[=add] --record[="database.table.record"] # add record in database
 ```
 ``` shell
---db[=delete] --record[="database.table.record"] # delete record in database
+busy --db[=delete] --record[="database.table.record"] # delete record in database
 ```
 ``` shell
---db[=show] --table[="database.table.record"] # show records in database
+busy --db[=show] --table[="database.table.record"] # show records in database
 ```
 
 # NOTES
