@@ -103,6 +103,16 @@ busy --subscribe[="URL"] # to subscribe
 busy --subscribe="https://somethingcool.co" :1
 ```  
 
+## --comment
+``` shell
+busy --comment="comment text" --url=["URL"] # to comment specific URL
+```
+☝️ TIP: option --comment without value will use default comment from database  
+⭐️ EXAMPLE: Active profile will comment "good to know" in post from group _bleblegroup_ in _socialfrance.eu_
+``` shell
+busy --comment="good to know" --url="socialfrance.eu/groups/bleblegroup/post/0192837465"
+```  
+
 ## --cron
 ``` shell
 busy --cron[=on|=off|=status] # to operate in crontab
@@ -116,7 +126,7 @@ busy --db[=add] --table[="database.table"] # add table in database
 busy --db[=drop] --table[="database.table"] # drop table in database
 ```
 ``` shell
-busy --db[=add] --record[="database.table.record"] # add record in database
+busy --db[=add] --table[="database.table"] --data=["data_to_add"] # add record in database
 ```
 ``` shell
 busy --db[=delete] --record[="database.table.record"] # delete record in database
@@ -124,6 +134,33 @@ busy --db[=delete] --record[="database.table.record"] # delete record in databas
 ``` shell
 busy --db[=show] --table[="database.table.record"] # show records in database
 ```
+⭐️ EXAMPLE: Add record with specific data into _fb_friends_ table
+``` shell
+busy --db=add --table="roy_visar_db.fb_friends" --data="001,Roy Visar,http://portal.url/profile,data1,data2"
+```  
+⭐️ EXAMPLE: Update record to specific data in _fb_friends_ table in _roy_visar_db_ database
+``` shell
+busy --db=update --table="roy_visar_db.fb_friends.2345" --data="Roy Visar,data2"
+```  
+
+# system
+## --clip-clear
+``` shell
+busy --clip-clear|-cc # clip clear in default DISPLAY
+```
+
+## --restart
+``` shell
+busy --restart :5 # retart DISPLAY:5
+busy --restart=all # restart all
+```
+
+## --screen
+``` shell
+busy --screen=status # clip clear
+busy --screen=on --cmd="htop" # run _htop_ in screen session
+```
+
 
 # NOTES
 🔥 Hot: last update  
