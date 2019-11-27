@@ -17,7 +17,7 @@ busy [sub_command] [--option=value]... [:place]
 # Available options:
 🚧 Under construction
 
-## like
+## --like
 ``` shell
 --like[="URL"] # to like something eg. post, profile
 ```
@@ -26,7 +26,7 @@ busy [sub_command] [--option=value]... [:place]
 busy --like="https://socialportal.com/fanpage/post" :0
 ```
 
-## follow
+## --follow
 ``` shell
 --follow[="URL"] # to follow profile from URL
 ```
@@ -36,7 +36,7 @@ busy --like="https://socialportal.com/fanpage/post" :0
 busy --like="https://socialportal.com/fanpage/post" :02
 ```
 
-## post
+## --post
 ``` shell
 --post[="database.table.record"] # to prepare and publish a post
 ```
@@ -46,7 +46,7 @@ busy --like="https://socialportal.com/fanpage/post" :02
 busy --like="roy_visar_db.fb_posts.4276" :5
 ```
 
-## live
+## --live
 ``` shell
 --live[=start|=stop|=status] --url[="URL"]
 # live streaming to specific rtmp socket
@@ -58,7 +58,7 @@ busy --like="roy_visar_db.fb_posts.4276" :5
 busy --live=start --url="rtmp://live-api.blablavideo.com:80/api=1&key=As4fRws8Q" :0
 ```
 
-## login
+## --login
 ``` shell
 --login[=login_name] # to login in specific portal
 ```
@@ -67,7 +67,7 @@ busy --live=start --url="rtmp://live-api.blablavideo.com:80/api=1&key=As4fRws8Q"
 busy --login="https://socialportal.com" :1
 ```  
 
-## share
+## --share
 ``` shell
 --share[="URL"] # to share something
 ```
@@ -75,6 +75,55 @@ busy --login="https://socialportal.com" :1
 ``` shell
 busy --share="https://somethingcool.co" --url="https://socialportal.com/group_name" :1
 ```  
+
+## --join
+``` shell
+--join[="URL"] # to join somewhere
+```
+⭐️ EXAMPLE: Active profile will join somewhere
+``` shell
+busy --join="https://socialportal.com/group_name" :1
+```  
+
+## --invite
+``` shell
+--invite[=database.table] --url=["URL"]# to invite others
+```
+⭐️ EXAMPLE: Active profile will invite others
+``` shell
+busy --invite[=roy_visar_db.fb_friends] --url="https://socialportal.com/group_name" :1
+```  
+
+## --subscribe
+``` shell
+--subscribe[="URL"] # to subscribe
+```
+⭐️ EXAMPLE: Active profile will subscribe
+``` shell
+busy --subscribe="https://somethingcool.co" :1
+```  
+
+## --cron
+``` shell
+--cron[=on|=off|=status] # to operate in crontab
+```
+
+## --db
+``` shell
+--db[=add] --table[="database.table"] # drop table in database
+```
+``` shell
+--db[=drop] --table[="database.table"] # drop table in database
+```
+``` shell
+--db[=add] --record[="database.table.record"] # add record in database
+```
+``` shell
+--db[=delete] --record[="database.table.record"] # delete record in database
+```
+``` shell
+--db[=show] --table[="database.table.record"] # show records in database
+```
 
 # NOTES
 🔥 Hot: last update  
