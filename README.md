@@ -60,12 +60,13 @@ busy --live=start --url="rtmp://live-api.blablavideo.com:80/api=1&key=As4fRws8Q"
 
 ## --login
 ``` shell
---login[=login_name] # to login in specific portal
+--login[=login_name] --url=["URL"]# to login in specific portal
 ```
 ⭐️ EXAMPLE: Active profile will login in socialportal.com, executed in DISPLAY:1
 ``` shell
-busy --login="https://socialportal.com" :1
+busy --login --url="https://socialportal.com" :1
 ```  
+☝️ TIP: _login_ option with no value  
 
 ## --share
 ``` shell
