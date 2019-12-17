@@ -1,8 +1,8 @@
 #!/bin/bash
 
 echo -e "\e[44m Cleaning up..... \e[0m"
-touch /var/log/busy4me.log; chmod 666 /var/log/busy4me.log
-LOGFILE=/var/log/busy4me.log
+#touch /var/log/busy4me.log; chmod 666 /var/log/busy4me.log
+#LOGFILE=/var/log/busy4me.log
 
 logline() {
     while IFS= read -r line; do
@@ -12,8 +12,8 @@ logline() {
 
 if [ $USER != "root" ]
 	then
-	echo "Run this script as root! exit..." | logline
+	echo "Run this script as root! exit..."
 	exit
 else
-  echo "Run as root OK..." | logline
+  echo "Run as root OK..."
 fi
