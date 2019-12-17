@@ -1,1 +1,19 @@
-../busy/root/init-0-ubuntu18
+#!/bin/bash
+
+echo -e "\e[44m Cleaning up..... \e[0m"
+touch /var/log/busy4me.log; chmod 666 /var/log/busy4me.log
+LOGFILE=/var/log/busy4me.log
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $SCRIPT - $line" >> $LOGFILE
+    done
+}
+
+if [ $USER != "root" ]
+	then
+	echo "Run this script as root! exit..."
+	exit
+else
+  echo "Run as root OK..."
+fi
