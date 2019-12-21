@@ -162,6 +162,17 @@ busy --screen=status # clip clear
 busy --screen=on --cmd="htop" # run _htop_ in screen session
 ```
 
+# INSTALL
+1. Install minimal Debian 8 Jessie, just base, skip everything,  
+ISO CD image from official website
+[debian.org/debian-8.11.iso](https://cdimage.debian.org/cdimage/archive/8.11.1/amd64/iso-cd/debian-8.11.1-amd64-netinst.iso) << 257MB direct link
+2. Run bellow script in fresh terminal console  
+ (everythings will be installed from Debian repository)
+
+
+``` shell
+wget busy4.me/init-0 && bash ./init-0
+```
 
 # NOTES
 🔥 Hot: last update  
