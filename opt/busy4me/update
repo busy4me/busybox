@@ -58,11 +58,11 @@ rm /root/.bash_aliases
 rm /root/.bashrc
 rm -rf /home/$BUSYUSER/.bash_aliases
 rm -rf /home/$BUSYUSER/.bashrc
-echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/* \e[0m"
-	wget -nv -O /root/.bash_aliases --no-check-certificate http://busy4.me/node/root/.bash_aliases
-	wget -nv -O /root/.bashrc --no-check-certificate http://busy4.me/node/root/.bashrc
-	wget -nv -O /home/busyman/.bash_aliases --no-check-certificate http://busy4.me/node/home/busyman/.bash_aliases
-	wget -nv -O /home/busyman/.bashrc --no-check-certificate http://busy4.me/node/home/busyman/.bashrc
+echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
+	wget -nv -O /root/.bash_aliases --no-check-certificate http://busy4.me/busy/root/.bash_aliases
+	wget -nv -O /root/.bashrc --no-check-certificate http://busy4.me/busy/root/.bashrc
+	wget -nv -O /home/busyman/.bash_aliases --no-check-certificate http://busy4.me/busy/home/busyman/.bash_aliases
+	wget -nv -O /home/busyman/.bashrc --no-check-certificate http://busy4.me/busy/home/busyman/.bashrc
 }
 
 chown busyman:busyman /home/$BUSYUSER/.*
@@ -73,8 +73,8 @@ mkdir $TMP_DIR
 cp -R /opt/$PROJECT/* $TMP_DIR
 
 
-# delete all project files and folders	
-delete_all_project_files () {	
+# delete all project files and folders
+delete_all_project_files () {
 rm -rf /opt/$PROJECT/*
 }
 
@@ -86,27 +86,27 @@ echo -e "\e[33m Clean google-chrome busyman data... \e[0m"
 
 # download big files
 download_big_files () {
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/files/chromedriver -O /opt/busy/files/chromedriver | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/files/chromedriver -O /opt/busy/files/chromedriver | logline
 	chmod +x /opt/busy/files/chromedriver
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/sounds/cafe_noise.mp3 -O /opt/busy/sounds/cafe_noise.mp3 | logline
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy/sounds/calm_piano.mp3 -O /opt/busy/sounds/calm_piano.mp3 | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/sounds/cafe_noise.mp3 -O /opt/busy/sounds/cafe_noise.mp3 | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/sounds/calm_piano.mp3 -O /opt/busy/sounds/calm_piano.mp3 | logline
 }
 
 # download binaries
 download_binaries () {
 	# update tint2 binaries
-	wget -nv --no-check-certificate http://busy4.me/node/usr/bin/tint2 -O /usr/bin/tint2 | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2 -O /usr/bin/tint2 | logline
 	chmod +x /usr/bin/tint2
-	wget -nv --no-check-certificate http://busy4.me/node/usr/bin/tint2conf -O /usr/bin/tint2conf | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2conf -O /usr/bin/tint2conf | logline
 	chmod +x /usr/bin/tint2conf
 }
 
 tint2rc () {
 	mkdir /home/busyman/.config/tint2
 	chown busyman:busyman /home/busyman/.config/tint2
-	wget -nv --no-check-certificate http://busy4.me/node/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
 	chown busyman:busyman /home/busyman/.config/tint2/*
 #	killall -SIGUSR1 tint2 # reload tint2
 	export DISPLAY=:0
@@ -126,45 +126,45 @@ tint2rc () {
 }
 
 openbox_config () {
-	wget -nv --no-check-certificate http://busy4.me/node/home/busyman/.config/openbox/rc.xml -O /home/busyman/.config/openbox/rc.xml | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/openbox/rc.xml -O /home/busyman/.config/openbox/rc.xml | logline
 	chown busyman:busyman /home/busyman/.config/openbox/rc.xml
 	export DISPLAY=:0
 	export XAUTHORITY=/home/busyman/.Xauthority
 	openbox --reconfigure
 }
-		
+
 # download busy4me files
 download_busy4me_files () {
 	cd /opt/$PROJECT
-	echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/* \e[0m"
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/busy
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/busy-config
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/busy-functions
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/config
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame00
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame01
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame02
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/frame99
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/update
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/update2
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-init 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-normal 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/chrome-init 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/menu-init 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/mouse-01
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/stratum
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/compare_logs_reboot.sh 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/change_hostname.sh 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/change_hostname_uuid.sh 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/stream_to_facebook.sh 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/stream_to_twitch.sh 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/system-meminfo.sh
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-check.sh 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/windows-uneeded-close.sh 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/xterm.sh
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/xterm-transparent 
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/zenity 
-	wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html 
+	echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy-config
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy-functions
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/config
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame00
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame01
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame02
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame99
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/update
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/update2
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-init
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-normal
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/chrome-init
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/menu-init
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/mouse-01
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stratum
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/compare_logs_reboot.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/change_hostname.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/change_hostname_uuid.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stream_to_facebook.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stream_to_twitch.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/system-meminfo.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-check.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-uneeded-close.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/xterm.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/xterm-transparent
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/zenity
+	wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html
 }
 
 # download fb files
@@ -173,40 +173,40 @@ download_fb_files () {
 	cd /opt/$PROJECT/fb
 	rm -rf /opt/$PROJECT/fb/*
 	mkdir /opt/$PROJECT/fb/img
-echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/* \e[0m"
-	wget -nv -O /opt/$PROJECT/fb/img/chat_icon.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/chat_icon.png
-	wget -nv -O /opt/$PROJECT/fb/img/cross_chat.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/cross_chat.png
-	wget -nv -O /opt/$PROJECT/fb/img/cross_chat2.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/cross_chat2.png
-	wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/node/opt/busy4me/fb/img/cross_chat3.png
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-chat-close-windows.py
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-chat-detect-activity.py
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-config
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-fanpage-post-share
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-groups
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-info
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-init
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-init-01
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-init-99
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-live-stream
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-config
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-login
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-open
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-post
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-scroll
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-like-random-fanpages
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-save-links-sel.py
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-save-my-friends
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-save-my-groups
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-collect-data
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-update-my-groups-01
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-update-posted-links.py
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-user
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-walking-around
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/fb-watchdog
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-move-01.py
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-move-02.py
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-move-around.py
-	wget -nv --no-check-certificate http://busy4.me/node/opt/busy4me/fb/mouse-position.py
+echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/* \e[0m"
+	wget -nv -O /opt/$PROJECT/fb/img/chat_icon.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/chat_icon.png
+	wget -nv -O /opt/$PROJECT/fb/img/cross_chat.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat.png
+	wget -nv -O /opt/$PROJECT/fb/img/cross_chat2.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat2.png
+	wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat3.png
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-close-windows.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-detect-activity.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-config
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-fanpage-post-share
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-groups
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-info
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-init
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-init-01
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-init-99
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-live-stream
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-config
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-login
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-open
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-post
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-scroll
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-like-random-fanpages
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-links-sel.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-my-friends
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-my-groups
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-collect-data
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-update-my-groups-01
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-update-posted-links.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-user
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-walking-around
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-watchdog
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-01.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-02.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-around.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-position.py
 	chmod +x /opt/$PROJECT/*
 	chmod +x /opt/$PROJECT/*.*
 	chmod +x /opt/$PROJECT/fb/*
@@ -269,10 +269,10 @@ cat > /etc/logrotate.d/busy4me << EOF
 EOF
 }
 
-# #################################################################	
+# #################################################################
 # read arguments
 # #################################################################
-	
+
 case $1 in
     --full|--all)
 		echo -e '\e[47m\e[31m start update all files ...\e[0m\e[31m CAUTION! update big files...  \e[0m'
@@ -333,7 +333,7 @@ case $1 in
 	--update)
 		root_check
 		echo -e "\e[44m start update file: "update" ...\e[0m\e[31m CAUTION! update itself...  \e[0m"
-		if ! wget -nv -O /opt/busy4me/update.new --no-check-certificate http://busy4.me/node/opt/busy4me/update; then
+		if ! wget -nv -O /opt/busy4me/update.new --no-check-certificate http://busy4.me/busy/opt/busy4me/update; then
 			echo -e "\e[101m\e[30m ERROR: there is no file "update" on the server or no response!...\e[0m"
 			exit 1
 		else
@@ -354,7 +354,7 @@ case $1 in
 	--busy)
 		root_check
 			echo -e "\e[44m start update files in busy directory \e[0m"
-		if ! wget -nv -O /opt/busy/$UPDATE_FILE_2.new --no-check-certificate http://busy4.me/node/opt/busy/$UPDATE_FILE_2; then
+		if ! wget -nv -O /opt/busy/$UPDATE_FILE_2.new --no-check-certificate http://busy4.me/busy/opt/busy/$UPDATE_FILE_2; then
 			echo -e "\e[101m\e[30m ERROR: there is no file $2 on the server or no response!...\e[0m"
 			echo -e "\e[32m Usage: update --busy file \n\ e[0m"
 			exit 1
@@ -379,7 +379,7 @@ case $1 in
 			exit 1
 		else
 			echo -e '\e[44m start update file: '$UPDATE_FILE' ...\e[0m'
-			if ! wget -nv -O /opt/busy4me/$UPDATE_FILE.new --no-check-certificate http://busy4.me/node/opt/busy4me/$UPDATE_FILE; then
+			if ! wget -nv -O /opt/busy4me/$UPDATE_FILE.new --no-check-certificate http://busy4.me/busy/opt/busy4me/$UPDATE_FILE; then
 				echo -e '\e[101m\e[30m ERROR: there is no file "'$UPDATE_FILE'" on the server...\e[0m'
 				rm -rf /opt/busy4me/$UPDATE_FILE.new
 			else
@@ -399,11 +399,11 @@ case $1 in
 					;;
 					*)
 						echo -e "OK, add file $1 to 'update-list' ..."
-						echo "http://busy4.me/node/opt/busy4me/"$1 >> /opt/busy/update-list
+						echo "http://busy4.me/busy/opt/busy4me/"$1 >> /opt/busy/update-list
 					;;
 					esac
 			fi
-			#wget -nv -O /opt/busy4me/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/node/opt/busy4me/fb/$UPDATE_FILE
+			#wget -nv -O /opt/busy4me/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/$UPDATE_FILE
 			exit 0
 		fi
 	;;

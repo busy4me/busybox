@@ -34,7 +34,7 @@ BUSYUSER=busyman
 
 logline() {
     while IFS= read -r line; do
-        echo "$(date +%F' '%T) $SCRIPT - $line" | tee -a $LOGFILE 
+        echo "$(date +%F' '%T) $SCRIPT - $line" | tee -a $LOGFILE
     done
 }
 echo "$(date +%F' '%T) $SCRIPT - Start init-1 script ..." | logline
@@ -53,7 +53,7 @@ useradd $ADMIN_USER -s /bin/bash -m -g $ADMIN_USER | logline
 groupadd busyman >> $LOGFILE
 useradd busyman -s /bin/bash -m -g busyman | logline
 # add directory for write any files by users, chmod 777
-# don't want to see any files in busyman directory, 
+# don't want to see any files in busyman directory,
 # sometime it's seen on the screen when somehow open file dialog apears
 # in chrome Ctrl+o
 
@@ -103,7 +103,7 @@ apt-get install -y xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate
 apt-get -y install python python-dev python-tk
 apt-get install -y python-pip python-xlib python-pillow scrot
 pip install setuptools -U # update 08-2019,
-pip install pyautogui # need for automate keys, mouse, recognise pictures on the screen 
+pip install pyautogui # need for automate keys, mouse, recognise pictures on the screen
 
 #hostnamectl seems to need dbus, hostnamectl used for change hostname
 echo -e "\e[100m Install dbus ... \e[0m" | logline
@@ -127,7 +127,7 @@ echo "vm.swappiness = 10" >> /etc/sysctl.conf
 # backorts need for install salt-common which can't be installed without python-systemd
 echo 'deb http://deb.debian.org/debian jessie-backports main' >> /etc/apt/sources.list
 
-#add main repo & install SaltStack 
+#add main repo & install SaltStack
 echo -e "\e[100m Saltstack install Start ... \e[0m" | logline
 rm /etc/apt/sources.list.d/saltstack.list 2>/dev/null | logline
 echo 'deb http://repo.saltstack.com/apt/debian/8/amd64/latest jessie main' >> /etc/apt/sources.list.d/saltstack.list | logline
@@ -168,8 +168,8 @@ EOF
 chown $BUSYUSER:$BUSYUSER /home/busyman/.profile | logline
 
 # download big files
-wget -nv --no-check-certificate https://busy4.me/node/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
-wget -nv --no-check-certificate https://busy4.me/node/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
+wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
+wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
 feh --bg-scale /opt/busy/images/wallpaper.jpg | logline
 
 #echo 'Run google-chrome.sh script.....................'
@@ -220,12 +220,12 @@ mkdir /opt/$PROJECT/log
 ln -s /var/log/busy4me.log /opt/busy4me/busy4me.log
 export PATH=$PATH:/opt/$PROJECT
 cd /opt/$PROJECT
-echo "wget -q --no-check-certificate https://busy4.me/node/opt/busy4me/*"
-wget -nv --no-check-certificate https://busy4.me/node/opt/busy4me/update -O /opt/busy4me/update | logline
-wget -nv --no-check-certificate https://busy4.me/node/opt/busy4me/config -O /opt/busy4me/config | logline
-wget -nv --no-check-certificate https://busy4.me/node/opt/busy4me/windows-init -O /opt/busy4me/windows-init | logline
-wget -nv --no-check-certificate https://busy4.me/node/opt/busy4me/chrome-init -O /opt/busy4me/chrome-init | logline
-wget -nv --no-check-certificate https://busy4.me/node/opt/busy4me/menu-init -O /opt/busy4me/menu-init | logline
+echo "wget -q --no-check-certificate https://busy4.me/busy/opt/busy4me/*"
+wget -nv --no-check-certificate https://busy4.me/busy/opt/busy4me/update -O /opt/busy4me/update | logline
+wget -nv --no-check-certificate https://busy4.me/busy/opt/busy4me/config -O /opt/busy4me/config | logline
+wget -nv --no-check-certificate https://busy4.me/busy/opt/busy4me/windows-init -O /opt/busy4me/windows-init | logline
+wget -nv --no-check-certificate https://busy4.me/busy/opt/busy4me/chrome-init -O /opt/busy4me/chrome-init | logline
+wget -nv --no-check-certificate https://busy4.me/busy/opt/busy4me/menu-init -O /opt/busy4me/menu-init | logline
 chmod +x /opt/busy4me/*
 ls -la /opt/$PROJECT
 echo "Start /opt/busy4me/update..." | logline
