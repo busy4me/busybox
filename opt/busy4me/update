@@ -193,14 +193,11 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-open
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-post
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-scroll
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-like-random-fanpages
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-links-sel.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-my-friends
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-my-groups
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-collect-data
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-update-my-groups-01
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-update-posted-links.py
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-user
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-walking-around
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-watchdog
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-01.py
