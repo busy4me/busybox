@@ -35,12 +35,12 @@ zenity --info --title="clipboard" --text="$clip" --timeout $to
 echo "is it english? ... is it logged? ..."
 mark01='Create an account' #special sign from the MAIN LOGIN site
 mark02='Create New Account' #special sign from the MAIN LOGIN site
-case "$clip" in 
-    *$mark01*) 
+case "$clip" in
+    *$mark01*)
 	echo -e "\e[31mMain login page...Not logged\e[0m"
 	zenity --info --title="clipboard" --text="Mine login page...not logged..." --timeout $to
   ;;
-    *$mark02*) 
+    *$mark02*)
 	echo -e "\e[31m Mobile login page...Not logged\e[0m"
 	zenity --info --title="clipboard" --text="Mobile login page...not logged..." --timeout $to
   ;;
@@ -127,17 +127,17 @@ login_start () {
 		login_insert
 	fi
 
-	zenity --info --title="Prepare to login" --text="Prepare to login as $login" --timeout 3
+	zenity --info --title="Prepare to login" --text="Prepare to login as $login" --timeout 1
 
 	sleep 1 && wmctrl -r "Login" -b add,above &
 	(
 	echo "1" ; sleep 1
 	echo "20" ; sleep 1
 	echo "40" ; sleep 1
-	echo "60" ; sleep 2
-	echo "70" ; sleep 2
-	echo "80" ; sleep 2
-	echo "90" ; sleep 2
+	echo "60" ; sleep 1
+	echo "70" ; sleep 1
+	echo "80" ; sleep 1
+	echo "90" ; sleep 1
 	echo "100" ; sleep 1
 	) | OUTPUT=$(zenity --progress \
 	  --title="Login" \
@@ -225,7 +225,7 @@ for i in {1..2000} ; do
 					xdotool key --delay $kd Return
 					echo "Enter $login ..."
 					zenity --info --title="Webpage content" --text="Enter $login ..." --timeout $to
-					xdotool key --delay $kd Shift+Tab Ctrl+a Ctrl+c 
+					xdotool key --delay $kd Shift+Tab Ctrl+a Ctrl+c
 					clip2=$( xclip -out -selection clipboard )
 						case "$clip2" in
 							*mark11*)
@@ -234,7 +234,7 @@ for i in {1..2000} ; do
 							;;
 							*)
 								echo "Error, can not put password?..."
-							;;	
+							;;
 						esac
 					else
 						echo "Error, is this entry field? ..."
@@ -305,7 +305,7 @@ for i in {1..2000} ; do
 			echo -e "\e[41m --> \e[0m \e[31m Login in cache... Tap to login... Switch to fb_login_url \e[0mmark13=$mark13"
 			zenity --info --title="Tap to login" --text="Login in cache... Tap to login... Switch to fb_login_url" --timeout $tol
 			break
-		;;		
+		;;
 		*)
 			echo -e "\e[44m   \e[0m \e[34m probe again... \e[0m"
 			zenity --info --title="page_probe" --text="probe again..." --timeout $tos
@@ -325,7 +325,7 @@ login_saved_detect () {
 		xdotool key --delay $kd Tab
 		xdotool type --delay $kd $password
 		xdotool key --delay $kd Return
-		echo -e "\e[30m\e[45m Login as \e[33m $login ... \e[0m" 
+		echo -e "\e[30m\e[45m Login as \e[33m $login ... \e[0m"
 	fi
 }
 login_saved_detect
@@ -349,7 +349,7 @@ do
 	xclip -selection clipboard /opt/busy/files/blank
 	xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a
 	clip=$( xclip -out -selection clipboard )
-	
+
 	case "$clip" in
 		*"$mark07"*)
 			echo "Logged successfuly... switch to fb.com"
@@ -379,7 +379,7 @@ do
 			echo "This is something else ... what is it?"
 			#zenity --info --title="Webpage content" --text="This is something else ... what is it?" --timeout $to
 		;;
-		
+
 	esac
 done
 }
@@ -425,7 +425,7 @@ case "$clip" in
 						shift 1
 					done
 			done
-				
+
 		;;
 		*)
 			zenity --info --title="page_probe" --text="Looks OK \n\
@@ -454,4 +454,3 @@ page_probe
 
 echo -e "\e[33m This is End of $SCRIPT script\e[0m"
 zenity --info --title="End" --text="This is End of $SCRIPT script" --timeout $to
-

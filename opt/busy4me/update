@@ -430,3 +430,4 @@ echo "ls -la /var/www/html"
 
 echo -e "\e[32m OK \e[0m"
 # set +x
+exit 0
