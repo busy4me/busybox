@@ -180,6 +180,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat3.png
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-close-windows.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-detect-activity.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-collect-info
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-config
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-fanpage-post-share
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-groups

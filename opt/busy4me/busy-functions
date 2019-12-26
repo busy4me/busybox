@@ -98,7 +98,7 @@ esac
 set_crontab () {
 task=$1
 case $task in
-	all)
+	"all"|"fb-post -c all"|"fb-post")
 		empty=""
 		cron=$(crontab -l)
 		case $cron in
@@ -133,13 +133,14 @@ echo -e "job: " $job
 
 case $1 in
 	disable|--disable)
-		echo -e "\e[91m # disable \e[95m crontab job ... $cron_job\e[90m"
+		echo -e "\e[91m # disable \e[95m crontab job ... $job\e[90m"
 		crontab -l | sed "/^[^#].*export DISPLAY=$DISPLAY && \/opt\/busy4me\/fb\/$job/s/^/#/" | crontab -
 		crontab -l | sed "/^[^#].*export DISPLAY=$DISPLAY && \/opt\/busy4me\/busy/s/^/#/" | crontab -
 		crontab -l
 	;;
 	enable|--enable)
-		echo -e "\e[32m # enable \e[95m crontab job ... $cron_job \e[90m"
+		echo -e "\e[32m # enable \e[95m crontab job ... $job \e[90m"
+		echo -e "\e[32m # enable \e[95m crontab job ... $job \e[90m"
 		crontab -l | sed "/^#.*export DISPLAY=$DISPLAY && \/opt\/busy4me\/fb\/$job/s/^#//" | crontab -
 		crontab -l | sed "/^#.*export DISPLAY=$DISPLAY && \/opt\/busy4me\/busy/s/^#//" | crontab -
 		crontab -l

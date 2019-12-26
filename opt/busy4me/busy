@@ -69,7 +69,7 @@ case $1 in
 	status)
 	status
 	;;
-	set_crontab)
+	--set_crontab|set_crontab)
 	set_crontab $2
 	;;
 	COMMENT)
