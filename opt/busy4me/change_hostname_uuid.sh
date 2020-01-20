@@ -52,8 +52,8 @@ minion_id=$(cat /etc/salt/minion_id)
 echo "restart salt-minion service"
 	service salt-minion restart &&
 
-echo "       New minion_id"
-echo "-----------------------------------------------"
+echo -e "\e[0m       New minion_id"
+echo -e "\e[0m-----------------------------------------------"
 echo -e "\e[32m|     " $minion_id
 echo -e "\e[0m-----------------------------------------------"
 echo -e "...done \e[32m OK \e[0m"
