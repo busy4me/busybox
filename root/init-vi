@@ -1,0 +1,39 @@
+#!/bin/bash
+
+logline() {
+    while IFS= read -r line; do
+        echo "$(date +%F' '%T) $SCRIPT - $line" >> $LOGFILE
+    done
+}
+
+if [ $USER != "root" ]
+	then
+	echo "Run this script as root! exit..." | logline
+	exit
+fi
+
+busyuser=vi
+
+# Autologin as $busyuser without login manager in console tty1...
+autologin_user () {
+echo -e "\e[32m Autologin as $busyuser without login manager in console tty1...\e[0m"
+mkdir -pv /etc/systemd/system/getty@tty1.service.d
+rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $busyuser --noclear %I $TERM
+EOF
+}
+
+autostart_user () {
+cat > /home/$busyuser/.profile  << EOF
+[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
+EOF
+chown $busyuser:$busyuser /home/vi/.profile
+}
+
+autologin_user
+autostart_user
+
+systemctl set-default multi-user.target
