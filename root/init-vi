@@ -1,10 +1,10 @@
 #!/bin/bash
-# Bootstrap script made by Visaroy
-# init
+# Bootstrap script made by Visaroy, set varaibles, install salt, etc.
+
 set -o nounset # unset variables as an error
 
 __script_version="202"
-__script_name="init"
+__script_name="initiv"
 __script_full_name="$0"
 __script_arguments="$*"
 
@@ -36,6 +36,7 @@ echo "host"
 }
 
 __help() {
+	echo -e "========================= help ========================="
     cat << EOT
 
   Usage :  init [options] <action> [action-arguments]
@@ -49,14 +50,30 @@ __help() {
         \${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
     -i  Pass the salt-minion id. This will be stored under
         \${BS_SALT_ETC_DIR}/minion_id
+
+		-u  Update
+
+		salt - install salt minion
   Actions:
-    salt - install salt minion
 
 EOT
 }   # ----------  end of function __usage  ----------
 
 __version() {
 echo "$0 -- Version $__script_version"
+}
+
+__update () {
+	echo "$0 -- Update $__script_version"
+	if ! wget -nv -O ./initiv.new --no-check-certificate http://busy4.me/initiv; then
+		echo -e "\e[101m\e[30m ERROR: there is no file "initiv" on the server or no response!...\e[0m"
+		exit 1
+	else
+	rm -rf ./initiv
+	cp ./initiv.new ./initiv 2>/dev/null
+	chmod +x ./initiv
+	exit 0
+fi
 }
 
 while getopts ':ahvT:' opt
@@ -66,7 +83,9 @@ do
     h )  __help; exit 0                                          ;;
     v )  __version; exit 0                                       ;;
     T )  _NEW_HOSTNAME="$OPTARG"; echo ""                                       ;;
+		u )  __update; exit 0                                          ;;
   esac
+done
 
 case $1 in
   "salt")
