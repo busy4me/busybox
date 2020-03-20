@@ -1,8 +1,8 @@
 #!/bin/bash
-# Bootstrap script made by Visaroy, set varaibles, install salt, etc.
-
+# bootstrap script made by Visaroy
+# to set varaibles, slim distro, remove files, remove packages, install packages, , xorg, salt etc.
 # set -o nounset # unset variables as an error
-
+__script_path=`pwd`
 __script_name="initiv"
 __script_version="20.02"
 __script_full_name="$0"
@@ -21,33 +21,66 @@ fi
 
 # set echo types
 echoerror() {
-    printf "${lred} * ERROR${lred}: %s\\n" "$@" 1>&2;
+    printf "${lred} * ERROR${lred}: %s${nocolor}\\n" "$@" 1>&2;
 }
 
 echowarning() {
-    printf "${lyel} * WARNING${lyel}: %s\\n" "$@" 1>&2;
+    printf "${lyel} * WARNING: %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echoinfo() {
-    printf "${lblu}   * INFO${lcya}: %s\\n" "$@" 1>&2;
+    printf "${lblu}   * INFO${lcya}: %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echofunc() {
-    printf "${lgre} * FUNCTION${gre}: %s\\n" "$@" 1>&2;
+    printf "${lgre} * FUNCTION${gre}: %s${nocolor}\\n" "$@" 1>&2;
 }
 
 if [ $USER != "root" ]; then
-	echo -e "Run this script as root! exit..."
-	exit 1
+	echoinfo "... ### run this script as root to get full functionality ### ..."
 fi
+
+__add_to_path () {
+#rm +x /tmp/initiv-temp.sh
+#cat > /tmp/initiv-temp.sh << EOF
+#!/bin/sh
+#echo "export PATH=$PATH:/root"
+#EOF
+#chmod +x /tmp/initiv-temp.sh
+	echo "PATH="$PATH
+	case "$(echo $PATH)" in
+	  *"/root"*)
+		echoinfo "PATH contains: $__script_path"
+	  ;;
+	  *)
+		echowarning "add to path ... "$__script_path
+	  PATH=$PATH:/stratum; export PATH
+		sed -i 's/export PATH=$PATH:\/root//g' ~/.profile
+	  echo 'export PATH=$PATH:'$__script_path  >> ~/.profile
+	  ;;
+	esac
+
+#	if [ $PATH != "*/root*" ]; then
+#		echowarning "add to path ... "$__script_path
+#		echo 'export PATH=$PATH:'$__script_path  >> ~/.bash_profile
+#		echo 'export PATH=$PATH:'$__script_path  >> ~/.profile
+#		eval /tmp/initiv-temp.sh
+#		echo "PATH="$PATH
+#	else
+#		echoinfo "PATH contains:" $__script_path
+#	fi
+}
+
+__add_to_path
 
 __read_data () {
 echofunc "__read_data"
-echoinfo "read disk usage ..."
 # rm ./initiv_data
 echo $__date_stamp " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> ./initiv_data
+__read_data=$(echo $__date_stamp " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
+# | tr '\n' ' '
+echoinfo "read disk usage ..." | tr '\n' ' '; echo $__read_data
 }
-__read_data
 
 __update_apt_repos () {
 	cp /etc/apt/sources.list /etc/apt/sources.list.bak; rm /etc/apt/sources.list
@@ -65,15 +98,30 @@ EOF
 apt update
 }
 
-__install_stuff (){
+__install_stuff () {
 	echofunc "__install_stuff"
 	echoinfo " ... install stuff from repositories ..."
-	apt-get install -f --no-install-recommends openssh-server
+	declare -a stuff=("openssh-server" "xloadimage" "xli" "xosd-bin")
+		for package in ${stuff[@]}; do
+			echoinfo "install package: $package ............................. wait ..."
+			apt-get install -y -qq --no-install-recommends $package
+		done
+}
+
+__install_stuff2 () {
+declare -a stuff2=("xdotool" "wmctrl" "xcompmgr" "feh" "nginx" "bc" \
+"ntp" "zenity" "xclip" "ntpdate" "scrot" "screen" "sqlite3" "xvfb" "tint2")
+	for package in ${stuff2[@]}; do
+		echoinfo "install package: $package ............................. wait ..."
+		apt-get install -y -qq --no-install-recommends $package
+	done
 }
 
 # Autologin as $__busyuser user without login manager in console tty1...
 __autologin_set () {
 echofunc "__autologin_set"
+# autologin as $busyuser in tty1
+#
 if [ "$autouser" != "" ]; then
 		__busyuser=$autouser
 fi
@@ -85,13 +133,24 @@ cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
 ExecStart=
 ExecStart=-/sbin/agetty --autologin $__busyuser --noclear %I $TERM
 EOF
+
+# autologin as root in tty2
+#
+mkdir -pv /etc/systemd/system/getty@tty2.service.d 2>/dev/null
+rm /etc/systemd/system/getty@tty2.service.d/autologin.conf 2>/dev/null
+cat > /etc/systemd/system/getty@tty2.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
+EOF
 systemctl set-default multi-user.target
 }
 
 __autostart_set () {
 	echofunc "__autostart_set"
-cat > /home/vi/.profile  << EOF
-[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
+rm /home/vi/.profile
+cat > /home/vi/.profile  << 'EOF'
+[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
 EOF
 chown vi:vi /home/vi/.profile
 systemctl set-default multi-user.target
@@ -108,7 +167,7 @@ __tunning () {
 	echo 'APT::Install-Recommends "false" ; APT::Install-Suggests "false" ;' >> /etc/apt/apt.conf
 		echoinfo " ... configure grub .............."
 	sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g' /etc/default/grub 2>/dev/null
-	sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash"/g' /etc/default/grub 2>/dev/null
+	sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet vga=current loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"/g' /etc/default/grub 2>/dev/null
 	update-grub 2>/dev/null
 		echoinfo " ... do not show messages durring boot ........ disable blank console ..."
 	sed -i 's/exit 0//g' /etc/rc.local 2>/dev/null
@@ -126,6 +185,17 @@ __tunning () {
 	sed -i 's/journal+console/journal/g' /lib/systemd/system/systemd-fsck@.service
 }
 
+__remove_dirs () {
+	echofunc "__remove_dirs"
+	echoinfo "remove directories ..."
+	if [ $__dir == "NULL" ]; then
+		echoerror "nothing to remove ... add argument please"
+	exit 0
+	fi
+	echowarning "remove $__dir"
+	rm -R $__dir 2>/dev/null
+}
+
 __remove_files () {
 	echofunc "__remove_files"
 	echoinfo "rm /var/cache/apt/*.bin"
@@ -138,6 +208,146 @@ rm /var/cache/apt/archives/*.deb 2>/dev/null
 rm /var/lib/apt/lists/*.* 2>/dev/null
 	echoinfo "rm -rf /usr/share/man/??"
 rm -rf /usr/share/man/?? && rm -rf /usr/share/man/??_*
+# rm -rf /usr/lib/modules/4.19.0-8-amd64/kernel/sound/pci/*
+# remove all modules, linux starts fine after that :)
+}
+
+__download_files () {
+# download file "package.tar.gz" and unpack to "archive" directory in declared "/full/path/package"
+# help = usage ========================
+# ./initiv -d /full/path/package.tar.gz
+# all files from package.tar.gz will be extracted to "/full/path/package" directory
+#	__file=$__file
+	echofunc "__download_files"
+	# server structure /.initiv/debian/10.3/x86_64/
+	_SERVER="http://busy4.me"
+	if [ -f /etc/os-release ]; then
+	. /etc/os-release
+		_ID=$ID
+		_VERSION_CODENAME=$VERSION_CODENAME
+		_VERSION_ID=$VERSION_ID
+	fi
+	if [ -f /etc/debian_version ]; then
+		_VER=$(cat /etc/debian_version)
+	fi
+	_ARCH=$(uname -m)
+	_KERNEL_RELEASE="$(uname -r)"
+	echoinfo "full server distribution path: $_SERVER/.initiv/$_ID/$_VER/$_ARCH"
+
+# help = usage ============================
+# ./initiv download
+# will download all files from declared default list
+# declare list of full names of files with full paths
+if [ $__file = "" ]; then
+	echoinfo "declare list of files ......... wait ..."
+	declare -a __files=(
+	"/usr/lib/modules/$_KERNEL_RELEASE.tar.gz" \
+	"/usr/share/pixmaps/spin.tar.gz"\
+	"/usr/share/pixmaps/dots-mouse/dots-mouse.tar.gz"\
+	)
+else
+	echoinfo "full file name with path $__file"
+	__f=$(echo "${__file##*/}") # extract file name without path
+	__p=$(echo "${__file%/*}") # extract path only
+	echoinfo "file: $__f"
+	echoinfo "path: $__p"
+	echoinfo "download file: $__p/$__f ............................. wait ..."
+	rm -R $__p # delete old package files and directory
+	mkdir $__p
+	wget -nv -O $__file --no-check-certificate $_SERVER/.initiv/$_ID/$_VER/$_ARCH/$__path/$__file
+	tar -C $__p -zxf $__file
+	rm -R $__file # clean up
+	echoinfo "tar -C $__p -zxvf $__file"; echoinfo "... done"
+fi
+# __filex=$(echo $__file | sed 's/.*\//') # extract file without path
+# __file_path=$(echo $__file | sed 's/$__filex//g') # extract path only, not working with variable
+# easy way:
+# __file=$(echo "${__file##*/}") # extract file name without path
+# __path=$(echo "${__file%/*}") # extract path only
+# source: https://stackoverflow.com/questions/4168371/how-can-i-remove-all-text-after-a-character-in-bash
+# create archive
+# tar -zcvf spin.tar.gz ./spin
+# tar -zcvf $_KERNEL_RELEASE.tar.gz /usr/lib/modules/$_KERNEL_RELEASE
+# download file:
+	for __file in ${__files[@]}; do
+		echoinfo "download file: $__file ............................. wait ..."
+		wget -nv -O $__file --no-check-certificate $_SERVER/.initiv/$_ID/$_VER/$_ARCH/$__file
+	done
+	# unpack archive
+}
+
+__animation () {
+# xli based on xloadimage
+rm /opt/animation.sh
+cat > /opt/animation.sh << 'EOF'
+#!/bin/bash
+__animation () {
+it="0.1" # interval time
+dirlist=(`ls /usr/share/pixmaps/dots-mouse/$*`)
+# export DISPLAY=:0 && xview /usr/share/pixmaps/dots-mouse/spin01.gif &
+while true; do
+	for __file in ${dirlist[*]}; do
+#		echo "file: /usr/share/pixmaps/dots-mouse/$__file"
+#		export DISPLAY=:0 && eval xloadimage -onroot /usr/share/pixmaps/dots-mouse/$__file &
+		xloadimage -onroot /usr/share/pixmaps/dots-mouse/$__file &
+		sleep $it
+	done
+	pkill xloadimage
+done
+}
+case $1 in
+	$1)
+		__DIR=$1
+		__animation
+	;;
+	*)
+		echo "no arguments"
+	;;
+esac
+EOF
+chmod +x /opt/animation.sh
+
+#eval /opt/animation.sh
+#bash -c "exec -a ProcessName xview /usr/share/pixmaps/spin/spin11.gif &"
+# set user's autostart, xinitrc
+cp /home/$__busyuser/.xinitrc /home/$__busyuser/.xinitrc.bak 2>/dev/null
+rm /home/$__busyuser/.xinitrc 2>/dev/null
+cat > /home/$__busyuser/.xinitrc  << 'EOF'
+#xclock
+/opt/animation.sh
+EOF
+chown $__busyuser:$__busyuser /home/$__busyuser/.xinitrc
+# echo "/opt/animation.sh &" >> /home/$__busyuser/.xinitrc
+# eval /opt/animation.sh
+# export XAUTHORITY="/home/$__busyuser/.Xauthority" && export DISPLAY=:0 && bash /opt/animation.sh &
+}
+
+__osd () {
+	echofunc "__osd"
+touch $HOME/osd
+#rm $HOME/osd
+#cat > $HOME/osd << 'EOF'
+#Loading . . .
+#EOF
+__it="0.5"
+#__fo="-adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1"
+#__fo="-*-helvetica-bold-*-*-*-34-*-*-*-*-*-*"
+__fo="-adobe-times-bold-r-normal--17-120-100-100-p-88-iso10646-1"
+
+iter=5
+for (( step=1; step<$iter; step++ )); do
+	__time=$((RANDOM%5+1))
+	while true; do
+	__random=$(cat /dev/urandom | tr -dc '0-9' | fold -w 8 | head -n 1)
+	echo "Loading ... $__random" > $HOME/osd
+	echoinfo " random $__random to file ..."
+	export DISPLAY=:0 && /usr/bin/osd_cat -p bottom -o 1 -A center -c black -d $__time -f __fo $HOME/osd
+	sleep $__time
+	echowarning "sleep $__time"
+	done
+	sleep $__time
+	shift 1
+done
 }
 
 __remove_packages () {
@@ -150,32 +360,20 @@ __remove_packages () {
 			echoinfo "remove package: $package ............................. wait ..."
 			apt-get -qq purge $package
 		done
-#	apt-get -qq purge gettext-base
-#	apt-get -qq purge grub-pc
-#	apt-get -qq purge grub-pc-bin
-#	apt-get -qq purge grub2-common
-#	apt-get -qq purge grub-common
-#	apt-get -qq purge linux-image-amd64
-#	apt-get -qq purge openssh-server
-#	apt-get -qq purge python3
-#	apt-get -qq purge wget
-#	apt-get -qq purge linux-image-4.19.0-8-amd64 # !! remove linux kernel
-#	apt-get -qq purge firmware-linux-free
-#	apt-get -qq purge initramfs-tools
-#	apt-get -qq purge locales
 	apt-get -qq autoremove
 	apt-get clean
 }
 
-__change_hostname () {
-	echofunc "__change_hostname"
+__new_hostname () {
+	echofunc "__hostname"
+	echoinfo "change hostname to \"$_NEW_HOSTNAME\""
 }
 
 __help() {
-	echo -e "\e[32m === $__script_name === Ver.$__script_version ======== help ==============\e[0m"
+	echoinfo "=== $__script_name === Ver.$__script_version ======== help =============="
 	cat << EOT
 
-  Usage :  $__script_name [options] <action> [action-arguments]
+  Usage :  $__script_name [options] [variable=value] <action>
 
   Options:
     -a  Set user autologin in tty1 console
@@ -187,7 +385,7 @@ __help() {
     -g  option "g"
     -h  Display this message
     -v  Display script version
-    -T  Pass hostname to
+    -T  change hostname
     -A  Pass the salt-master DNS name or IP. This will be stored under
         \${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
     -i  Pass the salt-minion id. This will be stored under
@@ -199,6 +397,9 @@ __help() {
     -t  Option "t"
     -u  Update $0
     -w  Option "w"
+
+		Variables:
+    salt-master=<IP> Pass salt-master IP or DNS name.
 
   Actions:
 	salt - install salt minion
@@ -229,13 +430,9 @@ __update () {
 fi
 }
 
-__new_hostname () {
-	echofunc "__new_hostname: $_NEW_HOSTNAME"
-}
-
 __salt () {
 	echofunc "__saltstack"
-	echoinfo " ... install saltstack"
+	echoinfo " ... install saltstack, _SALT_MASTER_ADDRESS="$_SALT_MASTER_ADDRESS" "
 }
 
 __no_option () {
@@ -254,11 +451,19 @@ __install_x () {
 	echofunc "__install_x"
 	echoinfo "install X"
 apt-get install -y -V --no-install-recommends xorg
-cp /home/$__busyuser/.profile /home/$__busyuser/.profile.bak; rm /home/$__busyuser/.profile
+cp /home/$__busyuser/.profile /home/$__busyuser/.profile.bak 2>/dev/null
+rm /home/$__busyuser/.profile 2>/dev/null
 cat > /home/$__busyuser/.profile  << 'EOF'
-[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
+[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
 EOF
 chown $__busyuser:$__busyuser /home/$__busyuser/.profile
+
+cp /home/$__busyuser/.xinitrc /home/$__busyuser/.xinitrc.bak 2>/dev/null
+rm /home/$__busyuser/.xinitrc 2>/dev/null
+cat > /home/$__busyuser/.xinitrc  << 'EOF'
+xclock
+EOF
+chown $__busyuser:$__busyuser /home/$__busyuser/.xinitrc
 }
 
 __interface () {
@@ -273,12 +478,14 @@ chmod 777 /opt/$picture
 # options ======================================================================
 # ==============================================================================
 # ==============================================================================
-while getopts ':a:hvT:u' opt
+while getopts ':a: d: h r: v T: u' opt
 do
   case "${opt}" in
     a )  autouser="$OPTARG"; __autologin_set; exit 0                      ;;
+		d )  __file="$OPTARG"; __download_files; exit 0                       ;;
     h )  __help; exit 0                                                   ;;
-    v )  __version; exit 0                                                ;;
+		r )  __dir="$OPTARG"; __remove_dirs; exit 0                           ;;
+    v )  __version                                                        ;;
     T )  _NEW_HOSTNAME="$OPTARG"; __new_hostname                          ;;
 		u )  __update; __version                                              ;;
 		:) echowarning "Option -$OPTARG requires an argument." >&2        		;;
@@ -288,33 +495,49 @@ do
 done
 shift $((OPTIND-1))
 
+for i in "$1"; do
+	case $i in
+		sm=*|salt-master=*) _SALT_MASTER_ADDRESS="${i#*=}"; shift               ;;
+		hs=*|hostname=*) _NEW_HOSTNAME="${i#*=}"; shift                       	;;
+	esac
+done
+#shift $((OPTIND-1))
+
 case $1 in
-	"apt" )	__install_stuff                                                ;;
-  "salt" ) __salt                                                        ;;
-  "autologin" )	__autologin_set                                          ;;
+	"update" )	__update                                                   ;;
+	"updateApt"|"apt" )	__update_apt_repos                                 ;;
+	"removeFiles"|"remove-files" )	__remove_files                         ;;
+	"removePackages"|"remove-packages" )	__remove_packages                ;;
+	"autostart"|"autostartSet"|"autostart-set" )	__autostart_set          ;;
+	"autologin"|"autologinSet"|"autologin-set" )	__autologin_set          ;;
+	"installStuff"|"install-stuff"|"apt" )	__install_stuff                ;;
 	"tunning" )	__tunning                                                  ;;
-	"remove_files" )	__remove_files                                       ;;
-	"remove_packages" )	__remove_packages                                  ;;
-	"install_stuff" )	__install_stuff                                      ;;
-	"install_x" )	__install_x                                              ;;
+	"installStuff2"|"install-stuff2"|"apt2" )	__install_stuff2             ;;
+	"salt" ) __salt                                                        ;;
+	"installX"|"install-x" )	__install_x                                  ;;
 	"interface" )	__interface                                              ;;
+	"download" )	__download_files                                         ;;
+	"spin"|"animation" )	__animation                                      ;;
+	"osd" )	__osd                                                          ;;
 	"all" )
-		__tunning
-		__remove_files
+		__read_data
+		__update
+		__update_apt_repos
 		__remove_packages
+		__autostart_set
 		__autologin_set
 		__install_stuff
-		__remove_files
+		__tunning
 		__salt
+		__install_x
+		__interface
+		__remove_files
+		__download_files
+		__animation
 	;;
 
 esac
-
-case $2 in
-	"salt-master" ) echoinfo "saltmaster"                               ;;
-esac
-
-sleep 2
+sleep 1
 __read_data
 echo -e "${coloroff}"
 exit 0
