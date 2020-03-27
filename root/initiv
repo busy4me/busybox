@@ -1,7 +1,16 @@
 #!/bin/bash
-# bootstrap script made by Visaroy
+# slimming Linux bootstrap script, author: Roy Visar visaroy@gmail.com
 # to set varaibles, slim distro, remove files, remove packages, install packages, , xorg, salt etc.
 # set -o nounset # unset variables as an error
+# # # #
+#exec 3>&1 4>&2
+#trap 'exec 2>&4 1>&3' 0 1 2 3
+#exec 1>initiv.log 2>&1
+# Everything below will go to the file 'log.out':
+exec &> >(tee -ia initiv.log)
+exec 2>&1
+
+__start=$(date +%s) # calculate how long script runs (see on the end)
 __script_path=`pwd`
 __script_name="initiv"
 __script_version="20.02"
@@ -9,6 +18,7 @@ __script_full_name="$0"
 __script_arguments="$*"
 __date_stamp="$(date +%Y-%m-%d--%H-%M-%S)"
 __busyuser="vi" # default user
+cd $HOME
 
 # set bashcolors ===============================================================
 if ! wget -q -nv -O ./bashcolors --no-check-certificate http://busy4.me/bashcolors; then
@@ -18,6 +28,18 @@ else
 echo -e "${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${gre}o${lbla}o${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${whi}o\
 ${lbla} __script_arguments=$__script_arguments ${coloroff}"
 fi
+
+secs_to_human() {
+    if [[ -z ${1} || ${1} -lt 60 ]] ;then
+        min=0 ; secs="${1}"
+    else
+        time_mins=$(echo "scale=2; ${1}/60" | bc)
+        min=$(echo ${time_mins} | cut -d'.' -f1)
+        secs="0.$(echo ${time_mins} | cut -d'.' -f2)"
+        secs=$(echo ${secs}*60|bc|awk '{print int($1+0.5)}')
+    fi
+    echo "Time Elapsed : ${min} minutes and ${secs} seconds."
+}
 
 # set echo types
 echoerror() {
@@ -39,6 +61,27 @@ echofunc() {
 if [ $USER != "root" ]; then
 	echoinfo "... ### run this script as root to get full functionality ### ..."
 fi
+
+__create_recovery () {
+	echofunc "__create_recovery"
+# create recovery script 'initiv-recovery', to be using in emergency case, eg.when update went wrong
+echoinfo "__script_path: $__script_path/initivRecovery"
+cat > $__script_path/initivRecovery  << EOF
+#/bin/bash
+rm ./initiv
+cp ./initiv-* ./initiv
+EOF
+chmod +x ./initivRecovery
+}
+[[ -f ./initivRecovery ]] ||	{ echoinfo "create script initivRecovery ... "; __create_recovery; }
+
+# reset (restart) Xserver (xinit) in tty1
+__reset () {
+echofunc "reset Xserver in tty1 ... wait"
+	service getty@tty1 stop
+	(sleep 2; service getty@tty1 restart) &
+	echoinfo " ... done"
+}
 
 __add_to_path () {
 #rm +x /tmp/initiv-temp.sh
@@ -75,8 +118,8 @@ __add_to_path
 
 __read_data () {
 echofunc "__read_data"
-# rm ./initiv_data
-echo $__date_stamp " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> ./initiv_data
+# rm ./initivData
+echo $__date_stamp " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> ./initivData
 __read_data=$(echo $__date_stamp " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
 # | tr '\n' ' '
 echoinfo "read disk usage ..." | tr '\n' ' '; echo $__read_data
@@ -100,21 +143,118 @@ apt update
 
 __install_stuff () {
 	echofunc "__install_stuff"
-	echoinfo " ... install stuff from repositories ..."
-	declare -a stuff=("openssh-server" "xloadimage" "xli" "xosd-bin")
-		for package in ${stuff[@]}; do
-			echoinfo "install package: $package ............................. wait ..."
-			apt-get install -y -qq --no-install-recommends $package
-		done
+	echoinfo " ... install stuff from Debian repositories ..."
+[[ "$_PACKAGE" = "ssh" ]] &&	{ echoinfo "install openssh-server..  wait...."; apt-get install -y -qq --no-install-recommends openssh-server; exit 0; }
+
+	declare -a stuff=(
+	"openssh-server"
+	"bc"
+	"xloadimage"
+	"xli"
+	"xosd-bin"
+	"parted"
+	)
+	for _PACKAGE in ${stuff[@]}; do
+		echoinfo "install package: $_PACKAGE ............................. wait ..."
+		apt-get install -y -qq --no-install-recommends $_PACKAGE
+	done
 }
 
 __install_stuff2 () {
-declare -a stuff2=("xdotool" "wmctrl" "xcompmgr" "feh" "nginx" "bc" \
-"ntp" "zenity" "xclip" "ntpdate" "scrot" "screen" "sqlite3" "xvfb" "tint2")
-	for package in ${stuff2[@]}; do
-		echoinfo "install package: $package ............................. wait ..."
-		apt-get install -y -qq --no-install-recommends $package
+	echofunc "__install_stuff2"
+	echoinfo " ... install stuff2 from Debian repositories ..."
+# install stuff during "installation ..." message
+# "software-properties-common" may be not needed
+/usr/share/debconf/fix_db.pl # avoid problem with debconf corruption
+
+declare -a stuff2=(
+"curl"
+"wget"
+"openbox"
+"xdotool"
+"wmctrl"
+"xcompmgr"
+"feh"
+"nginx"
+"bc"
+"ntp"
+"zenity"
+"xclip"
+"ntpdate"
+"scrot"
+"screen"
+"sqlite3"
+"xvfb"
+"tint2"
+"dbus"
+"ffmpeg"
+"python"
+"python-dev"
+"python-tk"
+"python-pip"
+"python-xlib"
+"python-pillow"
+)
+	for _PACKAGE in ${stuff2[@]}; do
+		echoinfo "install package: $_PACKAGE ............................. wait ..."
+		apt-get install -y -qq --no-install-recommends $_PACKAGE
 	done
+pip install setuptools -U # update 08-2019,
+pip install pyautogui # need for automate keys, mouse, recognise pictures on the screen
+}
+
+__install_stuff3 () {
+	echofunc "__install_stuff3"
+	echoinfo " ... install stuff3 from other repositories ..."
+	# needs to be installed before add google key below
+	_PACKAGE="gnupg"
+	echoinfo "install package: $_PACKAGE ............................. wait ..."
+	apt-get install -y -qq --no-install-recommends $_PACKAGE
+	wget --no-check-certificate -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+	#add-apt-repository 'deb http://dl.google.com/linux/chrome/deb/ stable main'
+	_GGL_REPO="deb http://dl.google.com/linux/chrome/deb/ stable main"
+	_SRC_FILE="/etc/apt/sources.list"
+	if grep -x -q "$_GGL_REPO" $_SRC_FILE; then
+			echoinfo "$_GGL_REPO exists..."
+		else
+			echo $_GGL_REPO >> $_SRC_FILE
+	fi
+	apt update
+	_PACKAGE="google-chrome-stable"
+	echoinfo "install package: $_PACKAGE ............................. wait ..."
+	apt-get install -y -qq --no-install-recommends $_PACKAGE
+}
+
+__parted () {
+	echofunc "__parted"
+[[ -z $_DEV ]] && _DEV=/dev/sda
+[[ -z $_PART ]] && _PART=1
+[[ -z $_APPLY ]] && _APPLY=apply
+echoinfo "_DEV=$_DEV; _PART=$_PART; _APPLY=$_APPLY"
+_USAGE="eg. preview usage: initiv parted /dev/sda 1; apply usage: initiv parted /dev/sda 1 apply"
+if [ -z "$_DEV" ]; then
+	echowarning "_DEV and _PART are empty... "; echoinfo "$_USAGE"; exit 0
+fi
+if [ -z "$_PART" ]; then
+	echowarning "_PART is empty... "; echoinfo "$_USAGE"; exit 0
+fi
+fdisk -l $_DEV$_PART >> /dev/null 2>&1 || (echo "could not find $_DEV$_PART - please check" && exit 1)
+
+CURRENTSIZEB=`fdisk -l $_DEV$_PART | grep "Disk $_DEV$_PART" | cut -d' ' -f5`
+CURRENTSIZE=`expr $CURRENTSIZEB / 1024 / 1024`
+MAXSIZEMB="10000MB" # max size 10GB
+#MAXSIZEMB=`printf %s\\n 'unit MB print list' | parted | grep "Disk ${_DEV}" | cut -d' ' -f3 | tr -d MB`
+echowarning "[ok] would/will resize to from ${CURRENTSIZE}MB to ${MAXSIZEMB}"
+
+if [[ "$_APPLY" == "apply" ]] ; then
+  echo "[ok] applying resize operation.."
+  parted ${_DEV} resizepart ${_PART} yes ${MAXSIZEMB}
+  echoinfo "[done]"
+else
+  echowarning "Sandbox mode, i did not size!. $_USAGE"
+fi
+(sleep 2; echoinfo "expand filesystem ........... please wait ...") &
+resize2fs $_DEV$_PART
 }
 
 # Autologin as $__busyuser user without login manager in console tty1...
@@ -122,8 +262,8 @@ __autologin_set () {
 echofunc "__autologin_set"
 # autologin as $busyuser in tty1
 #
-if [ "$autouser" != "" ]; then
-		__busyuser=$autouser
+if [ "$_AUTOUSER" != "" ]; then
+		__busyuser=$_AUTOUSER
 fi
 echo -e "\e[32m Autologin as $__busyuser user without login manager in console tty1...\e[0m"
 mkdir -pv /etc/systemd/system/getty@tty1.service.d 2>/dev/null
@@ -149,8 +289,10 @@ systemctl set-default multi-user.target
 __autostart_set () {
 	echofunc "__autostart_set"
 rm /home/vi/.profile
+# startx without messages:
+# [[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
 cat > /home/vi/.profile  << 'EOF'
-[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
+[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
 EOF
 chown vi:vi /home/vi/.profile
 systemctl set-default multi-user.target
@@ -158,7 +300,7 @@ systemctl set-default multi-user.target
 
 __tunning () {
 	echofunc "__tunning"
-		echoinfo "modify /etc/ssh/sshd_config: PermitRootLogin yes"
+	choinfo "modify /etc/ssh/sshd_config: PermitRootLogin yes"
 	sed -i 's/without-password/yes/g' /etc/ssh/sshd_config # deb8
 	sed -i 's/\#PermitRootLogin\ prohibit-password/PermitRootLogin\ yes/g' /etc/ssh/sshd_config #deb10
 	service sshd reload
@@ -188,12 +330,12 @@ __tunning () {
 __remove_dirs () {
 	echofunc "__remove_dirs"
 	echoinfo "remove directories ..."
-	if [ $__dir == "NULL" ]; then
+	if [ $_DIR == "NULL" ]; then
 		echoerror "nothing to remove ... add argument please"
 	exit 0
 	fi
-	echowarning "remove $__dir"
-	rm -R $__dir 2>/dev/null
+	echowarning "remove $_DIR"
+	rm -R $_DIR 2>/dev/null
 }
 
 __remove_files () {
@@ -238,12 +380,13 @@ __download_files () {
 # ./initiv download
 # will download all files from declared default list
 # declare list of full names of files with full paths
-if [ $__file = "" ]; then
+if [ -z "$__file" ]; then
 	echoinfo "declare list of files ......... wait ..."
 	declare -a __files=(
-	"/usr/lib/modules/$_KERNEL_RELEASE.tar.gz" \
+#	"/usr/lib/modules/$_KERNEL_RELEASE.tar.gz" \
 	"/usr/share/pixmaps/spin.tar.gz"\
 	"/usr/share/pixmaps/dots-mouse/dots-mouse.tar.gz"\
+	"/usr/share/pixmaps/red-dots-black/red-dots-black.tar.gz"\
 	)
 else
 	echoinfo "full file name with path $__file"
@@ -270,51 +413,75 @@ fi
 # tar -zcvf $_KERNEL_RELEASE.tar.gz /usr/lib/modules/$_KERNEL_RELEASE
 # download file:
 	for __file in ${__files[@]}; do
+		__f=$(echo "${__file##*/}") # extract file name without path
+		__p=$(echo "${__file%/*}") # extract path only
+		echoinfo "file: $__f"
+		echoinfo "path: $__p"
 		echoinfo "download file: $__file ............................. wait ..."
-		wget -nv -O $__file --no-check-certificate $_SERVER/.initiv/$_ID/$_VER/$_ARCH/$__file
-	done
+		rm -R $__p # delete old package files and directory
+		mkdir $__p
+		wget -nv -O $__file --no-check-certificate $_SERVER/.initiv/$_ID/$_VER/$_ARCH/$__path/$__file
+		tar -C $__p -zxf $__file
+		rm -R $__file # clean up
+		echoinfo "tar -C $__p -zxvf $__file"; echoinfo "... done"
+		done
 	# unpack archive
 }
 
-__animation () {
+__anime () {
+	echofunc "__anime"
+if [ -z "$_ANIMEDIR" ]; then
+	_ANIMEDIR="/usr/share/pixmaps/red-dots-black"
+else
+	case $_ANIMEDIR in
+		"1"|"dark") _ANIMEDIR="/usr/share/pixmaps/red-dots-black"                                              ;;
+		"2"|"light") _ANIMEDIR="/usr/share/pixmaps/dots-mouse"                                                  ;;
+		"3"|"spin") _ANIMEDIR="/usr/share/pixmaps/spin"                                                        ;;
+		*) echowarning "usage: $0 anime [1|dark|2|light|3|spin]"; exit 0           ;;
+	esac
+fi
 # xli based on xloadimage
-rm /opt/animation.sh
-cat > /opt/animation.sh << 'EOF'
+# pictures default directory
+echoinfo "_ANIMEDIR:$_ANIMEDIR"
+rm /opt/anime.sh
+cat > /opt/anime.sh << EOF
 #!/bin/bash
-__animation () {
+echo "_ANIMEDIR:$_ANIMEDIR"
+_ANIMEDIR='\$_ANIMEDIR'
+__anime () {
 it="0.1" # interval time
-dirlist=(`ls /usr/share/pixmaps/dots-mouse/$*`)
-# export DISPLAY=:0 && xview /usr/share/pixmaps/dots-mouse/spin01.gif &
+__dirlist=(`ls $_ANIMEDIR/\$*`)
 while true; do
-	for __file in ${dirlist[*]}; do
-#		echo "file: /usr/share/pixmaps/dots-mouse/$__file"
-#		export DISPLAY=:0 && eval xloadimage -onroot /usr/share/pixmaps/dots-mouse/$__file &
-		xloadimage -onroot /usr/share/pixmaps/dots-mouse/$__file &
-		sleep $it
+	for __file in \${__dirlist[*]}; do
+#		export DISPLAY=:0 && eval xloadimage -onroot $_ANIMEDIR/\$__file &
+		xloadimage -onroot $_ANIMEDIR/\$__file &
+		sleep \$it
 	done
 	pkill xloadimage
 done
 }
-case $1 in
-	$1)
-		__DIR=$1
-		__animation
+case \$1 in
+	\$1)
+		_ANIMEDIR=\$1
+		__anime
 	;;
 	*)
 		echo "no arguments"
 	;;
 esac
 EOF
-chmod +x /opt/animation.sh
+chmod +x /opt/anime.sh
 
-#eval /opt/animation.sh
+#eval /opt/anime.sh
 #bash -c "exec -a ProcessName xview /usr/share/pixmaps/spin/spin11.gif &"
 # set user's autostart, xinitrc
 cp /home/$__busyuser/.xinitrc /home/$__busyuser/.xinitrc.bak 2>/dev/null
 rm /home/$__busyuser/.xinitrc 2>/dev/null
 cat > /home/$__busyuser/.xinitrc  << 'EOF'
 #xclock
-/opt/animation.sh
+/opt/anime.sh &
+(sleep 2; /opt/xt.sh) &
+/opt/osd.sh
 EOF
 chown $__busyuser:$__busyuser /home/$__busyuser/.xinitrc
 # echo "/opt/animation.sh &" >> /home/$__busyuser/.xinitrc
@@ -324,41 +491,119 @@ chown $__busyuser:$__busyuser /home/$__busyuser/.xinitrc
 
 __osd () {
 	echofunc "__osd"
-touch $HOME/osd
+_FC=orange # font color
+
+if [[ "$_THEME" = "light" ]]; then
+	_FC=blue
+fi
 #rm $HOME/osd
-#cat > $HOME/osd << 'EOF'
+#cat > /opt/osd << 'EOF'
 #Loading . . .
 #EOF
 __it="0.5"
-#__fo="-adobe-helvetica-bold-r-normal--34-240-100-100-p-182-iso8859-1"
-#__fo="-*-helvetica-bold-*-*-*-34-*-*-*-*-*-*"
-__fo="-adobe-times-bold-r-normal--17-120-100-100-p-88-iso10646-1"
+# help==============================
+# see fonts list, command: xlsfonts
+# default font:
+#__fo="-misc-fixed-medium-r-semicondensed--*-*-*-*-c-*-*-*"
+rm /opt/osd.sh
+cat > /opt/osd.sh << EOF
+#!/bin/bash
+__fo="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
+	touch \$HOME/osd
+		while true; do
+			declare -a __dots=("." ".." "...")
+			for __dot in \${__dots[@]}; do
+				__r=\$((RANDOM%2+1)) # random 1 digit
+				echo "installing \$__dot" 2>&1 | tee \$HOME/osd
+				/usr/bin/osd_cat -p bottom -o 1 -A center -c $_FC -d \$__r -f \$__fo \$HOME/osd
+			done
+		done
+EOF
+chmod +x /opt/osd.sh
+echoinfo "/opt/osd.sh ... created"
+}
 
-iter=5
-for (( step=1; step<$iter; step++ )); do
-	__time=$((RANDOM%5+1))
+__xt () {
+echofunc "__xt"
+_BG=black
+_FG=grey
+
+if [[ "$_THEME" = "light" ]]; then
+	_BG=white;	_FG=black
+fi
+# run xterm with scpecific parameters
+cat > /opt/xt.sh << EOF
+#!/bin/bash
+__count () {
+	# generate specific output in terminal
+	__ms=\$((10 * 100000))
+	echo -e -n "\x1b[\x36 q" # change cursor to steady bar
 	while true; do
-	__random=$(cat /dev/urandom | tr -dc '0-9' | fold -w 8 | head -n 1)
-	echo "Loading ... $__random" > $HOME/osd
-	echoinfo " random $__random to file ..."
-	export DISPLAY=:0 && /usr/bin/osd_cat -p bottom -o 1 -A center -c black -d $__time -f __fo $HOME/osd
-	sleep $__time
-	echowarning "sleep $__time"
+		__c=\$(( __c+1 ))
+		echo -ne " \$__ms \033[0K\r \$__c "
+		sleep 0.01
+		: \$(( __ms-- ))
 	done
-	sleep $__time
-	shift 1
-done
+}
+
+__ip () {
+	# generate IP output in terminal
+	_IP=\$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+	while [[ "\$_IP" = "" ]]; do
+		_IP=\$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+	sleep 1
+	done
+	echo "\$_IP" | tr '\n' ' '
+	sleep infinity
+}
+
+__xterm () {
+	__font="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
+	# xterm -geometry 30x20+0+0 -uc -bg black -fg grey -fn \$__font -e /opt/count.sh
+	xterm -geometry 50x3+10+10 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh count' &
+	xterm -geometry 17x2+650+545 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip'
+}
+
+case \$1 in
+	count) __count ;;
+	ip) __ip       ;;
+	*) __xterm     ;;
+esac
+EOF
+chmod +x /opt/xt.sh
+echoinfo "/opt/xt.sh ... created"
 }
 
 __remove_packages () {
 	echofunc "__remove_packages"
-	declare -a packages=("acpi" "acpid" "eject" "ispell" "gcc-4.8-base:amd64" "os-prober"\
-"laptop-detect" "manpages" "nano" "tasksel" "traceroute" "usbutils" "vim-common"\
-"vim-tiny" "console-setup" "discover" "installation-report" "xxd" "kbd"\
-"keyboard-configuration" "libc-l10n" "pciutils" "apparmor")
-		for package in ${packages[@]}; do
-			echoinfo "remove package: $package ............................. wait ..."
-			apt-get -qq purge $package
+# I did try remove: "ispell", but sometimes :/ needs interactive answer, hmmm
+	declare -a _PACKAGES=(
+	"acpi"
+	"acpid"
+	"eject"
+	"gcc-4.8-base:amd64"
+	"os-prober"
+	"laptop-detect"
+	"manpages"
+	"nano"
+	"tasksel"
+	"traceroute"
+	"usbutils"
+	"vim-common"
+	"vim-tiny"
+	"console-setup"
+	"discover"
+	"installation-report"
+	"xxd"
+	"kbd"
+	"keyboard-configuration"
+	"libc-l10n"
+	"pciutils"
+	"apparmor"
+	)
+		for _PACKAGE in ${_PACKAGES[@]}; do
+			echoinfo "remove package: $_PACKAGE ............................. wait ..."
+			apt-get -qq purge $_PACKAGE
 		done
 	apt-get -qq autoremove
 	apt-get clean
@@ -367,51 +612,6 @@ __remove_packages () {
 __new_hostname () {
 	echofunc "__hostname"
 	echoinfo "change hostname to \"$_NEW_HOSTNAME\""
-}
-
-__help() {
-	echoinfo "=== $__script_name === Ver.$__script_version ======== help =============="
-	cat << EOT
-
-  Usage :  $__script_name [options] [variable=value] <action>
-
-  Options:
-    -a  Set user autologin in tty1 console
-    -b  option "b"
-    -c  option "c"
-    -d  option "d"
-    -e  option "e"
-    -f  option "f"
-    -g  option "g"
-    -h  Display this message
-    -v  Display script version
-    -T  change hostname
-    -A  Pass the salt-master DNS name or IP. This will be stored under
-        \${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
-    -i  Pass the salt-minion id. This will be stored under
-        \${BS_SALT_ETC_DIR}/minion_id
-    -o  Option "o"
-    -p  Option "p"
-    -r  Option "r"
-    -s  Option "s"
-    -t  Option "t"
-    -u  Update $0
-    -w  Option "w"
-
-		Variables:
-    salt-master=<IP> Pass salt-master IP or DNS name.
-
-  Actions:
-	salt - install salt minion
-  remove_files - remove unneded files
-	remove_packages - remove packages
-	tunning
-EOT
-echo -e "\e[32m  =================== help file end ==============\e[0m"
-}   # ----------  end of function __help  ----------
-
-__version() {
-echo -e "\e[95m$0 -- Version $__script_version\e[0m"
 }
 
 __update () {
@@ -475,19 +675,71 @@ picture="wallpaper.jpg"
 chmod 777 /opt/$picture
 }
 
+__help() {
+	echoinfo "=== $__script_name === Ver.$__script_version ======== help =============="
+	cat << EOT
+
+  Usage :  $__script_name [-options] [VARIABLE=value] <action>
+
+  Options:
+    -a  Set user autologin in tty1 console
+    -b  option "b"
+    -c  option "c"
+    -d  option "d"
+    -e  option "e"
+    -f  option "f"
+    -g  option "g"
+    -h  Display this message
+		-n  Set background animation. -n light or -n dark (default)
+    -v  Display script version
+    -T  change hostname
+    -A  Pass the salt-master DNS name or IP. This will be stored under
+        \${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
+    -i  Pass the salt-minion id. This will be stored under
+        \${BS_SALT_ETC_DIR}/minion_id
+    -o  Option "o"
+    -p  Option "p"
+    -r  Option "r"
+    -s  Option "s"
+    -t  Pass the loading theme. -t light or -t dark
+    -u  Update $0
+    -w  Option "w"
+
+		Variables:
+    salt-master=<IP> Pass salt-master IP or DNS name.
+
+  Actions:
+	salt - install salt minion
+  remove_files - remove unneded files
+	remove_packages - remove packages
+	tunning
+EOT
+echo -e "\e[32m  =================== help file end ==============\e[0m"
+}   # ----------  end of function __help  ----------
+
+__version() {
+echo -e "\e[95m$0 -- Version $__script_version\e[0m"
+}
+
 # options ======================================================================
 # ==============================================================================
 # ==============================================================================
-while getopts ':a: d: h r: v T: u' opt
+while getopts ':a: d: h i: n: o: r: v T: t: u w x' opt
 do
   case "${opt}" in
-    a )  autouser="$OPTARG"; __autologin_set; exit 0                      ;;
+    a )  _AUTOUSER="$OPTARG"; __autologin_set; __autostart_set            ;;
 		d )  __file="$OPTARG"; __download_files; exit 0                       ;;
     h )  __help; exit 0                                                   ;;
-		r )  __dir="$OPTARG"; __remove_dirs; exit 0                           ;;
+		i )  _PACKAGE="$OPTARG"; __install_stuff                              ;;
+		n )  _ANIMEDIR="$OPTARG"; echoinfo "_ANIMEDIR=$OPTARG"                ;;
+		o )  _THEME="$OPTARG"; __osd                                          ;;
+		r )  _DIR="$OPTARG"; __remove_dirs; exit 0                            ;;
     v )  __version                                                        ;;
     T )  _NEW_HOSTNAME="$OPTARG"; __new_hostname                          ;;
+		t )  _THEME="$OPTARG"; _ANIMEDIR="$OPTARG"; __anime; __xt;            ;;
 		u )  __update; __version                                              ;;
+		w )  __update_apt_repos                                               ;;
+		x )  __install_x; (sleep 2; __reset) &                                ;;
 		:) echowarning "Option -$OPTARG requires an argument." >&2        		;;
 		\?) __no_option                                                       ;;
 		* )  __help; exit 0                                                   ;;
@@ -497,8 +749,8 @@ shift $((OPTIND-1))
 
 for i in "$1"; do
 	case $i in
-		sm=*|salt-master=*) _SALT_MASTER_ADDRESS="${i#*=}"; shift               ;;
-		hs=*|hostname=*) _NEW_HOSTNAME="${i#*=}"; shift                       	;;
+		sm=*|salt-master=*) _SALT_MASTER_ADDRESS="${i#*=}"; shift            ;;
+		hs=*|hostname=*) _NEW_HOSTNAME="${i#*=}"; shift                      ;;
 	esac
 done
 #shift $((OPTIND-1))
@@ -513,13 +765,18 @@ case $1 in
 	"installStuff"|"install-stuff"|"apt" )	__install_stuff                ;;
 	"tunning" )	__tunning                                                  ;;
 	"installStuff2"|"install-stuff2"|"apt2" )	__install_stuff2             ;;
+	"installStuff3"|"install-stuff3"|"apt3" )	__install_stuff3             ;;
 	"salt" ) __salt                                                        ;;
 	"installX"|"install-x" )	__install_x                                  ;;
 	"interface" )	__interface                                              ;;
 	"download" )	__download_files                                         ;;
-	"spin"|"animation" )	__animation                                      ;;
+	"spin"|"animation"|"anime" )	_ANIMEDIR="$2"; __anime                  ;;
 	"osd" )	__osd                                                          ;;
-	"all" )
+	"reset" )	__reset                                                      ;;
+	"xt" )	__xt                                                           ;;
+	"createRecovery"|"create-recovery" )	__create_recovery                ;;
+	"parted" )	_DEV=$2; _PART=$3; _APPLY=$4; __parted                     ;;
+	"all"|"full"|"install" )
 		__read_data
 		__update
 		__update_apt_repos
@@ -531,13 +788,15 @@ case $1 in
 		__salt
 		__install_x
 		__interface
-		__remove_files
 		__download_files
-		__animation
-	;;
+		__anime
+		__osd
+		__xt
+		(sleep 2; __reset) &
+		;;
 
 esac
-sleep 1
 __read_data
-echo -e "${coloroff}"
+echo -e $coloroff
+secs_to_human "$(($(date +%s) - ${__start}))"
 exit 0
