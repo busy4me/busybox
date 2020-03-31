@@ -1,33 +1,113 @@
 #!/bin/bash
-# slimming Linux bootstrap script, author: Roy Visar visaroy@gmail.com
-# to set varaibles, slim distro, remove files, remove packages, install packages, , xorg, salt etc.
-# set -o nounset # unset variables as an error
-# # # #
-#exec 3>&1 4>&2
-#trap 'exec 2>&4 1>&3' 0 1 2 3
-#exec 1>initiv.log 2>&1
-# Everything below will go to the file 'log.out':
-exec &> >(tee -ia initiv.log)
-exec 2>&1
-
-__start=$(date +%s) # calculate how long script runs (see on the end)
-__script_path=`pwd`
-__script_name="initiv"
-__script_version="20.02"
-__script_full_name="$0"
-__script_arguments="$*"
-__date_stamp="$(date +%Y-%m-%d--%H-%M-%S)"
-__busyuser="vi" # default user
-cd $HOME
-
+cat > ./initivHelp << 'HELP'
+|
+-- Script -- initiv --------------------------------------------------------------------------------
+|    Description: slimming Linux bootstrap script used to slim Linux distributions, remove packages|
+|                 install only the packages you need, eg.xorg and chrome                           |
+|         Author: visaroy@gmail.com                                                                |
+----------------------------------------------------------------------------------------------------
+|
+HELP
+cat >> ./initivHelp << 'HELP'
+|
+-- Script -- initiv --------------------------------------------------------------------------------
+|    Description: slimming Linux bootstrap script used to slim Linux distributions, remove packages|
+|                 install only the packages you need                                               |
+|                                                                                                  |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 # set bashcolors ===============================================================
 if ! wget -q -nv -O ./bashcolors --no-check-certificate http://busy4.me/bashcolors; then
 	echo -e "no colors...\e[0m"
 else
 . ./bashcolors
-echo -e "${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${gre}o${lbla}o${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${whi}o\
-${lbla} __script_arguments=$__script_arguments ${coloroff}"
+echo -e "${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${gre}o${lbla}o${lblu}o${gre}o${cya}o${red}\
+o${mag}o${yel}o${whi}o${lbla}o${whi}o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lbla}o${gre}\
+o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o
+_SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}"
 fi
+# Everything below will go to the file 'initiv.log':
+exec &> >(tee -ia initiv.log)
+exec 2>&1
+
+_START=$(date +%s) # calculate how long script runs (see on the end)
+_SCRIPT_PATH=`pwd`
+_SCRIPT_NAME="initiv"
+_SCRIPT_VERSION="20.02"
+_SCRIPT_FULL_NAME="$0"
+_SCRIPT_ARGUMENTS="$*"
+_DATE_STAMP="$(date +%Y-%m-%d--%H-%M-%S)"
+_USER="busyman" # default user name
+_PASS="busy" # default user password
+
+__useradd () {
+	echofunc "__useradd"
+	echoinfo "_USER=$_USER"
+	groupadd $_USER 2>/dev/null
+	useradd -p $(openssl passwd -1 $_PASS) -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
+	usermod -a -G "cdrom,floppy,dip,plugdev,netdev,audio,video" $_USER
+	_CAF="/etc/cron.allow"
+if ! grep -q $_USER $_CAF; then
+	echo "$_USER" >> $_CAF
+	echoconfirm "$_USER added to $_CAF"
+else
+	echoinfo "$_USER already exists in $_CAF"
+fi
+}
+
+# Autologin as $_USER user without login manager in console tty1...
+__autologin () {
+echofunc "__autologin"
+echoinfo "_AUTOUSER=$_USER"
+# autologin as $busyuser in tty1
+_AUTOUSER=$_USER
+#if [ "$_AUTOUSER" != "" ]; then
+#		_USER=$_AUTOUSER
+#fi
+echo -e "\e[32m Autologin as \e[95m$_USER\e[0m user without login manager in console tty1...\e[0m"
+mkdir -pv /etc/systemd/system/getty@tty1.service.d 2>/dev/null
+rm /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $_AUTOUSER --noclear %I $TERM
+EOF
+
+# autologin as root in tty2
+#
+mkdir -pv /etc/systemd/system/getty@tty2.service.d 2>/dev/null
+rm /etc/systemd/system/getty@tty2.service.d/autologin.conf 2>/dev/null
+cat > /etc/systemd/system/getty@tty2.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
+EOF
+systemctl set-default multi-user.target
+}
+
+__autostart () {
+	echofunc "__autostart"
+	echoinfo "_AUTOUSER=$_USER set startx after autologing and applications after X starts..."
+cp /home/$_USER/.profile /home/$_USER/.profile.bak 2>/dev/null
+rm /home/$_USER/.profile 2>/dev/null
+# [[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
+cat > /home/$_USER/.profile  << 'EOF'
+[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
+EOF
+chown $_USER:$_USER /home/$_USER/.profile
+
+cp /home/$_USER/.xinitrc /home/$_USER/.xinitrc.bak 2>/dev/null
+rm /home/$_USER/.xinitrc 2>/dev/null
+cat > /home/$_USER/.xinitrc  << 'EOF'
+#xclock
+/opt/anime.sh &
+(sleep 2; /opt/xt.sh) &
+/opt/osd.sh
+EOF
+chown $_USER:$_USER /home/$_USER/.xinitrc
+systemctl set-default multi-user.target
+}
 
 secs_to_human() {
     if [[ -z ${1} || ${1} -lt 60 ]] ;then
@@ -54,6 +134,10 @@ echoinfo() {
     printf "${lblu}   * INFO${lcya}: %s ${nocolor}\\n" "$@" 1>&2;
 }
 
+echoconfirm() {
+    printf "${mag}   * INFO${lmag}: %s ${nocolor}\\n" "$@" 1>&2;
+}
+
 echofunc() {
     printf "${lgre} * FUNCTION${gre}: %s${nocolor}\\n" "$@" 1>&2;
 }
@@ -62,11 +146,21 @@ if [ $USER != "root" ]; then
 	echoinfo "... ### run this script as root to get full functionality ### ..."
 fi
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __create_recovery -------------------------------------------------------------------
+|    Description: create initivRecovery file, used in emergency when update goes wrong.            |
+|          Usage: ./initivRecovery                                                                 |
+|                 Script ./initivRecovery removes badly updated ./initiv and copy from last        |
+|                 backup file ./initiv-*                                                           |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __create_recovery () {
 	echofunc "__create_recovery"
 # create recovery script 'initiv-recovery', to be using in emergency case, eg.when update went wrong
-echoinfo "__script_path: $__script_path/initivRecovery"
-cat > $__script_path/initivRecovery  << EOF
+echoinfo "_SCRIPT_PATH: $_SCRIPT_PATH/initivRecovery"
+cat > $_SCRIPT_PATH/initivRecovery  << EOF
 #/bin/bash
 rm ./initiv
 cp ./initiv-* ./initiv
@@ -76,6 +170,13 @@ chmod +x ./initivRecovery
 [[ -f ./initivRecovery ]] ||	{ echoinfo "create script initivRecovery ... "; __create_recovery; }
 
 # reset (restart) Xserver (xinit) in tty1
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __reset -----------------------------------------------------------------------------
+|    Description: reset xinit and Xserver in default tty1                                          |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __reset () {
 echofunc "reset Xserver in tty1 ... wait"
 	service getty@tty1 stop
@@ -93,24 +194,24 @@ __add_to_path () {
 	echo "PATH="$PATH
 	case "$(echo $PATH)" in
 	  *"/root"*)
-		echoinfo "PATH contains: $__script_path"
+		echoinfo "PATH contains: $_SCRIPT_PATH"
 	  ;;
 	  *)
-		echowarning "add to path ... "$__script_path
+		echowarning "add to path ... "$_SCRIPT_PATH
 	  PATH=$PATH:/stratum; export PATH
 		sed -i 's/export PATH=$PATH:\/root//g' ~/.profile
-	  echo 'export PATH=$PATH:'$__script_path  >> ~/.profile
+	  echo 'export PATH=$PATH:'$_SCRIPT_PATH  >> ~/.profile
 	  ;;
 	esac
 
 #	if [ $PATH != "*/root*" ]; then
-#		echowarning "add to path ... "$__script_path
-#		echo 'export PATH=$PATH:'$__script_path  >> ~/.bash_profile
-#		echo 'export PATH=$PATH:'$__script_path  >> ~/.profile
+#		echowarning "add to path ... "$_SCRIPT_PATH
+#		echo 'export PATH=$PATH:'$_SCRIPT_PATH  >> ~/.bash_profile
+#		echo 'export PATH=$PATH:'$_SCRIPT_PATH  >> ~/.profile
 #		eval /tmp/initiv-temp.sh
 #		echo "PATH="$PATH
 #	else
-#		echoinfo "PATH contains:" $__script_path
+#		echoinfo "PATH contains:" $_SCRIPT_PATH
 #	fi
 }
 
@@ -119,10 +220,45 @@ __add_to_path
 __read_data () {
 echofunc "__read_data"
 # rm ./initivData
-echo $__date_stamp " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> ./initivData
-__read_data=$(echo $__date_stamp " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
+echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> ./initivData
+__read_data=$(echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
 # | tr '\n' ' '
 echoinfo "read disk usage ..." | tr '\n' ' '; echo $__read_data
+}
+
+__remove_packages () {
+	echofunc "__remove_packages"
+# I did try remove: "ispell", but sometimes :/ needs interactive answer, hmmm
+# "keyboard-configuration"
+	declare -a _PACKAGES=(
+	"acpi"
+	"acpid"
+	"eject"
+	"gcc-4.8-base:amd64"
+	"os-prober"
+	"laptop-detect"
+	"manpages"
+	"nano"
+	"tasksel"
+	"traceroute"
+	"usbutils"
+	"vim-common"
+	"vim-tiny"
+	"console-setup"
+	"discover"
+	"installation-report"
+	"kbd"
+	"xxd"
+	"libc-l10n"
+	"pciutils"
+	"apparmor"
+	)
+		for _PACKAGE in ${_PACKAGES[@]}; do
+			echoinfo "remove package: $_PACKAGE ............................. wait ..."
+			apt-get -qq purge $_PACKAGE
+		done
+	apt-get -qq autoremove
+	apt-get clean
 }
 
 __update_apt_repos () {
@@ -148,6 +284,7 @@ __install_stuff () {
 
 	declare -a stuff=(
 	"openssh-server"
+	"openssl"
 	"bc"
 	"xloadimage"
 	"xli"
@@ -210,6 +347,7 @@ __install_stuff3 () {
 	_PACKAGE="gnupg"
 	echoinfo "install package: $_PACKAGE ............................. wait ..."
 	apt-get install -y -qq --no-install-recommends $_PACKAGE
+# instll google-chrome
 	wget --no-check-certificate -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 	#add-apt-repository 'deb http://dl.google.com/linux/chrome/deb/ stable main'
 	_GGL_REPO="deb http://dl.google.com/linux/chrome/deb/ stable main"
@@ -225,12 +363,32 @@ __install_stuff3 () {
 	apt-get install -y -qq --no-install-recommends $_PACKAGE
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __parted ----------------------------------------------------------------------------
+|    Description: extend linux partition to 10GB (default) on /dev/sda1                            |
+|          Usage: ./initiv mb=2000MB parted; expand to 2GB, default part: _DEV=/dev/sda _PART=1    |
+|                 ./initiv parted /dev/sda 1 apply                                                 |
+|                 ./initiv [mb=] parted [device] [partition] [apply]                               |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __parted () {
 	echofunc "__parted"
+_PACK=$(apt list parted)
+if [[ $_PACK == *"installed"* ]]; then
+	echo "parted exists.."
+else
+	echoinfo "install parted package ....  "
+	apt-get install -y -qq --no-install-recommends parted
+fi
+
 [[ -z $_DEV ]] && _DEV=/dev/sda
 [[ -z $_PART ]] && _PART=1
 [[ -z $_APPLY ]] && _APPLY=apply
-echoinfo "_DEV=$_DEV; _PART=$_PART; _APPLY=$_APPLY"
+[[ -z $_EXT ]] && _EXT="10000MB" # max size 10GB
+
+echoinfo "_DEV=$_DEV; _PART=$_PART; _APPLY=$_APPLY; _EXT=$_EXT"
 _USAGE="eg. preview usage: initiv parted /dev/sda 1; apply usage: initiv parted /dev/sda 1 apply"
 if [ -z "$_DEV" ]; then
 	echowarning "_DEV and _PART are empty... "; echoinfo "$_USAGE"; exit 0
@@ -242,65 +400,24 @@ fdisk -l $_DEV$_PART >> /dev/null 2>&1 || (echo "could not find $_DEV$_PART - pl
 
 CURRENTSIZEB=`fdisk -l $_DEV$_PART | grep "Disk $_DEV$_PART" | cut -d' ' -f5`
 CURRENTSIZE=`expr $CURRENTSIZEB / 1024 / 1024`
-MAXSIZEMB="10000MB" # max size 10GB
-#MAXSIZEMB=`printf %s\\n 'unit MB print list' | parted | grep "Disk ${_DEV}" | cut -d' ' -f3 | tr -d MB`
-echowarning "[ok] would/will resize to from ${CURRENTSIZE}MB to ${MAXSIZEMB}"
+#_EXT=`printf %s\\n 'unit MB print list' | parted | grep "Disk ${_DEV}" | cut -d' ' -f3 | tr -d MB`
+echowarning "[ok] would/will resize to from ${CURRENTSIZE}MB to ${_EXT}"
 
 if [[ "$_APPLY" == "apply" ]] ; then
   echo "[ok] applying resize operation.."
-  parted ${_DEV} resizepart ${_PART} yes ${MAXSIZEMB}
+  parted ${_DEV} resizepart ${_PART} yes ${_EXT}
   echoinfo "[done]"
 else
   echowarning "Sandbox mode, i did not size!. $_USAGE"
 fi
-(sleep 2; echoinfo "expand filesystem ........... please wait ...") &
+(sleep 1; echoinfo "expand filesystem ........... please wait ..."; exit 0) &
+#(sleep 2; printf "\n") &
 resize2fs $_DEV$_PART
-}
-
-# Autologin as $__busyuser user without login manager in console tty1...
-__autologin_set () {
-echofunc "__autologin_set"
-# autologin as $busyuser in tty1
-#
-if [ "$_AUTOUSER" != "" ]; then
-		__busyuser=$_AUTOUSER
-fi
-echo -e "\e[32m Autologin as $__busyuser user without login manager in console tty1...\e[0m"
-mkdir -pv /etc/systemd/system/getty@tty1.service.d 2>/dev/null
-rm /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
-cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin $__busyuser --noclear %I $TERM
-EOF
-
-# autologin as root in tty2
-#
-mkdir -pv /etc/systemd/system/getty@tty2.service.d 2>/dev/null
-rm /etc/systemd/system/getty@tty2.service.d/autologin.conf 2>/dev/null
-cat > /etc/systemd/system/getty@tty2.service.d/autologin.conf << EOF
-[Service]
-ExecStart=
-ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
-EOF
-systemctl set-default multi-user.target
-}
-
-__autostart_set () {
-	echofunc "__autostart_set"
-rm /home/vi/.profile
-# startx without messages:
-# [[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
-cat > /home/vi/.profile  << 'EOF'
-[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
-EOF
-chown vi:vi /home/vi/.profile
-systemctl set-default multi-user.target
 }
 
 __tunning () {
 	echofunc "__tunning"
-	choinfo "modify /etc/ssh/sshd_config: PermitRootLogin yes"
+	echoinfo "modify /etc/ssh/sshd_config: PermitRootLogin yes"
 	sed -i 's/without-password/yes/g' /etc/ssh/sshd_config # deb8
 	sed -i 's/\#PermitRootLogin\ prohibit-password/PermitRootLogin\ yes/g' /etc/ssh/sshd_config #deb10
 	service sshd reload
@@ -475,18 +592,18 @@ chmod +x /opt/anime.sh
 #eval /opt/anime.sh
 #bash -c "exec -a ProcessName xview /usr/share/pixmaps/spin/spin11.gif &"
 # set user's autostart, xinitrc
-cp /home/$__busyuser/.xinitrc /home/$__busyuser/.xinitrc.bak 2>/dev/null
-rm /home/$__busyuser/.xinitrc 2>/dev/null
-cat > /home/$__busyuser/.xinitrc  << 'EOF'
+cp /home/$_USER/.xinitrc /home/$_USER/.xinitrc.bak 2>/dev/null
+rm /home/$_USER/.xinitrc 2>/dev/null
+cat > /home/$_USER/.xinitrc  << 'EOF'
 #xclock
 /opt/anime.sh &
 (sleep 2; /opt/xt.sh) &
 /opt/osd.sh
 EOF
-chown $__busyuser:$__busyuser /home/$__busyuser/.xinitrc
-# echo "/opt/animation.sh &" >> /home/$__busyuser/.xinitrc
+chown $_USER:$_USER /home/$_USER/.xinitrc
+# echo "/opt/animation.sh &" >> /home/$_USER/.xinitrc
 # eval /opt/animation.sh
-# export XAUTHORITY="/home/$__busyuser/.Xauthority" && export DISPLAY=:0 && bash /opt/animation.sh &
+# export XAUTHORITY="/home/$_USER/.Xauthority" && export DISPLAY=:0 && bash /opt/animation.sh &
 }
 
 __osd () {
@@ -523,6 +640,23 @@ chmod +x /opt/osd.sh
 echoinfo "/opt/osd.sh ... created"
 }
 
+__dots () {
+	echofunc "__dots"
+_TERM=$(tty)
+_PROC=$(ps -e | grep "initiv" | grep -v grep)
+echoinfo "$_PROC"
+(while [[ $_PROC == *"initiv"* ]]; do
+	_PROC=$(ps -e | grep "initiv" | grep -v grep)
+    printf '.' > $_TERM
+    sleep 1
+done) &
+
+sleep 5
+
+printf '\n' > $_TERM
+(sleep 0.1; pkill initiv) &
+}
+
 __xt () {
 echofunc "__xt"
 _BG=black
@@ -549,7 +683,7 @@ __count () {
 __ip () {
 	# generate IP output in terminal
 	_IP=\$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
-	while [[ "\$_IP" = "" ]]; do
+  while [ -z \$_IP ]; do
 		_IP=\$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
 	sleep 1
 	done
@@ -574,41 +708,6 @@ chmod +x /opt/xt.sh
 echoinfo "/opt/xt.sh ... created"
 }
 
-__remove_packages () {
-	echofunc "__remove_packages"
-# I did try remove: "ispell", but sometimes :/ needs interactive answer, hmmm
-	declare -a _PACKAGES=(
-	"acpi"
-	"acpid"
-	"eject"
-	"gcc-4.8-base:amd64"
-	"os-prober"
-	"laptop-detect"
-	"manpages"
-	"nano"
-	"tasksel"
-	"traceroute"
-	"usbutils"
-	"vim-common"
-	"vim-tiny"
-	"console-setup"
-	"discover"
-	"installation-report"
-	"xxd"
-	"kbd"
-	"keyboard-configuration"
-	"libc-l10n"
-	"pciutils"
-	"apparmor"
-	)
-		for _PACKAGE in ${_PACKAGES[@]}; do
-			echoinfo "remove package: $_PACKAGE ............................. wait ..."
-			apt-get -qq purge $_PACKAGE
-		done
-	apt-get -qq autoremove
-	apt-get clean
-}
-
 __new_hostname () {
 	echofunc "__hostname"
 	echoinfo "change hostname to \"$_NEW_HOSTNAME\""
@@ -617,12 +716,12 @@ __new_hostname () {
 __update () {
 	echofunc "__update"
 	echoinfo " ..check update"
-	echo -e "$0 \e[32m -- Update $__script_version $__date_stamp\e[0m"
+	echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
 	if ! wget -nv -O ./initiv.new --no-check-certificate http://busy4.me/initiv; then
 		echoerror "there is no file "$0" on the server or no response!..."
 		exit 1
 	else
-	rm -rf ./initiv-*;	cp ./initiv ./initiv-$__date_stamp # backup just in case
+	rm -rf ./initiv-*;	cp ./initiv ./initiv-$_DATE_STAMP # backup just in case
 	rm -rf ./initiv;	cp ./initiv.new ./initiv 2>/dev/null
 	chmod +x ./initiv
 	rm -rf ./initiv.new
@@ -630,9 +729,31 @@ __update () {
 fi
 }
 
+
+
 __salt () {
-	echofunc "__saltstack"
+	echofunc "__salt"
 	echoinfo " ... install saltstack, _SALT_MASTER_ADDRESS="$_SALT_MASTER_ADDRESS" "
+_SALT_DIR="/etc/salt"
+_SALT_MASTER="api1.busy4.me"
+	# Drop the master address if passed
+	if [ "$_SALT_MASTER" != "null" ]; then
+	    [ ! -d "$_SALT_DIR/minion.d" ] && mkdir -p "$_SALT_DIR/minion.d"
+cat > $_SALT_DIR/minion.d/99-master-address.conf << EOF
+master: $_SALT_MASTER
+EOF
+	fi
+
+	wget -O - https://repo.saltstack.com/py3/debian/10/amd64/latest/SALTSTACK-GPG-KEY.pub | apt-key add -
+
+	# Drop the minion id if passed
+	if [ "$_SALT_MINION" != "null" ]; then
+	    [ ! -d "$_SALT_DIR" ] && mkdir -p "$_SALT_ETC_DIR"
+	    echo "$_SALT_MINION_ID" > "$_SALT_ETC_DIR/minion_id"
+	fi
+
+	echo "deb http://repo.saltstack.com/py3/debian/10/amd64/latest buster main" >> /etc/apt/sources.list
+
 }
 
 __no_option () {
@@ -651,19 +772,6 @@ __install_x () {
 	echofunc "__install_x"
 	echoinfo "install X"
 apt-get install -y -V --no-install-recommends xorg
-cp /home/$__busyuser/.profile /home/$__busyuser/.profile.bak 2>/dev/null
-rm /home/$__busyuser/.profile 2>/dev/null
-cat > /home/$__busyuser/.profile  << 'EOF'
-[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
-EOF
-chown $__busyuser:$__busyuser /home/$__busyuser/.profile
-
-cp /home/$__busyuser/.xinitrc /home/$__busyuser/.xinitrc.bak 2>/dev/null
-rm /home/$__busyuser/.xinitrc 2>/dev/null
-cat > /home/$__busyuser/.xinitrc  << 'EOF'
-xclock
-EOF
-chown $__busyuser:$__busyuser /home/$__busyuser/.xinitrc
 }
 
 __interface () {
@@ -676,10 +784,11 @@ chmod 777 /opt/$picture
 }
 
 __help() {
-	echoinfo "=== $__script_name === Ver.$__script_version ======== help =============="
-	cat << EOT
+	echoinfo "=== $_SCRIPT_NAME === Ver.$_SCRIPT_VERSION ======== help =============="
 
-  Usage :  $__script_name [-options] [VARIABLE=value] <action>
+	cat >> ./initivHelp << HELP
+
+  Usage :  $_SCRIPT_NAME [-options] [VARIABLE=value] <action>
 
   Options:
     -a  Set user autologin in tty1 console
@@ -700,12 +809,12 @@ __help() {
     -o  Option "o"
     -p  Option "p"
     -r  Option "r"
-    -s  Option "s"
+    -s
     -t  Pass the loading theme. -t light or -t dark
     -u  Update $0
     -w  Option "w"
 
-		Variables:
+    Variables:
     salt-master=<IP> Pass salt-master IP or DNS name.
 
   Actions:
@@ -713,67 +822,78 @@ __help() {
   remove_files - remove unneded files
 	remove_packages - remove packages
 	tunning
-EOT
+HELP
+cat ./initivHelp
 echo -e "\e[32m  =================== help file end ==============\e[0m"
 }   # ----------  end of function __help  ----------
 
 __version() {
-echo -e "\e[95m$0 -- Version $__script_version\e[0m"
+echo -e "\e[95m$0 -- Version $_SCRIPT_VERSION\e[0m"
 }
 
-# options ======================================================================
-# ==============================================================================
-# ==============================================================================
-while getopts ':a: d: h i: n: o: r: v T: t: u w x' opt
+# === options ======================================================================================
+# |                                                                                                |
+# ==================================================================================================
+while getopts ':a: d: h i: n: o: r: s: v T: t: u U: w x' opt
 do
   case "${opt}" in
-    a )  _AUTOUSER="$OPTARG"; __autologin_set; __autostart_set            ;;
-		d )  __file="$OPTARG"; __download_files; exit 0                       ;;
-    h )  __help; exit 0                                                   ;;
-		i )  _PACKAGE="$OPTARG"; __install_stuff                              ;;
-		n )  _ANIMEDIR="$OPTARG"; echoinfo "_ANIMEDIR=$OPTARG"                ;;
-		o )  _THEME="$OPTARG"; __osd                                          ;;
-		r )  _DIR="$OPTARG"; __remove_dirs; exit 0                            ;;
-    v )  __version                                                        ;;
-    T )  _NEW_HOSTNAME="$OPTARG"; __new_hostname                          ;;
-		t )  _THEME="$OPTARG"; _ANIMEDIR="$OPTARG"; __anime; __xt;            ;;
-		u )  __update; __version                                              ;;
-		w )  __update_apt_repos                                               ;;
-		x )  __install_x; (sleep 2; __reset) &                                ;;
-		:) echowarning "Option -$OPTARG requires an argument." >&2        		;;
-		\?) __no_option                                                       ;;
-		* )  __help; exit 0                                                   ;;
+    a )  _AUTOUSER="$OPTARG"; __autologin; __autostart                               ;;
+		d )  __file="$OPTARG"; __download_files; exit 0                                          ;;
+    h )  __help; exit 0                                                                      ;;
+		i )  _PACKAGE="$OPTARG"; __install_stuff                                                 ;;
+		n )  _ANIMEDIR="$OPTARG"; echoinfo "_ANIMEDIR=$OPTARG"                                   ;;
+		o )  _THEME="$OPTARG"; __osd                                                             ;;
+		r )  _DIR="$OPTARG"; __remove_dirs; exit 0                                               ;;
+		s )  _SALT_MASTER="$OPTARG"; __salt                                                      ;;
+    v )  __version                                                                           ;;
+    T )  _NEW_HOSTNAME="$OPTARG"; __new_hostname                                             ;;
+		t )  _THEME="$OPTARG"; _ANIMEDIR="$OPTARG"; __anime; __xt;                               ;;
+		u )  __update; __version                                                                 ;;
+		U )  _USER="$OPTARG"; __useradd; __anime; __autologin; __autostart; __reset      ;;
+		w )  __update_apt_repos                                                                  ;;
+		x )  __install_x; (sleep 2; __reset) &                                                   ;;
+		:) echowarning "Option -$OPTARG requires an argument." >&2        		                   ;;
+		\?) __no_option                                                                          ;;
+		* )  __help; exit 0                                                                      ;;
   esac
 done
 shift $((OPTIND-1))
 
+# pass other options:
+# sm=xxx.xxx.xxx.xxx - saltstack master IP address or DNS name
+# hs="hostname" - host name
 for i in "$1"; do
 	case $i in
 		sm=*|salt-master=*) _SALT_MASTER_ADDRESS="${i#*=}"; shift            ;;
 		hs=*|hostname=*) _NEW_HOSTNAME="${i#*=}"; shift                      ;;
+		mb=*|maxsize=*) _EXT="${i#*=}"; shift                      ;;
 	esac
 done
 #shift $((OPTIND-1))
 
+
+
+# actions:
 case $1 in
 	"update" )	__update                                                   ;;
 	"updateApt"|"apt" )	__update_apt_repos                                 ;;
 	"removeFiles"|"remove-files" )	__remove_files                         ;;
 	"removePackages"|"remove-packages" )	__remove_packages                ;;
-	"autostart"|"autostartSet"|"autostart-set" )	__autostart_set          ;;
-	"autologin"|"autologinSet"|"autologin-set" )	__autologin_set          ;;
+	"autostart"|"autostartSet"|"autostart-set" )	__autostart          ;;
+	"autologin"|"autologinSet"|"autologin-set" )	__autologin          ;;
 	"installStuff"|"install-stuff"|"apt" )	__install_stuff                ;;
 	"tunning" )	__tunning                                                  ;;
 	"installStuff2"|"install-stuff2"|"apt2" )	__install_stuff2             ;;
 	"installStuff3"|"install-stuff3"|"apt3" )	__install_stuff3             ;;
-	"salt" ) __salt                                                        ;;
+	"salt" ) _SALT_MASTER=$2; __salt                                       ;;
 	"installX"|"install-x" )	__install_x                                  ;;
 	"interface" )	__interface                                              ;;
 	"download" )	__download_files                                         ;;
-	"spin"|"animation"|"anime" )	_ANIMEDIR="$2"; __anime                  ;;
+	"anime"|"spin"|"animation" )	_ANIMEDIR="$2"; __anime                  ;;
 	"osd" )	__osd                                                          ;;
 	"reset" )	__reset                                                      ;;
 	"xt" )	__xt                                                           ;;
+	"dots" )	__dots                                                       ;;
 	"createRecovery"|"create-recovery" )	__create_recovery                ;;
 	"parted" )	_DEV=$2; _PART=$3; _APPLY=$4; __parted                     ;;
 	"all"|"full"|"install" )
@@ -781,9 +901,10 @@ case $1 in
 		__update
 		__update_apt_repos
 		__remove_packages
-		__autostart_set
-		__autologin_set
 		__install_stuff
+		__useradd
+		__autostart
+		__autologin
 		__tunning
 		__salt
 		__install_x
@@ -798,5 +919,5 @@ case $1 in
 esac
 __read_data
 echo -e $coloroff
-secs_to_human "$(($(date +%s) - ${__start}))"
+secs_to_human "$(($(date +%s) - ${_START}))"
 exit 0
