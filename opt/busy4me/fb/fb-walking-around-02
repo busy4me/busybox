@@ -6,14 +6,14 @@ source /opt/busy4me/fb/fb-config
 
 logline() {
     while IFS= read -r line; do
-        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE 
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
     done
 }
 
 login=$(cat "$login_source")
 echo 'login =' $login | logline
 login_string=$login
-login_string=$(echo $login_string | tr '@' '_')
+login_string=$(echo $login_string | tr '@' '-')
 echo 'login_string =' $login_string | logline
 user_db="$HOME/busy4me/fb/db/fb_$login_string.db"
 echo 'Use database:' $user_db | logline
@@ -71,7 +71,7 @@ sleep 0.3
 
 walking_around_wall () {
 
-kds=50 # Key Delay Short [ms] 
+kds=50 # Key Delay Short [ms]
 kd=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
 kd_2=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
 kdl=$((500 + RANDOM % 15 * 100)) # Key Delay Long between 500 and 2000[ms]
@@ -94,11 +94,11 @@ xdotool key --delay 500 Ctrl+f
 xdotool type --delay $kd facebook
 xdotool key --delay $kd Escape keydown Shift Tab keyup Shift Tab Escape
 xdotool key --delay 500 Escape
-xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape 
+xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
 xdotool key --delay $kd Down Down Down
 xdotool key --delay $kd_2 Down Down Down
 xdotool key --delay $kdl Down Down Down
-xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape 
+xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
 xdotool key --delay $kds Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab
 xdotool key --delay $kd Down Down Down Escape
 xdotool key --delay $kds Tab Tab Tab Tab Tab Tab Tab Escape
@@ -127,7 +127,7 @@ xdotool key --delay $kd Escape Escape
 loop () {
 iter=500
 for (( i=1; i<$iter; i++ )); do
-    echo "# Active profile is effective..." 
+    echo "# Active profile is effective..."
     echo "$(( (i * 100) /$iter ))%"
 	echo "walking_around_wall..."  $i "step of" $iter | logline
 		walking_around_wall

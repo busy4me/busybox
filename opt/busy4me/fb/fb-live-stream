@@ -14,7 +14,7 @@ logline() {
 login=$(cat "$login_source")
 echo 'login =' $login | logline
 login_string=$login
-login_string=$(echo $login_string | tr '@' '_')
+login_string=$(echo $login_string | tr '@' '-')
 echo 'login_string =' $login_string | logline
 user_db="/opt/busy/fb/db/fb_$login_string.db"
 echo 'Use database:' $user_db | logline
@@ -41,7 +41,7 @@ sleep 3
 
 live_video_run () {
 
-kds=50 # Key Delay Short [ms] 
+kds=50 # Key Delay Short [ms]
 kd=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
 kd_2=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
 kdl=$((500 + RANDOM % 15 * 100)) # Key Delay Long between 500 and 2000[ms]
@@ -126,7 +126,7 @@ loop () {
 # how many steps to do
 iter=1000
 for (( step=1; step<$iter; step++ )); do
-    echo "Check page..." 
+    echo "Check page..."
     echo "$(( (i * 100) /$iter ))%"
 	echo -e "\e[32m Check page with Live Video...\e[91m"  $step "\e[32mstep of\e[91m" $iter "\e[0m" | logline
 		live_video_run

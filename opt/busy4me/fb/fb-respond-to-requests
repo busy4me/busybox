@@ -10,7 +10,7 @@ source /opt/busy4me/fb/fb-config
 
 logline() {
     while IFS= read -r line; do
-        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE 
+        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
     done
 }
 
@@ -19,7 +19,7 @@ xdotool search --class zenity windowkill
 login=$(cat "$login_source")
 echo 'login =' $login | logline
 login_string=$login
-login_string=$(echo $login_string | tr '@' '_')
+login_string=$(echo $login_string | tr '@' '-')
 echo 'login_string =' $login_string | logline
 user_db="$HOME/busy4me/fb/db/fb_$login_string.db"
 echo 'Use database:' $user_db | logline
@@ -106,7 +106,7 @@ zenity --info --title="respond_to_requests" --text="xdotool key --delay $kd Tab"
 	xdotool search --onlyvisible --class chrome windowactivate
 	xdotool key --delay $kd Tab
     sleep 0.5
-	
+
 mark06_i=0
 #while (( mark06_i == 0 || not_valid_counter_1 < 10 || not_valid_counter_2 < 10 ))
 while (( mark06_i == 0 ))
@@ -232,4 +232,3 @@ echo "Stop scrolling...."
 
 transset -a 0.7
 echo "stop $SCRIPT" | logline
-

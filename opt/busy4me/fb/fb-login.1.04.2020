@@ -50,13 +50,12 @@ case "$clip" in
 esac
 
 # open mobile page...
-echo -e "\e[33m      ...open mobile page...\e[0m"
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 xdotool key --delay 200 Ctrl+l | logline
 xdotool type $login_url
 xdotool key --delay 200 Return
 
-echo -e "\e[33m      ...         ...set variables ...\e[0m"
+
 empty01=""
 mark02='Forgotten'
 mark03='Help Centre'
@@ -75,10 +74,8 @@ mark13="Tap to log in"
 touch /opt/busy/files/blank
 
 # login data insert by zenity dialog
-#===================================================================================================
-#== Function =======================================================================================
-#===================================================================================================
 login_insert () {
+  echo -e "\e[42m \e[0m\e[32m Start function:\e[33m login_insert\e[0m" | logline
 	rm -rf /opt/busy/fb/* # remove old files
 
     OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,180,90,440,250 & zenity --forms --title="Login" --text="busy4me automation:\n\Social Media Assistant: \n\ ...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login" --add-entry="Password" --width 450 --height 300)
@@ -111,15 +108,19 @@ login_insert () {
 		;;
 	esac
 }
-#===================================================================================================
-#== Function =======================================================================================
-#===================================================================================================
+
 login_start () {
+  echo -e "\e[42m \e[0m\e[32m Start function:\e[33m login_start\e[0m" | logline
 	echo "Check login................................................"
 	login_source="/opt/busy/fb/fb-login"
 	password_source="/opt/busy/fb/fb-password"
 	login=$(cat "$login_source")
 	password=$(cat "$password_source")
+
+while [ -s $login_source ]; do
+  echo -e "while: \e[32m file $login_source exists and is not empty \e[0m" | logline
+  break
+done
 
 	if [ -s $login_source ];then
 		echo -e "\e[32m file $login_source exists and is not empty \e[0m" | logline
@@ -132,17 +133,17 @@ login_start () {
 		login_insert
 	fi
 
-	zenity --info --title="Prepare to login" --text="Prepare to login as $login" --timeout 3
+	zenity --info --title="Prepare to login" --text="Prepare to login as $login" --timeout 1
 
 	sleep 1 && wmctrl -r "Login" -b add,above &
 	(
 	echo "1" ; sleep 1
 	echo "20" ; sleep 1
 	echo "40" ; sleep 1
-	echo "60" ; sleep 2
-	echo "70" ; sleep 2
-	echo "80" ; sleep 2
-	echo "90" ; sleep 2
+	echo "60" ; sleep 1
+	echo "70" ; sleep 1
+	echo "80" ; sleep 1
+	echo "90" ; sleep 1
 	echo "100" ; sleep 1
 	) | OUTPUT=$(zenity --progress \
 	  --title="Login" \
@@ -154,19 +155,18 @@ login_start () {
 	  --auto-kill)
 	accepted=$?
 	if ((accepted != 0)); then
-		echo "accepted=$accepted Login cancelled... Login insert start..."
-		login_insert
-  else
-    echo "accepted=$accepted OK, continue login..."
-	fi
-
-	(( $? != 0 )) && zenity --error --text="Error in zenity command. Start again ..." --timeout $to
+		  echo "accepted=$accepted Login cancelled ..."
+      login_insert
+		else
+      echo "accepted=$accepted OK, continue login ....."
+  fi
+(( $? != 0 )) && zenity --error --text="Error in zenity command. Start again ..." --timeout $to
 }
 
-login_start
+#login_start
 
 login_string=$login
-echo echo -e "\e[42m\e[0m"$login_string | logline
+echo -e "\e[42m\e[0m"$login_string | logline
 login_string=$(echo $login_string | tr '@.' '-')
 echo -e '\e[32login_string =\e[0m' $login_string | logline
 
@@ -176,24 +176,21 @@ user_db="/opt/busy/fb/db/fb_$login_string.db"
 echo -e "\e[42m\e[30m user_db = \e[0m\e[32m" $user_db "\e[0m" | logline
 
 # change hostname and minion_id - it must be done as root, moved to change_hostname.sh
-hostnamectl set-hostname $login_string
-echo $login_string > /etc/salt/minion_id
-rm /etc/salt/pki/minion/minion.*
-rm /etc/salt/pki/minion/minion_master.*
-service salt-minion restart &
+#hostnamectl set-hostname $login_string
+#echo $login_string > /etc/salt/minion_id
+#rm /etc/salt/pki/minion/minion.*
+#rm /etc/salt/pki/minion/minion_master.*
+#service salt-minion restart &
 
 touch /opt/busy/fb/fb-name | logline
 touch /opt/busy/fb/fb-first-name | logline
 touch /opt/busy/fb/fb-last-name | logline
 
-#===================================================================================================
-#== Function =======================================================================================
-#===================================================================================================
 create_database () {
+  echo -e "\e[42m \e[0m\e[32m Start function:\e[33m create_database\e[0m" | logline
 if [ -s $user_db ];then
 	rows=$(sqlite3 $user_db  "SELECT COUNT (*) FROM groups";)
 	echo -e "\e[32mBase $login_string.db exists. There is " $rows " rows. Continue...\e[0m" | logline
-    break
 else
 	echo -e "\e[31mThere is no $login_string database, create:\e[0m $login_string.db" | logline
 	mkdir -p /opt/busy/fb/db
@@ -203,16 +200,12 @@ else
 	sqlite3 $user_db "SELECT COUNT (*) FROM fb_groups";
 fi
 }
-
 create_database
 
 # check if mobile facebook page is open
-#===================================================================================================
-#== Function =======================================================================================
-#===================================================================================================
 page_probe () {
 for i in {1..2000} ; do
-	echo "page_probe..."
+  echo -e "\e[42m \e[0m\e[32m Start function:\e[33m page_probe\e[0m .. . . $i times" | logline
 	zenity --info --title="page_probe" --text="page_probe..." --timeout 1
 	xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate
 	xclip -selection clipboard /opt/busy/files/blank
@@ -288,7 +281,6 @@ for i in {1..2000} ; do
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark02 ... go to login..."
 			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark02\"... go to login..." --timeout $tos
 			login_start
-      break
 		;;
 		*"$mark03"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark03=$mark03"
@@ -327,15 +319,10 @@ for i in {1..2000} ; do
 		esac
 done
 }
-echo -e "\e[33m...Entry to page_probe function ...\e[0m"
 page_probe
-echo "clipboard clean ... execute:  xclip -selection clipboard /opt/busy/files/blank"
 
 xclip -selection clipboard /opt/busy/files/blank
 echo "login_saved_detect start"
-#===================================================================================================
-#== Function =======================================================================================
-#===================================================================================================
 login_saved_detect () {
 	xdotool key --delay $kd Shift+Tab Ctrl+a Ctrl+c
 	clip=$( xclip -out -selection clipboard )
@@ -356,9 +343,6 @@ xclip -selection clipboard /opt/busy/files/blank
 echo "entry_detect start"
 entry01=0
 
-#===================================================================================================
-#== Function =======================================================================================
-#===================================================================================================
 entry_detect () {
 xdotool key --delay $kd Ctrl+l Ctrl+a Ctrl+c
 clip=$( xclip -out -selection clipboard )
@@ -366,7 +350,8 @@ if [ $clip = mark05 ]
 then
 	echo -e "\e[32mThis is mobile login page URL OK...\e[0m  $mark05"
 fi
-while [ $entry01 -lt 2 ]; do
+while [ $entry01 -lt 2 ]
+do
 	xclip -selection clipboard /opt/busy/files/blank
 	xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a
 	clip=$( xclip -out -selection clipboard )

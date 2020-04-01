@@ -1,4 +1,5 @@
 #!/bin/bash
+# slimming Linux bootstrap script
 cat > ./initivHelp << 'HELP'
 |
 -- Script -- initiv --------------------------------------------------------------------------------
@@ -8,25 +9,6 @@ cat > ./initivHelp << 'HELP'
 ----------------------------------------------------------------------------------------------------
 |
 HELP
-cat >> ./initivHelp << 'HELP'
-|
--- Script -- initiv --------------------------------------------------------------------------------
-|    Description: slimming Linux bootstrap script used to slim Linux distributions, remove packages|
-|                 install only the packages you need                                               |
-|                                                                                                  |
-----------------------------------------------------------------------------------------------------
-|
-HELP
-# set bashcolors ===============================================================
-if ! wget -q -nv -O ./bashcolors --no-check-certificate http://busy4.me/bashcolors; then
-	echo -e "no colors...\e[0m"
-else
-. ./bashcolors
-echo -e "${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${gre}o${lbla}o${lblu}o${gre}o${cya}o${red}\
-o${mag}o${yel}o${whi}o${lbla}o${whi}o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lbla}o${gre}\
-o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o
-_SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}"
-fi
 # Everything below will go to the file 'initiv.log':
 exec &> >(tee -ia initiv.log)
 exec 2>&1
@@ -38,14 +20,39 @@ _SCRIPT_VERSION="20.02"
 _SCRIPT_FULL_NAME="$0"
 _SCRIPT_ARGUMENTS="$*"
 _DATE_STAMP="$(date +%Y-%m-%d--%H-%M-%S)"
+_SERVER="http://busy4.me"
 _USER="busyman" # default user name
-_PASS="busy" # default user password
+#_PASS="busy" # default user password
 
+# set bashcolors ===============================================================
+if ! wget -q -nv -O ./bashcolors --no-check-certificate $_SERVER/bashcolors; then
+	echo -e "no colors...\e[0m"
+else
+. ./bashcolors
+echo -e "${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${gre}o${lbla}o${lblu}o${gre}o${cya}o${red}\
+o${mag}o${yel}o${whi}o${lbla}o${whi}o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lbla}o${gre}\
+o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o
+_SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}"
+fi
+
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __autologin -------------------------------------------------------------------------
+|    Description: Add user and set password                                                        |
+|         Option: -U [user]                                                                        |
+|        Caution: AFTER CREATE USER THE CONSOLE tty1 WILL BE RESTARTED IMMEDIATELY and NEW USER    |
+|                 WILL START WORK IN NEW X SESSION                                                 |
+|           user: user's name                                                                      |
+|       Examples: ./initiv -U kate # create user "kate" and allow use crontab                      |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __useradd () {
 	echofunc "__useradd"
 	echoinfo "_USER=$_USER"
 	groupadd $_USER 2>/dev/null
-	useradd -p $(openssl passwd -1 $_PASS) -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
+	useradd -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
+#	useradd -p $(openssl passwd -1 $_PASS) -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
 	usermod -a -G "cdrom,floppy,dip,plugdev,netdev,audio,video" $_USER
 	_CAF="/etc/cron.allow"
 if ! grep -q $_USER $_CAF; then
@@ -56,7 +63,16 @@ else
 fi
 }
 
-# Autologin as $_USER user without login manager in console tty1...
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __autologin -------------------------------------------------------------------------
+|    Description: Autologin as $_USER user without login manager in console tty1...                |
+|         Option: -a [user]                                                                        |
+|           user: existing user name                                                               |
+|       Examples: ./initiv -a kate # set "kate" user automaticaly logged in tty1                   |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __autologin () {
 echofunc "__autologin"
 echoinfo "_AUTOUSER=$_USER"
@@ -85,7 +101,14 @@ ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
 EOF
 systemctl set-default multi-user.target
 }
+cat >> ./initivHelp << 'HELP'
 
+|
+-- Function -- __autostart -------------------------------------------------------------------------
+|    Description: set startx after autologing and applications after X starts                      |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __autostart () {
 	echofunc "__autostart"
 	echoinfo "_AUTOUSER=$_USER set startx after autologing and applications after X starts..."
@@ -93,7 +116,7 @@ cp /home/$_USER/.profile /home/$_USER/.profile.bak 2>/dev/null
 rm /home/$_USER/.profile 2>/dev/null
 # [[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
 cat > /home/$_USER/.profile  << 'EOF'
-[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
+[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
 EOF
 chown $_USER:$_USER /home/$_USER/.profile
 
@@ -184,13 +207,14 @@ echofunc "reset Xserver in tty1 ... wait"
 	echoinfo " ... done"
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __add_to_path -----------------------------------------------------------------------
+|    Description: add initiv to path                                                               |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __add_to_path () {
-#rm +x /tmp/initiv-temp.sh
-#cat > /tmp/initiv-temp.sh << EOF
-#!/bin/sh
-#echo "export PATH=$PATH:/root"
-#EOF
-#chmod +x /tmp/initiv-temp.sh
 	echo "PATH="$PATH
 	case "$(echo $PATH)" in
 	  *"/root"*)
@@ -203,29 +227,34 @@ __add_to_path () {
 	  echo 'export PATH=$PATH:'$_SCRIPT_PATH  >> ~/.profile
 	  ;;
 	esac
-
-#	if [ $PATH != "*/root*" ]; then
-#		echowarning "add to path ... "$_SCRIPT_PATH
-#		echo 'export PATH=$PATH:'$_SCRIPT_PATH  >> ~/.bash_profile
-#		echo 'export PATH=$PATH:'$_SCRIPT_PATH  >> ~/.profile
-#		eval /tmp/initiv-temp.sh
-#		echo "PATH="$PATH
-#	else
-#		echoinfo "PATH contains:" $_SCRIPT_PATH
-#	fi
 }
 
 __add_to_path
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __read_data -------------------------------------------------------------------------
+|    Description: read data                                                                        |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __read_data () {
 echofunc "__read_data"
 # rm ./initivData
 echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> ./initivData
-__read_data=$(echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
+_DISK=$(echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
 # | tr '\n' ' '
-echoinfo "read disk usage ..." | tr '\n' ' '; echo $__read_data
+echoinfo "read disk usage ..." | tr '\n' ' '
+echo $_DISK
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __remove_packages -------------------------------------------------------------------
+|    Description: remove packages                                                                  |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __remove_packages () {
 	echofunc "__remove_packages"
 # I did try remove: "ispell", but sometimes :/ needs interactive answer, hmmm
@@ -261,6 +290,13 @@ __remove_packages () {
 	apt-get clean
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __update_apt_repos ------------------------------------------------------------------
+|    Description: update apt                                                                       |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __update_apt_repos () {
 	cp /etc/apt/sources.list /etc/apt/sources.list.bak; rm /etc/apt/sources.list
 		#add main repo Debian 8 Jessie
@@ -277,6 +313,13 @@ EOF
 apt update
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __install_stuff ---------------------------------------------------------------------
+|    Description: install openssh-server, openssl, bc, xloadimage, xli, xosd-bin, parted           |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __install_stuff () {
 	echofunc "__install_stuff"
 	echoinfo " ... install stuff from Debian repositories ..."
@@ -297,6 +340,15 @@ __install_stuff () {
 	done
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __install_stuff2 --------------------------------------------------------------------
+|    Description: install stuff 2                                                                  |
+|         Option: -apt2 |installStuff2                                                             |
+|       Examples: ./initiv -apt2                                                                   |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __install_stuff2 () {
 	echofunc "__install_stuff2"
 	echoinfo " ... install stuff2 from Debian repositories ..."
@@ -340,6 +392,15 @@ pip install setuptools -U # update 08-2019,
 pip install pyautogui # need for automate keys, mouse, recognise pictures on the screen
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __install_stuff3 --------------------------------------------------------------------
+|    Description: install google chrome                                                            |
+|         Option: -apt3                                                                            |
+|       Examples: ./initiv -apt3                                                                   |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __install_stuff3 () {
 	echofunc "__install_stuff3"
 	echoinfo " ... install stuff3 from other repositories ..."
@@ -361,6 +422,20 @@ __install_stuff3 () {
 	_PACKAGE="google-chrome-stable"
 	echoinfo "install package: $_PACKAGE ............................. wait ..."
 	apt-get install -y -qq --no-install-recommends $_PACKAGE
+}
+
+__busy () {
+	_FILE="init-1"
+	if wget -q -nv -O ./$_FILE --no-check-certificate $_SERVER/$_FILE; then
+		bash ./$_FILE
+	else
+		echowarning "no $_FILE..."
+	fi
+cat > /home/$_USER/.xinitrc  << 'EOF'
+openbox
+EOF
+	chown $_USER:$_USER /home/$_USER/.xinitrc
+	systemctl set-default multi-user.target
 }
 
 cat >> ./initivHelp << 'HELP'
@@ -415,6 +490,13 @@ fi
 resize2fs $_DEV$_PART
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __tunning ---------------------------------------------------------------------------
+|    Description: tunning                                                                          |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __tunning () {
 	echofunc "__tunning"
 	echoinfo "modify /etc/ssh/sshd_config: PermitRootLogin yes"
@@ -444,6 +526,13 @@ __tunning () {
 	sed -i 's/journal+console/journal/g' /lib/systemd/system/systemd-fsck@.service
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __remove_dirs -----------------------------------------------------------------------
+|    Description: remove directories                                                               |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __remove_dirs () {
 	echofunc "__remove_dirs"
 	echoinfo "remove directories ..."
@@ -455,6 +544,13 @@ __remove_dirs () {
 	rm -R $_DIR 2>/dev/null
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __remove_files ----------------------------------------------------------------------
+|    Description: remove files                                                                     |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __remove_files () {
 	echofunc "__remove_files"
 	echoinfo "rm /var/cache/apt/*.bin"
@@ -471,6 +567,13 @@ rm -rf /usr/share/man/?? && rm -rf /usr/share/man/??_*
 # remove all modules, linux starts fine after that :)
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __download_files --------------------------------------------------------------------
+|    Description: download files                                                                   |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __download_files () {
 # download file "package.tar.gz" and unpack to "archive" directory in declared "/full/path/package"
 # help = usage ========================
@@ -479,7 +582,6 @@ __download_files () {
 #	__file=$__file
 	echofunc "__download_files"
 	# server structure /.initiv/debian/10.3/x86_64/
-	_SERVER="http://busy4.me"
 	if [ -f /etc/os-release ]; then
 	. /etc/os-release
 		_ID=$ID
@@ -545,16 +647,27 @@ fi
 	# unpack archive
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __anime -----------------------------------------------------------------------------
+|    Description: create animation script (wallpaper durring installation)                         |
+|         Option: -n [type]                                                                        |
+|          Types: dark <default>, light, spin                                                      |
+|       Examples: ./initiv -n light # create white background color animation, four color dots     |
+|                 ./initiv -n dark # create black background color animation, three red dots       |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __anime () {
 	echofunc "__anime"
 if [ -z "$_ANIMEDIR" ]; then
 	_ANIMEDIR="/usr/share/pixmaps/red-dots-black"
 else
 	case $_ANIMEDIR in
-		"1"|"dark") _ANIMEDIR="/usr/share/pixmaps/red-dots-black"                                              ;;
-		"2"|"light") _ANIMEDIR="/usr/share/pixmaps/dots-mouse"                                                  ;;
-		"3"|"spin") _ANIMEDIR="/usr/share/pixmaps/spin"                                                        ;;
-		*) echowarning "usage: $0 anime [1|dark|2|light|3|spin]"; exit 0           ;;
+		"1"|"dark") _ANIMEDIR="/usr/share/pixmaps/red-dots-black"                        ;;
+		"2"|"light") _ANIMEDIR="/usr/share/pixmaps/dots-mouse"                           ;;
+		"3"|"spin") _ANIMEDIR="/usr/share/pixmaps/spin"                                  ;;
+		*) echowarning "usage: $0 anime [1|dark|2|light|3|spin]"; exit 0                 ;;
 	esac
 fi
 # xli based on xloadimage
@@ -606,6 +719,13 @@ chown $_USER:$_USER /home/$_USER/.xinitrc
 # export XAUTHORITY="/home/$_USER/.Xauthority" && export DISPLAY=:0 && bash /opt/animation.sh &
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __osd -------------------------------------------------------------------------------
+|    Description: create script to display text during installation                                |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __osd () {
 	echofunc "__osd"
 _FC=orange # font color
@@ -640,6 +760,13 @@ chmod +x /opt/osd.sh
 echoinfo "/opt/osd.sh ... created"
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __dots ------------------------------------------------------------------------------
+|    Description: dots                                                                             |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __dots () {
 	echofunc "__dots"
 _TERM=$(tty)
@@ -657,6 +784,13 @@ printf '\n' > $_TERM
 (sleep 0.1; pkill initiv) &
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __xt --------------------------------------------------------------------------------
+|    Description: create xterminal winodows diplayed durring installation                          |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __xt () {
 echofunc "__xt"
 _BG=black
@@ -708,16 +842,30 @@ chmod +x /opt/xt.sh
 echoinfo "/opt/xt.sh ... created"
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __new_hostname ----------------------------------------------------------------------
+|    Description: new hostname                                                                     |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __new_hostname () {
 	echofunc "__hostname"
 	echoinfo "change hostname to \"$_NEW_HOSTNAME\""
 }
 
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __update ----------------------------------------------------------------------------
+|    Description: update initiv itself                                                             |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __update () {
 	echofunc "__update"
 	echoinfo " ..check update"
 	echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
-	if ! wget -nv -O ./initiv.new --no-check-certificate http://busy4.me/initiv; then
+	if ! wget -nv -O ./initiv.new --no-check-certificate $_SERVER/initiv; then
 		echoerror "there is no file "$0" on the server or no response!..."
 		exit 1
 	else
@@ -729,8 +877,13 @@ __update () {
 fi
 }
 
-
-
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __salt ------------------------------------------------------------------------------
+|    Description: install saltstack                                                                |
+----------------------------------------------------------------------------------------------------
+|
+HELP
 __salt () {
 	echofunc "__salt"
 	echoinfo " ... install saltstack, _SALT_MASTER_ADDRESS="$_SALT_MASTER_ADDRESS" "
@@ -779,50 +932,50 @@ __interface () {
 	echoinfo "set interface ..."
 picture="wallpaper.jpg"
 	rm /opt/$picture
-	wget -nv -O /opt/$picture --no-check-certificate http://busy4.me/$picture
+	wget -nv -O /opt/$picture --no-check-certificate $_SERVER/$picture
 chmod 777 /opt/$picture
 }
 
+
+cat >> ./initivHelp << HELP
+Usage :  $_SCRIPT_NAME [-options] [VARIABLE=value] <action>
+
+Options:
+	-a  Set user autologin in tty1 console
+	-b  option "b"
+	-c  option "c"
+	-d  option "d"
+	-e  option "e"
+	-f  option "f"
+	-g  option "g"
+	-h  Display this message
+	-n  Set background animation. -n light or -n dark (default)
+	-v  Display script version
+	-T  change hostname
+	-A  Pass the salt-master DNS name or IP. This will be stored under
+			\${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
+	-i  Pass the salt-minion id. This will be stored under
+			\${BS_SALT_ETC_DIR}/minion_id
+	-o  Option "o"
+	-p  Option "p"
+	-r  Option "r"
+	-s
+	-t  Pass the loading theme. -t light or -t dark
+	-u  Update $0
+	-w  Option "w"
+
+	Variables:
+	salt-master=<IP> Pass salt-master IP or DNS name.
+
+Actions:
+salt - install salt minion
+remove_files - remove unneded files
+remove_packages - remove packages
+tunning
+HELP
 __help() {
 	echoinfo "=== $_SCRIPT_NAME === Ver.$_SCRIPT_VERSION ======== help =============="
 
-	cat >> ./initivHelp << HELP
-
-  Usage :  $_SCRIPT_NAME [-options] [VARIABLE=value] <action>
-
-  Options:
-    -a  Set user autologin in tty1 console
-    -b  option "b"
-    -c  option "c"
-    -d  option "d"
-    -e  option "e"
-    -f  option "f"
-    -g  option "g"
-    -h  Display this message
-		-n  Set background animation. -n light or -n dark (default)
-    -v  Display script version
-    -T  change hostname
-    -A  Pass the salt-master DNS name or IP. This will be stored under
-        \${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
-    -i  Pass the salt-minion id. This will be stored under
-        \${BS_SALT_ETC_DIR}/minion_id
-    -o  Option "o"
-    -p  Option "p"
-    -r  Option "r"
-    -s
-    -t  Pass the loading theme. -t light or -t dark
-    -u  Update $0
-    -w  Option "w"
-
-    Variables:
-    salt-master=<IP> Pass salt-master IP or DNS name.
-
-  Actions:
-	salt - install salt minion
-  remove_files - remove unneded files
-	remove_packages - remove packages
-	tunning
-HELP
 cat ./initivHelp
 echo -e "\e[32m  =================== help file end ==============\e[0m"
 }   # ----------  end of function __help  ----------
@@ -834,10 +987,11 @@ echo -e "\e[95m$0 -- Version $_SCRIPT_VERSION\e[0m"
 # === options ======================================================================================
 # |                                                                                                |
 # ==================================================================================================
-while getopts ':a: d: h i: n: o: r: s: v T: t: u U: w x' opt
+while getopts ':a: b d: h i: n: o: r: s: v T: t: u U: w x' opt
 do
   case "${opt}" in
-    a )  _AUTOUSER="$OPTARG"; __autologin; __autostart                               ;;
+    a )  _AUTOUSER="$OPTARG"; __autologin; __autostart                                       ;;
+		b )  __busy; exit 0                                                                      ;;
 		d )  __file="$OPTARG"; __download_files; exit 0                                          ;;
     h )  __help; exit 0                                                                      ;;
 		i )  _PACKAGE="$OPTARG"; __install_stuff                                                 ;;
@@ -849,7 +1003,7 @@ do
     T )  _NEW_HOSTNAME="$OPTARG"; __new_hostname                                             ;;
 		t )  _THEME="$OPTARG"; _ANIMEDIR="$OPTARG"; __anime; __xt;                               ;;
 		u )  __update; __version                                                                 ;;
-		U )  _USER="$OPTARG"; __useradd; __anime; __autologin; __autostart; __reset      ;;
+		U )  _USER="$OPTARG"; __useradd; __anime; __autologin; __autostart; __reset              ;;
 		w )  __update_apt_repos                                                                  ;;
 		x )  __install_x; (sleep 2; __reset) &                                                   ;;
 		:) echowarning "Option -$OPTARG requires an argument." >&2        		                   ;;
@@ -896,6 +1050,7 @@ case $1 in
 	"dots" )	__dots                                                       ;;
 	"createRecovery"|"create-recovery" )	__create_recovery                ;;
 	"parted" )	_DEV=$2; _PART=$3; _APPLY=$4; __parted                     ;;
+	"busy" )	__busy                                                       ;;
 	"all"|"full"|"install" )
 		__read_data
 		__update

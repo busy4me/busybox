@@ -8,7 +8,7 @@ source /opt/busy4me/fb/fb-config
 
 echo "fb_login: " $(cat /opt/busy/fb/fb-login)
 	old_hostname=$(cat /etc/hostname)
-	new_hostname=$(cat /opt/busy/fb/fb-login | tr '@.' '_')
+	new_hostname=$(cat /opt/busy/fb/fb-login | tr '@.' '-')
 
 if [ "$old_hostname" == "$new_hostname" ]
 then
