@@ -79,13 +79,14 @@ touch /opt/busy/files/blank
 #== Function =======================================================================================
 #===================================================================================================
 login_insert () {
+while [[ ! $_valid == "OK" ]]; do
 	rm -rf /opt/busy/fb/* # remove old files
 
-    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,180,90,440,250 & zenity --forms --title="Login" --text="busy4me automation:\n\Social Media Assistant: \n\ ...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login" --add-entry="Password" --width 450 --height 300)
+    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,130,70,540,250 & zenity --forms --title="Login" --text="busy4.me automation:\n\...Social Media Assistant: \n\   ...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login (email)" --add-entry="Password" --width 450 --height 200)
 	accepted=$?
 	if ((accepted != 0)); then
 		echo -e "\e[32m Start again...\e[0m" | logline
-		zenity --info --title="Prepare to login" --text="Social Media Assistant:\n You must be logged before using busy4.me platform ... try again ... " --timeout 5
+		zenity --info --title="Prepare to login" --text="Social Media Assistant:\n You must be logged before using busy4.me platform ... try again ... " --width 350 --timeout 7
 		login_start
 	fi
 
@@ -93,23 +94,18 @@ login_insert () {
 	password=$(awk -F, '{print $2}' <<<$OUTPUT)
 	echo $login | tee /opt/busy/fb/fb-login
 	echo $password | tee /opt/busy/fb/fb-password
-# validation
-	at="@"
-	case login in
-		*$at*)
-			echo -e "\e[32m email OK ...\e[0m "
-			zenity --info --title="login email OK" --text="Social Media Assistant:\n login email OK ..." --timeout 3
-		;;
-		*0*)
-			echo -e "\e[32m number OK ...\e[0m "
-			zenity --info --title="login number OK" --text="Social Media Assistant:\n login number OK ..." --timeout 3
-		;;
-		*)
-			echo -e "\e[31m login must be an email or telephone number ... \e[0m "
-			zenity --warning --title="Wrong login" --text="Social Media Assistant:\n login must be an email or telephone number ..." --timeout 3
-			login_start
-		;;
-	esac
+
+# email validation
+  _regex="^([A-Za-z]+[A-Za-z0-9]*((\.|\-|\_)?[A-Za-z]+[A-Za-z0-9]*){1,})@(([A-Za-z]+[A-Za-z0-9]*)+((\.|\-|\_)?([A-Za-z]+[A-Za-z0-9]*)+){1,})+\.([A-Za-z]{2,})+$"
+    if [[ $login =~ ${_regex} ]]; then
+      printf "* %-48s \e[1;32m[pass]\e[m\n" "$login"
+      zenity --info --title="login validation" --text="Social Media Assistant:\n login=$login correct" --width 350 --height 150 --timeout 2
+      _valid="OK"
+    else
+      printf "* %-48s \e[1;31m[fail]\e[m\n" "$login"
+      zenity --info --title="login validation" --text="Social Media Assistant:\n login=$login incorrect format... \n shuld be email like something@domain.xxx" --width 350 --height 150 --timeout 7
+    fi
+done
 }
 #===================================================================================================
 #== Function =======================================================================================

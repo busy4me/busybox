@@ -123,7 +123,6 @@ sysctl vm.swappiness=10
 # set swappiness permamently
 echo "vm.swappiness = 10" >> /etc/sysctl.conf
 
-
 # backorts need for install salt-common which can't be installed without python-systemd
 echo 'deb http://deb.debian.org/debian jessie-backports main' >> /etc/apt/sources.list
 

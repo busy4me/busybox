@@ -38,7 +38,7 @@ fi
 cat >> ./initivHelp << 'HELP'
 |
 -- Function -- __autologin -------------------------------------------------------------------------
-|    Description: Add user and set password                                                        |
+|    Description: Add user and set password (default user: busyman without password)               |
 |         Option: -U [user]                                                                        |
 |        Caution: AFTER CREATE USER THE CONSOLE tty1 WILL BE RESTARTED IMMEDIATELY and NEW USER    |
 |                 WILL START WORK IN NEW X SESSION                                                 |
@@ -362,6 +362,7 @@ declare -a stuff2=(
 "openbox"
 "xdotool"
 "wmctrl"
+"netcat"
 "xcompmgr"
 "feh"
 "nginx"
