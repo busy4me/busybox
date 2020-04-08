@@ -623,3 +623,10 @@ case $1 in
 	;;
 esac
 }
+
+function _extip () {
+  # what is my external IP
+  # ip
+_EXTIP=$(curl -s "http://whatismyip.akamai.com/")
+echo $_EXTIP
+}

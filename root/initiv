@@ -939,10 +939,18 @@ chmod 777 /opt/$picture
 
 
 cat >> ./initivHelp << HELP
-Usage :  $_SCRIPT_NAME [-options] [VARIABLE=value] <action>
+Usage :  $_SCRIPT_NAME [-o]... [parameter]... <action>
+where -o is option with or without parameter
+
+Examples:
+	./initiv -a user1 -n light -A "master.hipposite.com" install
+	./initiv full
+	./initiv -u
 
 Options:
 	-a  Set user autologin in tty1 console
+	-A  Pass the salt-master DNS name or IP. This will be stored under
+			\${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
 	-b  option "b"
 	-c  option "c"
 	-d  option "d"
@@ -950,20 +958,26 @@ Options:
 	-f  option "f"
 	-g  option "g"
 	-h  Display this message
-	-n  Set background animation. -n light or -n dark (default)
-	-v  Display script version
-	-T  change hostname
-	-A  Pass the salt-master DNS name or IP. This will be stored under
-			\${BS_SALT_ETC_DIR}/minion.d/99-master-address.conf
 	-i  Pass the salt-minion id. This will be stored under
 			\${BS_SALT_ETC_DIR}/minion_id
-	-o  Option "o"
-	-p  Option "p"
-	-r  Option "r"
-	-s
+	-j  option "j"
+	-k  option "k"
+	-l  option "l"
+	-m  option "m"
+	-n  Set background animation. -n light or -n dark (default)
+	-o  option "o"
+	-p  option "p"
+	-r  option "r"
+	-s  option "s"
 	-t  Pass the loading theme. -t light or -t dark
-	-u  Update $0
-	-w  Option "w"
+	-T  pass host name value and execute change hostname. -T hostname, -T node (default)
+	-q  option "q"
+	-u  Update itself $0
+	-w  option "w"
+	-v  Display script version
+	-x  option "x"
+	-y  option "y"
+	-z  option "z"
 
 	Variables:
 	salt-master=<IP> Pass salt-master IP or DNS name.
@@ -986,7 +1000,7 @@ echo -e "\e[95m$0 -- Version $_SCRIPT_VERSION\e[0m"
 }
 
 # === options ======================================================================================
-# |                                                                                                |
+# | pass options with or without parameters                                                        |
 # ==================================================================================================
 while getopts ':a: b d: h i: n: o: r: s: v T: t: u U: w x' opt
 do
@@ -1013,20 +1027,6 @@ do
   esac
 done
 shift $((OPTIND-1))
-
-# pass other options:
-# sm=xxx.xxx.xxx.xxx - saltstack master IP address or DNS name
-# hs="hostname" - host name
-for i in "$1"; do
-	case $i in
-		sm=*|salt-master=*) _SALT_MASTER_ADDRESS="${i#*=}"; shift            ;;
-		hs=*|hostname=*) _NEW_HOSTNAME="${i#*=}"; shift                      ;;
-		mb=*|maxsize=*) _EXT="${i#*=}"; shift                      ;;
-	esac
-done
-#shift $((OPTIND-1))
-
-
 
 # actions:
 case $1 in
