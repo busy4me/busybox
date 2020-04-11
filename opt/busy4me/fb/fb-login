@@ -162,7 +162,7 @@ login_start () {
 login_start
 
 login_string=$login
-echo echo -e "\e[42m\e[0m"$login_string | logline
+echo -e "\e[42m\e[0m"$login_string | logline
 login_string=$(echo $login_string | tr '@.' '-')
 echo -e '\e[32login_string =\e[0m' $login_string | logline
 
