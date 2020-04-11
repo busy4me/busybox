@@ -35,7 +35,7 @@ if [ -f /opt/busy4me/fb/fb-config ];then
 	exit 1
 fi
 
-kd=400 # key delay [miliseconds]
+kd=600 # key delay [miliseconds]
 to=2 # zenity messages time out [seconds]
 BR01="google-chrome" # Browser 01
 PROC01="chrome" # process 01
@@ -66,6 +66,7 @@ echo "Clean google-chrome busyman data..." | logline
 #transset -a 0 | logline
 
 xdotool mousemove 800 600
+echo "... * kill existing windows: BR01=$BR01 SPOT01=$SPOT01 PROC01=$PROC01..." | logline
 xdotool search --onlyvisible --class "$BR01" windowkill | logline
 xdotool search --onlyvisible --class "$SPOT01" windowkill | logline
 xdotool search --onlyvisible --class "$PROC01" windowkill | logline
@@ -86,7 +87,7 @@ zenity --info --title="zoom" --text="move window...." --timeout $to
 echo "move window...."
 xdotool key Alt_L+space m | logline
 xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
-xdotool key --delay 100 Return | logline
+xdotool key --delay 500 Return | logline
 echo "shake...."
 zenity --info --title="shake" --text="shake...." --timeout $to
 shake

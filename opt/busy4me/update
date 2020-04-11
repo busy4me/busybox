@@ -205,6 +205,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-02.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-around.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-position.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-show.py
 	chmod +x /opt/$PROJECT/*
 	chmod +x /opt/$PROJECT/*.*
 	chmod +x /opt/$PROJECT/fb/*

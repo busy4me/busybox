@@ -59,9 +59,9 @@ xdotool mousemove 800 600
 echo "update date before login...." | logline
 ntpdate -s time.nist.gov | logline
 
-echo "Start $SCRIPT..." | logline
-echo "Start /opt/busy4me/windows-init..." | logline
-/bin/bash /opt/busy4me/windows-init
+#echo "Start $SCRIPT..." | logline
+#echo "Start /opt/busy4me/windows-init..." | logline
+#/bin/bash /opt/busy4me/windows-init
 
 echo "Start /opt/busy4me/fb/fb-init..." | logline
 /bin/bash /opt/busy4me/fb/fb-init

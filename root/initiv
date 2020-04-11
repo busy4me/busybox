@@ -5,7 +5,7 @@ cat > ./initivHelp << 'HELP'
 -- Script -- initiv --------------------------------------------------------------------------------
 |    Description: slimming Linux bootstrap script used to slim Linux distributions, remove packages|
 |                 install only the packages you need, eg.xorg and chrome                           |
-|         Author: visaroy@gmail.com                                                                |
+|         Author: Visaroy visaroy@gmail.com                                                        |
 ----------------------------------------------------------------------------------------------------
 |
 HELP
@@ -54,7 +54,7 @@ __useradd () {
 	useradd -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
 #	useradd -p $(openssl passwd -1 $_PASS) -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
 	usermod -a -G "cdrom,floppy,dip,plugdev,netdev,audio,video" $_USER
-	_CAF="/etc/cron.allow"
+	_CAF="/etc/cron.allow" # Cron Allow File
 if ! grep -q $_USER $_CAF; then
 	echo "$_USER" >> $_CAF
 	echoconfirm "$_USER added to $_CAF"
@@ -425,18 +425,29 @@ __install_stuff3 () {
 	apt-get install -y -qq --no-install-recommends $_PACKAGE
 }
 
-__busy () {
+cat >> ./initivHelp << 'HELP'
+|
+-- Function -- __install_stuff4 --------------------------------------------------------------------
+|    Description: download and install busy4me in /opt                                             |
+|         Option:                                                                                  |
+|       Examples:                                                                                  |
+----------------------------------------------------------------------------------------------------
+|
+HELP
+__install_stuff4 () {
+	echofunc "__install_stuff4"
+	echoinfo " ... download and install busy4me in /opt ..."
 	_FILE="init-1"
 	if wget -q -nv -O ./$_FILE --no-check-certificate $_SERVER/$_FILE; then
+cat > /home/$_USER/.xinitrc  << 'EOF'
+openbox-session
+EOF
+		chown $_USER:$_USER /home/$_USER/.xinitrc
+		systemctl set-default multi-user.target
 		bash ./$_FILE
 	else
 		echowarning "no $_FILE..."
 	fi
-cat > /home/$_USER/.xinitrc  << 'EOF'
-openbox
-EOF
-	chown $_USER:$_USER /home/$_USER/.xinitrc
-	systemctl set-default multi-user.target
 }
 
 cat >> ./initivHelp << 'HELP'
@@ -680,15 +691,18 @@ cat > /opt/anime.sh << EOF
 echo "_ANIMEDIR:$_ANIMEDIR"
 _ANIMEDIR='\$_ANIMEDIR'
 __anime () {
-it="0.1" # interval time
+it="0.2" # interval time
 __dirlist=(`ls $_ANIMEDIR/\$*`)
 while true; do
 	for __file in \${__dirlist[*]}; do
 #		export DISPLAY=:0 && eval xloadimage -onroot $_ANIMEDIR/\$__file &
 		xloadimage -onroot $_ANIMEDIR/\$__file &
 		sleep \$it
+		pkill xloadimage
+		sleep \$it
 	done
 	pkill xloadimage
+	sleep 2
 done
 }
 case \$1 in
@@ -910,6 +924,14 @@ EOF
 
 }
 
+__install_1 () {
+	# install progress in xterm during first interface...
+	_BG=black
+	_FG=grey
+	__font="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
+	xterm -geometry 120x5+20+10 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/root/initiv 1'
+}
+
 __no_option () {
 	echofunc "__no_option"
 	echo -e "${lred}Option does not exist :${lyel} -$OPTARG, ${coloroff} type $0 -h for help"
@@ -944,8 +966,10 @@ where -o is option with or without parameter
 
 Examples:
 	./initiv -a user1 -n light -A "master.hipposite.com" install
-	./initiv full
-	./initiv -u
+	./initiv 0 #virgin init on fresh distro, remove packages, tunning, install stuff, prepare 1st interface)
+	./initiv 1 # install stuff just after 1st run in VM, download ./inti-1 (install busy4me in /opt)
+	./initiv 2 #
+	./initiv -u # update itself
 
 Options:
 	-a  Set user autologin in tty1 console
@@ -975,7 +999,8 @@ Options:
 	-u  Update itself $0
 	-w  option "w"
 	-v  Display script version
-	-x  option "x"
+	-x  run command in xterminal (durring the first interface screen)
+	-X  install X server and reset tty1
 	-y  option "y"
 	-z  option "z"
 
@@ -1002,11 +1027,11 @@ echo -e "\e[95m$0 -- Version $_SCRIPT_VERSION\e[0m"
 # === options ======================================================================================
 # | pass options with or without parameters                                                        |
 # ==================================================================================================
-while getopts ':a: b d: h i: n: o: r: s: v T: t: u U: w x' opt
+while getopts ':a: b d: h i: n: o: r: s: v T: t: u U: w x X' opt
 do
   case "${opt}" in
     a )  _AUTOUSER="$OPTARG"; __autologin; __autostart                                       ;;
-		b )  __busy; exit 0                                                                      ;;
+		b )  __install_stuff4; exit 0                                                                      ;;
 		d )  __file="$OPTARG"; __download_files; exit 0                                          ;;
     h )  __help; exit 0                                                                      ;;
 		i )  _PACKAGE="$OPTARG"; __install_stuff                                                 ;;
@@ -1020,7 +1045,8 @@ do
 		u )  __update; __version                                                                 ;;
 		U )  _USER="$OPTARG"; __useradd; __anime; __autologin; __autostart; __reset              ;;
 		w )  __update_apt_repos                                                                  ;;
-		x )  __install_x; (sleep 2; __reset) &                                                   ;;
+		x )  _XT="YES"; echoinfo "run in the screen DISPLAY :0"                                  ;;
+		X )  __install_x; (sleep 2; __reset) &                                                   ;;
 		:) echowarning "Option -$OPTARG requires an argument." >&2        		                   ;;
 		\?) __no_option                                                                          ;;
 		* )  __help; exit 0                                                                      ;;
@@ -1031,12 +1057,12 @@ shift $((OPTIND-1))
 # actions:
 case $1 in
 	"update" )	__update                                                   ;;
-	"updateApt"|"apt" )	__update_apt_repos                                 ;;
+	"updateApt"|"aptUpdate" )	__update_apt_repos                           ;;
 	"removeFiles"|"remove-files" )	__remove_files                         ;;
 	"removePackages"|"remove-packages" )	__remove_packages                ;;
-	"autostart"|"autostartSet"|"autostart-set" )	__autostart          ;;
-	"autologin"|"autologinSet"|"autologin-set" )	__autologin          ;;
-	"installStuff"|"install-stuff"|"apt" )	__install_stuff                ;;
+	"autostart"|"autostartSet"|"autostart-set" )	__autostart              ;;
+	"autologin"|"autologinSet"|"autologin-set" )	__autologin              ;;
+	"installStuff"|"install-stuff"|"apt1" )	__install_stuff                ;;
 	"tunning" )	__tunning                                                  ;;
 	"installStuff2"|"install-stuff2"|"apt2" )	__install_stuff2             ;;
 	"installStuff3"|"install-stuff3"|"apt3" )	__install_stuff3             ;;
@@ -1051,8 +1077,8 @@ case $1 in
 	"dots" )	__dots                                                       ;;
 	"createRecovery"|"create-recovery" )	__create_recovery                ;;
 	"parted" )	_DEV=$2; _PART=$3; _APPLY=$4; __parted                     ;;
-	"busy" )	__busy                                                       ;;
-	"all"|"full"|"install" )
+	"busy" )	__install_stuff4                                             ;;
+	"0" )
 		__read_data
 		__update
 		__update_apt_repos
@@ -1071,7 +1097,19 @@ case $1 in
 		__xt
 		(sleep 2; __reset) &
 		;;
-
+	"1" )
+		__parted
+		__install_stuff2
+		__install_stuff3
+		__install_stuff4
+		__reset
+		;;
+	"2" )
+		__install_stuff4
+		;;
+	*)
+	 	__help
+		;;
 esac
 __read_data
 echo -e $coloroff
