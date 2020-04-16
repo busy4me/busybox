@@ -50,11 +50,15 @@ case "$clip" in
 esac
 
 # open mobile page...
+open_mobile_page () {
 echo -e "\e[33m      ...open mobile page...\e[0m"
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 xdotool key --delay 200 Ctrl+l | logline
 xdotool type $login_url
 xdotool key --delay 200 Return
+sleep 5
+}
+open_mobile_page
 
 echo -e "\e[33m      ...         ...set variables ...\e[0m"
 empty01=""
@@ -207,9 +211,17 @@ create_database
 #== Function =======================================================================================
 #===================================================================================================
 page_probe () {
-for i in {1..2000} ; do
-	echo "page_probe..."
-	zenity --info --title="page_probe" --text="page_probe..." --timeout 1
+for i in {1..1000} ; do
+  probe_count=$((probe_count+1))
+  if [ $probe_count -gt 5 ]; then
+    xdotool key --delay $kd Tab
+  fi
+  if [ $probe_count -gt 10 ]; then
+    open_mobile_page
+    probe_count=0
+  fi
+  echo "... page_probe $probe_count"
+	zenity --info --title="page_probe" --text="... page_probe $probe_count" --timeout 1
 	xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate
 	xclip -selection clipboard /opt/busy/files/blank
 	xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
@@ -403,9 +415,24 @@ done
 entry_detect
 
 echo -e "\e[42m\e[30m OK --> \e[0m Entry field OK, login in progress ..."
-zenity --info --title="End" --text="This is entry field... password?" --timeout $to
-xdotool key --delay $kd Shift+Tab
-xdotool type --delay $kd $login
+zenity --info --title="End" --text="This is 2nd entry field... pass" --timeout $to
+# there are two different loging pages,
+# 1. one with login field: "Mobile number or email address" and pass field: "Password"+"Show" button
+# 2. second with login field: "Email address"+"USE MOBILE" button and pass field "Password"+"SHOW" button
+# so the second one needs additional Shift+Tab key and when go back to pass, additional Tab key
+
+while [[ ! "$clip" == "$login" ]]; do
+  xdotool key --delay $kd Shift+Tab
+  xdotool type --delay $kd $login
+  xclip -selection clipboard /opt/busy/files/blank
+  xdotool key --delay $kd Ctrl+a Ctrl+c
+  clip=$( xclip -out -selection clipboard )
+  count01=$((count01+1))
+done
+if [ $count01 -gt 1 ]; then
+  xdotool key --delay $kd Tab
+fi
+
 xdotool key --delay $kd Tab
 xdotool type --delay $kd $password
 xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a Shift+Tab
@@ -415,6 +442,7 @@ case "$clip" in
 	*SHOW*)
 	echo -e "\e[42m\e[30m OK -> \e[0m\e[32m Looks good? Enter?... \e[0m\e[44mEnter\e[0m"
 	zenity --info --title="Ok" --text="Looks good? Enter?..." --timeout $tos
+  sleep 2
 	xdotool key --delay $kd Return
 	echo -e "\e[42m   \e[0m \e[32m ... yes, Enter. \e[0m"
 	zenity --info --title="Ok" --text="Yes, Enter." --timeout $tol

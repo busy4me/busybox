@@ -2,7 +2,7 @@
 # Autoupdate if changed...
 # Upgrade if needed...
 # curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
-SCRIPT=fb-init
+SCRIPT=fb-init.11.04.2020
 LOGFILE=/var/log/busy4me.log
 SAVE_DIR=/opt/busy/fb # with user permision 777
 PROJECT_DIR=/opt/busy4me/fb # with root permision 755, read only for users

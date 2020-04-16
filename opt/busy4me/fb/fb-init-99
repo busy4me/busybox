@@ -6,11 +6,11 @@ LOGFILE=/var/log/busy4me.log
 
 logline() {
     while IFS= read -r line; do
-        echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT - $line \e[0m" | tee -a $LOGFILE 
+        echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT - $line \e[0m" | tee -a $LOGFILE
     done
 }
 
-echo "$(date +%F' '%T) $USER $SCRIPT start.............................................." 
+echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT start.............................................." | logline
 echo "start..." | logline
 
 if [ $USER = "root" ]
@@ -28,17 +28,17 @@ if [ -f /opt/busy4me/fb/fb-config ];then
 fi
 
 kd=400 # key delay [miliseconds]
-to=2 # zenity messages time out [seconds] 
+to=2 # zenity messages time out [seconds]
 BR01="google-chrome" # Browser 01
 PROC01="chrome" # process 01
 SPOT01="facebook" # spot 01
 SPOT01url="http://facebook.com" # url 01
 BR01x=825 #BROWSER_01 size x
-BR01y=682 #BROWSER_01 size y 
+BR01y=682 #BROWSER_01 size y
 
 cd $HOME
 disp=":99"
-# close display 
+# close display
 echo "close " $disp
 # how to kill particular display?
 # kill existing Xvfb session
@@ -119,7 +119,7 @@ export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..
 		spot01_position_size
 		exit 1
 		#break
-fi	
+fi
 echo "sleep 5s ..." | logline
 sleep 5
 done

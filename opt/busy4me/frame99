@@ -37,13 +37,12 @@ echo "Run fb-init-99" | logline
 
 # login only when login files exists
 
-echo "Start /opt/busy4me/fb/fb-login-02 on screen 99..." | logline
+echo "Start /opt/busy4me/fb/fb-login on screen 99..." | logline
 /bin/bash $(export DISPLAY=:99 && /opt/busy4me/fb/fb-login)
 
 # sleep 180
-# enable crontab job 
+# enable crontab job
 crontab -l | sed "/^#.*export DISPLAY=:99 && \/opt\/busy4me\/fb\/fb-post -c all/s/^#//" | crontab -
 crontab -l | sed "/^#.*export DISPLAY=:99 && \/opt\/busy4me\/busy/s/^#//" | crontab -
 
 echo "Stop $SCRIPT..." | logline
-

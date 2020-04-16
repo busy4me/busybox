@@ -100,8 +100,11 @@ xdotool key Escape | logline
 
 BR01_probe () {
 echo -e "\e[96m *F:BR01_probe, check \"$BR01\" window\e[0m" | logline
-if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
+for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+do
+if [ -z "$( xdotool search --onlyvisible --class chrome )" ]; then
 		echo "there is no \"$BR01\"... exit..." | logline
+		break
 	else
 		echo "\"$BR01\" is opened already... enter url and set zoom to 75%..." | logline
 		xdotool search --sync --onlyvisible --name "$PROC01" windowactivate | logline
@@ -110,18 +113,42 @@ if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
 		xdotool key Return | logline
 		xdotool key --delay $kd Ctrl+0 | logline # reset zoom
 		xdotool key --delay $kd Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
-    sleep 5
+		break
 fi
+done
 }
+#BR01_probe
 
 SPOT01_probe () {
   echo -e "\e[96m *F:SPOT01_probe, check \"$SPOT01\" window\e[0m" | logline
 while  [ 1 ]; do
-	if [ -z "$( xdotool search --onlyvisible --name "$SPOT01" )" ]; then
-    echo "$SPOT01 non exists... open  $SPOT01 page..." | logline
-    echo "$SPOT01 non exists... open  $SPOT01 page..."
-    BR01_run
-    BR01_probe
+	if [ -z "$( xdotool search --onlyvisible --name "$SPOT01" )" ]
+		then
+		echo "$SPOT01 non exists... open  $SPOT01 page..." | logline
+		echo "$SPOT01 non exists... open  $SPOT01 page..."
+		$BR01 --window-size="800,600" \
+		--window-position="0,0" \
+		--incognito \
+		--disable-notifications \
+		--mute-audio \
+		--disable-device-discovery-notifications \
+		--no-first-run \
+		--no-default-browser-check \
+		--disable-translate \
+		--process-per-site \
+		--disable-sync-preferences \
+		--disable-gpu \
+		--disable-plugins \
+		--disable-plugins-discovery \
+		--disable-preconnect \
+		--dns-prefetch-disable \
+		--no-experiments \
+		--no-pings \
+		--no-referrers \
+		--disable-infobars \
+		--disable-session-crashed-bubble \
+		$SPOT01url & 2>/dev/null | logline
+		BR01_probe
 	else
 		echo "$date Window with $SPOT01 opened successfuly...." | logline
 		echo "Move and resize window...." | logline
@@ -131,35 +158,6 @@ while  [ 1 ]; do
 sleep 5
 done
 }
-
-BR01_run () {
-  $BR01 --window-size="800,600" \
-  --window-position="0,0" \
-  --incognito \
-  --disable-notifications \
-  --mute-audio \
-  --disable-device-discovery-notifications \
-  --no-first-run \
-  --no-default-browser-check \
-  --disable-translate \
-  --process-per-site \
-  --disable-sync-preferences \
-  --disable-gpu \
-  --disable-plugins \
-  --disable-plugins-discovery \
-  --disable-preconnect \
-  --dns-prefetch-disable \
-  --no-experiments \
-  --no-pings \
-  --no-referrers \
-  --disable-infobars \
-  --disable-session-crashed-bubble \
-  $SPOT01url & 2>/dev/null | logline
-}
-
-echo -e "\e[96m *F:BR01_run, first run \"$BR01\" \e[0m" | logline
-BR01_run
-sleep 10
 SPOT01_probe
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.7
