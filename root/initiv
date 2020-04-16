@@ -41,8 +41,11 @@ _SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}"
 fi
 
 __fix () { #help: fix possible problems with filesystem, databeses, apt, dpkg etc.
-dpkg --configure -a # if dpkg was interrupted, correct the problem.
+echofunc ${FUNCNAME[0]}
 /usr/share/debconf/fix_db.pl # avoid problem with debconf corruption
+update-default-wordlist
+dpkg --configure -a # if dpkg was interrupted, correct the problem.
+dpkg-reconfigure -u dictionaries-common
 }
 
 ## -- Function -- __autologin -------------------------------------------------------------------------
@@ -326,19 +329,45 @@ function __output () {
 	fi
 }
 
-## -- Function -- __install_stuff ---------------------------------------------------------------------
+## -- Function -- __install ---------------------------------------------------------------------------
 ## |    Description: install openssh-server, openssl, bc, xloadimage, xli, xosd-bin, parted           |
 ## ----------------------------------------------------------------------------------------------------
-__install_stuff () {
+__install () { #help: usege ./initiv -i package or ./initiv __install - to install basic packages
 	__output ${FUNCNAME[0]}
 	echofunc ${FUNCNAME[0]}
-	echoinfo " ... install stuff from official repositories ..."
+	echoinfo " ... install basic for frepare splash and first boot ..."
+# if used short name "ssh" then openssh-server will be installed
+# usage: ./initiv -i ssh
+#
 	[[ "$_PACKAGE" = "ssh" ]] &&	{ \
 		echoinfo "install openssh-server..  wait...."; \
 		apt-get install -y -qq --no-install-recommends openssh-server; exit 0; }
 
 	if [ -z $1 ]; then
 		declare -a stuff=(
+		"grub2-splashimages"
+		"fbi"
+		)
+		for _PACKAGE in ${stuff[@]}; do
+			echoinfo "install package: $_PACKAGE ............................. wait ..."
+			apt-get install -y -qq --no-install-recommends $_PACKAGE
+		done
+	else
+		echo "install $1 ....................."
+		apt-get install -y -qq --no-install-recommends $1
+	fi
+}
+
+## -- Function -- __install_stuff1 --------------------------------------------------------------------
+## |    Description: install openssh-server, openssl, bc, xloadimage, xli, xosd-bin, parted           |
+## ----------------------------------------------------------------------------------------------------
+__install_stuff1 () {
+	__output ${FUNCNAME[0]}
+	echofunc ${FUNCNAME[0]}
+	echoinfo " ... install stuff from official repositories ..."
+	if [ -z $1 ]; then
+		declare -a stuff=(
+		"grub2-splashimages"
 		"openssh-server"
 		"openssl"
 		"bc"
@@ -351,9 +380,6 @@ __install_stuff () {
 			echoinfo "install package: $_PACKAGE ............................. wait ..."
 			apt-get install -y -qq --no-install-recommends $_PACKAGE
 		done
-	else
-		echo "install $1 ....................."
-		apt-get install -y -qq --no-install-recommends $1
 	fi
 }
 
@@ -518,13 +544,47 @@ __tunning () {
 		echoinfo " ... set /etc/apt/apt.conf: Install-Recommends \"false\""
 		rm /etc/apt/apt.conf 2>/dev/null
 	echo 'APT::Install-Recommends "false" ; APT::Install-Suggests "false" ;' >> /etc/apt/apt.conf
-		echoinfo " ... configure grub .............."
-	sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g' /etc/default/grub 2>/dev/null
-	sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet vga=current loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"/g' /etc/default/grub 2>/dev/null
-	sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet vga=current loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"/g' /etc/default/grub 2>/dev/null
-	sed -i 's/\#GRUB_GFXMODE=640x480/GRUB_GFXMODE=800x600/g' /etc/default/grub 2>/dev/null
-echo "GRUB_GFXPAYLOAD_LINUX=keep" >> /etc/default/grub
+
+		echoinfo " ... configure grub, add options .............."
+_GRUB="/etc/default/grub" # grub config file
+	cp $_GRUB $_GRUB-$_DATE_STAMP
+#	sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g' $_GRUB 2>/dev/null
+#	sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"/g' $_GRUB 2>/dev/null
+#	sed -i 's/\#GRUB_GFXMODE=640x480/GRUB_GFXMODE=800x600/g' $_GRUB 2>/dev/null
+
+# add this to skip fsck: GRUB_CMDLINE_LINUX_DEFAULT=fsck.mode=skip
+cat > $_GRUB <<	EOF
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=0
+GRUB_DISTRIBUTOR="busy4.me"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"
+GRUB_CMDLINE_LINUX=""
+GRUB_GFXMODE=800x600
+GRUB_GFXPAYLOAD_LINUX=keep
+GRUB_BACKGROUND="/usr/share/images/grub/Plasma-lamp.tga"
+EOF
 	update-grub 2>/dev/null
+
+# available picture in default Debian 10
+# F-16 aeroplan
+#	050817-N-3488C-028.tga
+
+# room
+#	2006-02-15_Piping.tga
+
+# Apollo rocket
+#	Apollo_17_The_Last_Moon_Shot_Edit1.tga
+
+#	B-1B_over_the_pacific_ocean.tga
+#	BonsaiTridentMaple.tga
+#	Glasses_800_edit.tga
+#	Hortensia-1.tga
+#	Lake_mapourika_NZ.tga
+#	Moraine_Lake_17092005.tga
+#	Plasma-lamp.tga
+#	TulipStair_QueensHouse_Greenwich.tga
+#	Windbuchencom.tga
+
 		echoinfo " ... do not show messages durring boot ........ disable blank console ..."
 	sed -i 's/exit 0//g' /etc/rc.local 2>/dev/null
 	printf '%s\n%s\n' 'dmesg --console-off' 'exit 0' >> /etc/rc.local
@@ -654,6 +714,77 @@ fi
 	# unpack archive
 }
 
+__service () { #help: create service
+	echofunc ${FUNCNAME[0]}
+	systemctl disable ${_SNAME}.service
+	systemctl daemon-reload
+	echoinfo "create service which runs after reboot"
+	if [ -z "$1" ]; then
+		echowarning "you must define service name.."
+#		exit 1
+	fi
+	_SNAME=redblack # service name
+	if [ -z "$_ANIMEDIR" ]; then
+		_ANIMEDIR="/usr/share/pixmaps/red-dots-black"
+	fi
+cat > /usr/bin/${_SNAME} << EOF
+#!/bin/bash
+# generated by $_SCRIPT_FULL_NAME
+echo "_ANIMEDIR:$_ANIMEDIR"
+_ANIMEDIR='$_ANIMEDIR'
+__anime () {
+it="0.04" # interval time
+__dirlist=(\`ls \$_ANIMEDIR/\$*\`)
+while true; do
+	echo "next files from:" \$_ANIMEDIR
+	for __file in \${__dirlist[*]}; do
+			fbi -1 -T 1 -t 2 -noverbose $_ANIMEDIR/\$__file
+			sleep \$it
+			fbi -1 -T 1 -t 2 -noverbose $_ANIMEDIR/\$__file
+			sleep \$it
+		pkill fbi
+	done
+	echo "stop fbi"
+	pkill fbi
+	sleep 0.5
+done
+}
+case \$1 in
+	start)
+	__anime
+	;;
+	stop)
+	_PID=\$(pgrep ${_SNAME} | awk '{print \$1}')
+	kill -9 \$_PID
+#	pkill ${_SNAME}
+	;;
+esac
+EOF
+chmod +x /usr/bin/${_SNAME}
+
+cat > /etc/systemd/system/${_SNAME}.service << EOF
+# Contents of /etc/systemd/system/${_SNAME}.service
+[Unit]
+Description=redblack
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/$_SNAME start
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable ${_SNAME}.service
+echoinfo "service \"$_SNAME.service\" created, usage: service $_SNAME start|stop"
+cat > /root/.profile  << 'EOF'
+[[ $(tty) = /dev/tty2 ]] && (ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+EOF
+}
+
+
 ## cat >> ./initivHelp << 'HELP'
 ## -- Function -- __anime -----------------------------------------------------------------------------
 ## |    Description: create animation script (wallpaper durring installation)                         |
@@ -679,14 +810,15 @@ echo $_ANIMEDIR > /opt/anime.dir
 # xli based on xloadimage
 # pictures default directory
 echoinfo "_ANIMEDIR:$_ANIMEDIR"
-rm /opt/anime.sh
+rm /opt/anime.sh 2>/dev/null
 cat > /opt/anime.sh << EOF
 #!/bin/bash
+# generated by $_SCRIPT_FULL_NAME
 echo "_ANIMEDIR:$_ANIMEDIR"
-_ANIMEDIR='\$_ANIMEDIR'
+_ANIMEDIR='$_ANIMEDIR'
 __anime () {
 it="0.2" # interval time
-__dirlist=(`ls $_ANIMEDIR/\$*`)
+__dirlist=(`ls \$_ANIMEDIR/\$*`)
 while true; do
 	for __file in \${__dirlist[*]}; do
 #		export DISPLAY=:0 && eval xloadimage -onroot $_ANIMEDIR/\$__file &
@@ -714,13 +846,41 @@ chmod +x /opt/anime.sh
 # set user's autostart, xinitrc
 cp /home/$_USER/.xinitrc /home/$_USER/.xinitrc.bak 2>/dev/null
 rm /home/$_USER/.xinitrc 2>/dev/null
-cat > /home/$_USER/.xinitrc  << 'EOF'
+cat > /home/$_USER/.xinitrc  << EOF
+# generated by $_SCRIPT_FULL_NAME
 #xclock
 /opt/anime.sh &
 (sleep 2; /opt/xt.sh) &
 /opt/osd.sh
 EOF
 chown $_USER:$_USER /home/$_USER/.xinitrc
+
+# anime by framebuffer
+cat > /opt/anime.fb << EOF
+#!/bin/bash
+# generated by $_SCRIPT_FULL_NAME
+echo "_ANIMEDIR:$_ANIMEDIR"
+_ANIMEDIR='$_ANIMEDIR'
+__anime () {
+it="0.04" # interval time
+__dirlist=(`ls \$_ANIMEDIR/\$*`)
+while true; do
+	echo "next files from:" \$_ANIMEDIR
+	for __file in \${__dirlist[*]}; do
+			fbi -1 -T 1 -t 2 -noverbose $_ANIMEDIR/\$__file
+			sleep \$it
+			fbi -1 -T 1 -t 2 -noverbose $_ANIMEDIR/\$__file
+			sleep \$it
+		pkill fbi
+	done
+	echo "stop fbi"
+	pkill fbi
+	sleep 0.5
+done
+}
+__anime
+EOF
+chmod +x /opt/anime.fb
 }
 
 ## -- Function -- __osd -------------------------------------------------------------------------------
@@ -745,6 +905,7 @@ __it="0.5"
 rm /opt/osd.sh
 cat > /opt/osd.sh << EOF
 #!/bin/bash
+# generated by $_SCRIPT_FULL_NAME
 __fo="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
 	touch \$HOME/osd
 		while true; do
@@ -802,6 +963,7 @@ echo "$_THEME" > /opt/xt.theme # save value in file
 # run xterm with scpecific parameters
 cat > /opt/xt.sh << EOF
 #!/bin/bash
+# generated by $_SCRIPT_FULL_NAME
 __time () {
 	declare -a _DOTS=("0." "1.." "2..." "3...." "4....." "5....." "6......." "7........" "8........." "9..........")
 	_START=\$(date +%s)
@@ -874,20 +1036,30 @@ __new_hostname () {
 ## -- Function -- __update -------------------------------------------------------------------------
 ## |    Description: update initiv itself                                                          |
 ## -------------------------------------------------------------------------------------------------
-function __update () {
+__update () { #help: ./initiv update itself
 	__output ${FUNCNAME[0]}
 	echofunc ${FUNCNAME[0]}
-	echoinfo " ..check update"
+	echoinfo " ..download update on server $_SERVER"
 	echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
 	if ! wget -nv -O ./initiv.new --no-check-certificate $_SERVER/initiv; then
 		echoerror "there is no file "$0" on the server or no response!..."
 		exit 1
 	else
-	rm -rf ./initiv-*;	cp ./initiv ./initiv-$_DATE_STAMP # backup just in case
-	rm -rf ./initiv;	cp ./initiv.new ./initiv 2>/dev/null
-	chmod +x ./initiv
-	rm -rf ./initiv.new
-	echoinfo " Update end"
+		echoinfo " ... compare version"
+		_NEW="$(cat ./initiv.new | base64)"
+		_OLD="$(cat ./initiv | base64)"
+		if [ ! "$_NEW" == "$_OLD" ]; then
+			echowarning " ... version on the server is different, update and start again..."
+			rm -rf ./initiv-*;	cp ./initiv ./initiv-$_DATE_STAMP # backup just in case
+			rm -rf ./initiv;	cp ./initiv.new ./initiv 2>/dev/null
+			chmod +x ./initiv
+			rm -rf ./initiv.new
+			echo "run again: " $_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
+$_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
+exit 0
+		else
+			echoconfirm " ... no update needed, identical version on the server"
+		fi
 fi
 }
 
@@ -899,7 +1071,7 @@ __salt () { #help: install salt-minion, UUID used as minion ID if not provided, 
 	__output ${FUNCNAME[0]}
 	echofunc ${FUNCNAME[0]}
 	echoinfo " ... install saltstack, _SALT_MASTER=$_SALT_MASTER"
-	__install_stuff gnupg
+	__install_stuff1 gnupg
 wget -O - http://repo.saltstack.com/py3/debian/10/amd64/latest/SALTSTACK-GPG-KEY.pub | apt-key add -
 echo "deb http://repo.saltstack.com/py3/debian/10/amd64/latest buster main" >> /etc/apt/sources.list
 apt update
@@ -950,8 +1122,10 @@ done
 }
 
 __prepare () {
+	echofunc ${FUNCNAME[0]}
 cat > /opt/check << EOF
 #!/bin/bash
+# generated by $_SCRIPT_FULL_NAME
 _PROC="osd.sh" 	# looking for process
 _CHECK=\$(ps -e | grep \$_PROC | grep -v grep)
 while [[ ! \$_CHECK == *\$_PROC* ]]; do
@@ -998,33 +1172,34 @@ fi
 }
 
 __no_option () {
-	echofunc "__no_option"
+	echofunc ${FUNCNAME[0]}
 	echo -e "${lred}Option does not exist :${lyel} -$OPTARG, ${coloroff} type $0 -h for help"
 }
 
 __debfoster () {
-	echofunc "__no_option"
+	echofunc ${FUNCNAME[0]}
 	echoinfo "remove packages using debfoster"
 	apt -y install debfoster
 	debfoster -q
 }
 
 __install_x () {
-	echofunc "__install_x"
+	echofunc ${FUNCNAME[0]}
 	echoinfo "install X"
 apt-get install -y -V --no-install-recommends xorg
 }
 
 __interface () {
-	echofunc "__interface"
+	echofunc ${FUNCNAME[0]}
 	echoinfo "set interface ..."
 picture="wallpaper.jpg"
-	rm /opt/$picture
+	rm /opt/$picture 2>/dev/null
 	wget -nv -O /opt/$picture --no-check-certificate $_SERVER/$picture
 chmod 777 /opt/$picture
 }
 
 __count () { #help: generate specific output in terminal
+	echofunc ${FUNCNAME[0]}
 	__ms=$((10 * 100000))
 	echo -e -n "\x1b[\x36 q" # change cursor to steady bar
 	while true; do
@@ -1036,6 +1211,7 @@ __count () { #help: generate specific output in terminal
 }
 
 __timer () { #help: Generate one line time counter in Hours,Minutes,Second and deciseconds with nice dots
+echofunc ${FUNCNAME[0]}
 cat > /opt/timer << EOF
 #!/bin/bash
 declare -a _DOTS=("0." "1.." "2..." "3...." "4....." "5....." "6......." "7........" "8........." "9..........")
@@ -1064,6 +1240,7 @@ done
 }
 
 __timer2 () {
+	echofunc ${FUNCNAME[0]}
 _START=$(date +%s)
 declare -a _DOTS=("0." "1.." "2..." "3...." "4....." "5....." "6......." "7........" "8........." "9..........")
 while true; do
@@ -1116,12 +1293,22 @@ echoinfo "=== Stuff list ==="
 echoinfo "   *TODO"
 }
 
+##
+cat > ./updated << EOF
+## === udpate every time ===========================================================================
+## | run automaticaly udate every time on start!
+## | try ./initiv -k                                                   |
+## =================================================================================================
+EOF
+## __update
+
+##
 ## === options =====================================================================================
 ## | pass options with or without parameters                                                       |
 ## =================================================================================================
 ## Available options:
 ##
-while getopts ':a: b d: f F h H: i: l n: o: r: s: S v T: t: u U: w x X' opt
+while getopts ':a: b d: f F h H: i: k l n: o: r: s: S v T: t: u U: w x X' opt
 do
   case "${opt}" in
     a ) _AUTOUSER="$OPTARG"; __autologin; __autostart                                       ;;
@@ -1144,18 +1331,17 @@ do
 		H ) _THEME="$OPTARG"; _ANIMEDIR="$OPTARG"; __anime; __xt; __osd; __reset                ;;
 ## -H <value>	Pass the loading theme. values: <light> or <dark> (default)
 		i ) _PACKAGE="$OPTARG"; __install_stuff                                                 ;;
-## -i <package>	Install particular package
+## -i <package>	Install particular package, could be defined short name, eg. initiv -p ssh
+## 		available short names: ssh (install openssh-server)
+##
 ## -j		option "j"
-## -k		option "k"
+		k ) _SKIP_UPDATE="true"                                                                 ;;
+## -k		skip auto update *TODO
 		l ) __stuff_help                                                                        ;;
 ## -l		Stuff list *TODO
 ## -m		option "m"
 		n )  _ANIMEDIR="$OPTARG"; echoinfo "_ANIMEDIR=$OPTARG"                                   ;;
 ## -n <dir)	Set background animation, where <dir> contains pictures for animation *TODO
-		p ) _PACKAGE="$OPTARG"; __install_stuff                                                 ;;
-## -p <package>	install defined package, could be defined short name, eg. initiv -p ssh
-## 		available short names: ssh (install openssh-server)
-##
 		r ) _DIR="$OPTARG"; __remove_dirs; exit 0                                               ;;
 ## -r <dir>	remove particular directories *TODO
 		s ) _SALT_MASTER="$OPTARG"                                                              ;;
@@ -1197,63 +1383,73 @@ shift $((OPTIND-1))
 ## Available actions:
 ##
 case $1 in
-	"update" )	__update                                                   ;;
+	"update" )	__update                                                                 ;;
 ## update||update itself
-	"updateApt"|"aptUpdate"|"apt" )	__update_apt_repos                     ;;
+	"updateApt"|"aptUpdate"|"apt" )	__update_apt_repos                                   ;;
 ## aptUpdate|update apt repos
-	"removeFiles"|"remove-files" )	__remove_files                         ;;
+	"removeFiles"|"remove-files" )	__remove_files                                       ;;
 ## remove_files - remove unneded files
-	"removePackages"|"remove-packages" )	__remove_packages                ;;
+	"removePackages"|"remove-packages" )	__remove_packages                              ;;
 ## remove_packages - remove unnided packages
-	"autostart"|"autostartSet"|"autostart-set" )	__autostart              ;;
+	"autostart"|"autostartSet"|"autostart-set" )	__autostart                            ;;
 ## autostart	set programs tu run in user files: .profile and .xinitrc
-	"autologin"|"autologinSet"|"autologin-set" )	__autologin              ;;
+	"autologin"|"autologinSet"|"autologin-set" )	__autologin                            ;;
 ## autologin	set who will be logged in tty1
-	"installStuff"|"install-stuff"|"apt1" )	__install_stuff                ;;
-## apt1	install stuff from apt
-	"tunning" )	__tunning                                                  ;;
+	"tunning" )	__tunning                                                                ;;
 ## tunning	visual cosmetic tunning
-	"installStuff2"|"install-stuff2"|"apt2" )	__install_stuff2             ;;
+	"installStuff1"|"install-stuff1"|"apt1" )	__install_stuff1                           ;;
+## apt1	install stuff from apt
+	"installStuff2"|"install-stuff2"|"apt2" )	__install_stuff2                           ;;
 ## apt2	install stuff2 from apt
-	"installStuff3"|"install-stuff3"|"apt3" )	__install_stuff3             ;;
+	"installStuff3"|"install-stuff3"|"apt3" )	__install_stuff3                           ;;
 ## apt3	install stuff3 from apt
-	"salt" ) __salt                                                        ;;
+	"salt" ) __salt                                                                      ;;
 ## salt - install salt minion
-	"installX"|"install-x" )	__install_x                                  ;;
+	"installX"|"install-x" )	__install_x                                                ;;
 ## installX	install Xorg server
-	"interface" )	__interface                                              ;;
-	"download" )	__download_files                                         ;;
-	"anime"|"spin"|"animation" )	_ANIMEDIR="$2"; __anime                  ;;
-	"osd" )	__osd                                                          ;;
-	"reset" )	__reset                                                      ;;
+	"interface" )	__interface                                                            ;;
+	"download" )	__download_files                                                       ;;
+	"anime"|"spin"|"animation" )	_ANIMEDIR="$2"; __download_files; __anime              ;;
+	"osd" )	__osd                                                                        ;;
+	"reset" )	__reset                                                                    ;;
 ## reset	reset xinit (X server) and all child processes in tty1
-	"xt" )	__xt                                                           ;;
+	"xt" )	__xt                                                                         ;;
 ## xt	create xt.sh script, executed in first install screen
-	"dots" )	__dots                                                       ;;
-	"createRecovery"|"create-recovery" )	__create_recovery                ;;
-	"parted" )	_DEV=$2; _PART=$3; _APPLY=$4; __parted                     ;;
+	"dots" )	__dots                                                                     ;;
+	"createRecovery"|"create-recovery" )	__create_recovery                              ;;
+	"parted" )	_DEV=$2; _PART=$3; _APPLY=$4; __parted                                   ;;
 ## parted	expand partition to default 10GB
-	"busy" )	__install_stuff4                                             ;;
+	"busy" )	__install_stuff4                                                           ;;
 ## busy	install stuff4, download and execute script init-1
-	"timer" )	__timer                                                      ;;
+	"timer" )	__timer                                                                    ;;
 ## timer	show timer test
-	"show" )	__show $2                                                    ;;
+	"show" )	__show $2                                                                  ;;
 ## show	run xterm small window with installation scripts
-	"prepare" )	__prepare                                                  ;;
+	"service" )	__service $2                                                             ;;
+## create service
+	"prepare" )	__prepare                                                                ;;
 ## prepare	set distro to distribution
+	"install" )
+		__read_data
+		__install
+		__remove_packages
+		__useradd
+		__autostart
+		__autologin
+		__tunning
+		__interface
+		__download_files
+		__anime
+		__read_data
+		;;
+## install basic packages for splash and first boot
 	"0" )
 ## 0	execute all initial options, remove packages, set user, install X and basic stuff
 		__read_data
 		__update
 		__update_apt_repos
-		__remove_packages
-		__install_stuff
-		__useradd
-		__autostart
-		__autologin
-		__tunning
+		__install_stuff1
 		__install_x
-		__interface
 		__download_files
 		__anime
 		__osd
@@ -1265,7 +1461,8 @@ case $1 in
 	"1" )
 ## 1	execute installation process just after download and first run by user
 #		echoinfo "__parted"
-#		__parted
+		__parted
+		__fix
 		__salt
 		__install_stuff2
 		__install_stuff3
