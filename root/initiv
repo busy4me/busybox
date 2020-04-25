@@ -66,16 +66,17 @@ if [ ! -z $_HOST ]; then
 	fi
 fi
 
+if [ -x "$(command -v nc)" ]; then
 	nc -z 8.8.8.8 53  >/dev/null 2>&1
 	online=$?
 	if [ $online -eq 0 ]; then
 	    echook "DNS server 8.8.8.8 response OK :)"
 			_DNS_STATUS="OK"
 	else
-	    echoerror "DNS server 8.8.8.8 not response, offline? :(";
+	    echoerror "DNS server 8.8.8.8 not response, offline :(";
 			_DNS_STATUS="no response"
 	fi
-
+fi
 }
 
 # read all function first! All execution at the bottom.
@@ -654,7 +655,7 @@ openbox-session
 EOF
 		chown $_USER:$_USER /home/$_USER/.xinitrc
 		systemctl set-default multi-user.target
-		/usr/bin/initiv show 'in..progress...wait...' &
+		/usr/bin/initiv show '..in..progress...wait...' &
 		bash /usr/bin/$_FILE
 	else
 		echowarning "no $_FILE..."
@@ -1901,10 +1902,12 @@ case $1 in
 		__install_stuff2
 		__install_stuff3
 		__install_stuff4
+		systemctl disable $_BUSY_SERVICE
 		(sleep 2; systemctl disable $_INITIV_1_SERVICE)
 		(sleep 4; systemctl stop $_INITIV_1_SERVICE)
 		(sleep 6; service $_INITIV_1_SERVICE stop)
-		__reset
+		(sleep 8; systemctl reboot now)
+#		__reset
 		;;
 	"2" )
 ## 2	download and run init-1 script which next install busy4.me package and reboot
