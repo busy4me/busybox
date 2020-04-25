@@ -4,22 +4,25 @@
 # The main goals are: save a lot of space on root filesystem and prepare distro for specific tasks.
 # Install only the packages you need, eg. when you need web browser xorg+firefox you do not need vim
 # Comments with double ## are in help option -h or --help
-# try: ./initiv -h
-## * Usage: ./initiv [-o]... [parameter]... <action>
+# try: /usr/bin/initiv -h
+## * Usage: /usr/bin/initiv [-o]... [parameter]... <action>
 ## where -o is option with or without parameter
 ##
 # Everything below will go to the file 'initiv.log':
-exec &> >(tee -ia initiv.log)
-exec 2>&1
-
+_LOGFILE=/var/log/busy4me.log
 _START=$(date +%s) # calculate how long script runs (see on the end)
-_SCRIPT_PATH=`pwd`
+_EXECUTOR_PATH=`pwd`
+_SCRIPT_PATH="/usr/bin"
 _SCRIPT_NAME="initiv"
-_SCRIPT_VERSION="20.02"
+_SCRIPT_VERSION="$(date +%Y-%m-%d)"
 _SCRIPT_FULL_NAME="$0"
 _SCRIPT_ARGUMENTS="$*"
 _DATE_STAMP="$(date +%Y-%m-%d--%H-%M-%S)"
+_BUSY_SERVICE=busy4me # main service, watchdog, checks other busy4me precesses
+_BUSY_ANIME_SERVICE=busy-anime # animation in framebuffer, durring 'initiv 0' installation process
+_INITIV_1_SERVICE=initiv-1 # trigger 'initiv -S 1' installation process, visible in xterm, first X run
 _SERVER="http://busy4.me"
+_SERVER_DIR="/busy"
 _USER="busyman" # default user name
 #_PASS="busy" # default user password
 _THEME=dark # default installation theme, used in __xt and __anime functions
@@ -28,17 +31,154 @@ _FG=grey # default foreground color, used by xterm option -fg
 _SALT_DIR="/etc/salt"
 _SALT_MASTER="192.168.121.250"
 _SALT_MINION=$(cat /sys/class/dmi/id/product_uuid)
+# change hostname to present IP
+exec &> >(tee -ia $_LOGFILE)
+exec 2>&1
+echo "_EXECUTOR_PATH=$_EXECUTOR_PATH"
 
-# set bashcolors ===============================================================
-if ! wget -q -nv -O ./bashcolors --no-check-certificate $_SERVER/bashcolors; then
-	echo -e "no colors...\e[0m"
-else
-. ./bashcolors
+. /usr/bin/bashcolors
 echo -e "${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${gre}o${lbla}o${lblu}o${gre}o${cya}o${red}\
 o${mag}o${yel}o${whi}o${lbla}o${whi}o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lbla}o${gre}\
-o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o
-_SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}"
+o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lblu}
+_SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}" 2>/dev/null
+
+__net_status () {
+	_HOST=$(echo $1 | sed 's/http:\/\///g' | sed 's/https:\/\///g')
+	echofunc ${FUNCNAME[0]} $@
+#	_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+if [ ! "$_IP_STATUS" == "OK" ]; then
+	while [ -z "$_IP" ];	do
+		_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ' | sed 's/[[:space:]]//g')
+		echo "waiting for IP address... check... _IP=$_IP"
+		sleep 1
+	done
+	[[ -n "$_IP" ]] && { _IP_STATUS="OK"; echook "_IP_STATUS=$_IP_STATUS"; }
 fi
+
+if [ ! -z $_HOST ]; then
+	wget -q --tries=10 --timeout=20 --spider http://$_HOST
+	if [[ $? -eq 0 ]]; then
+			_HOST_STATUS="OK"
+	    echook "$_HOST Online :) _HOST_STATUS=OK"
+	else
+			"$_HOST"_STATUS="no response"
+	    echoerror "$_HOST Offline :("
+	fi
+fi
+
+	nc -z 8.8.8.8 53  >/dev/null 2>&1
+	online=$?
+	if [ $online -eq 0 ]; then
+	    echook "DNS server 8.8.8.8 response OK :)"
+			_DNS_STATUS="OK"
+	else
+	    echoerror "DNS server 8.8.8.8 not response, offline? :(";
+			_DNS_STATUS="no response"
+	fi
+
+}
+
+# read all function first! All execution at the bottom.
+__bashcolor () {
+	echofunc ${FUNCNAME[0]}
+# set bashcolors ===============================================================
+__net_status $_SERVER
+if ! wget -q -nv -O /usr/bin/bashcolors --no-check-certificate $_SERVER/bashcolors; then
+	echoerror "OFFLINE! ...can't connect to bashcolors in $_SERVER"
+fi
+}
+
+## -- Function -- __update -------------------------------------------------------------------------
+## |    Description: update initiv itself                                                          |
+## -------------------------------------------------------------------------------------------------
+__update () { #help: /usr/bin/initiv update itself
+	__output ${FUNCNAME[0]}
+	echofunc ${FUNCNAME[0]}
+	echoinfo " ..download update on server $_SERVER"
+	# initive should be always in /usr/bin directory, so even will be downloaded in different location
+	# will change itself
+	if [ ! "$_SCRIPT_FULL_NAME" == "/usr/bin/initiv" ]; then
+		echowarning "$_SCRIPT_FULL_NAME in wrong location, quick fix ..."
+		cp $_SCRIPT_FULL_NAME /usr/bin/initiv
+		chmod +x /usr/bin/initiv
+		rm $_SCRIPT_FULL_NAME
+		echo "run again from correct position: " /usr/bin/initiv $_SCRIPT_ARGUMENTS
+		/usr/bin/initiv $_SCRIPT_ARGUMENTS
+		exit 0
+	else
+		echoconfirm "$_SCRIPT_FULL_NAME ... correct"
+	fi
+
+	__net_status $_SERVER
+		echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
+	if ! wget -nv -O /usr/bin/initiv.new --no-check-certificate $_SERVER/initiv; then
+		echoerror "there is no file "$0" on the server or no response!..."
+		exit 1
+	else
+		echoinfo " ... compare version"
+		_NEW="$(cat /usr/bin/initiv.new | base64)"
+		_OLD="$(cat /usr/bin/initiv | base64)"
+		if [ ! "$_NEW" == "$_OLD" ]; then
+			echowarning " ... version on the server is different, update and start again..."
+			rm -rf /usr/bin/initiv-*
+			cp /usr/bin/initiv /usr/bin/initiv-$_DATE_STAMP # backup just in case
+			rm -rf /usr/bin/initiv
+			cp /usr/bin/initiv.new /usr/bin/initiv 2>/dev/null
+			chmod +x /usr/bin/initiv
+			rm -rf /usr/bin/initiv.new
+			echo "run again: " $_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
+			$_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
+			exit 0
+		else
+			echoconfirm " ... no update needed, identical version on the server"
+		fi
+	fi
+	echoconfirm "${FUNCNAME[0]} done"
+}
+
+__change_hostname () { #help: change hostname like IP address, also used for waiting online
+	echofunc ${FUNCNAME[0]}
+	_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+	_NEW_HOSTNAME=$(echo $_IP | tr '.' '-' | sed 's/[[:space:]]//g')
+	_OLD_HOSTNAME=$(cat /etc/hostname)
+	while [ -z "$_NEW_HOSTNAME" ];	do
+		_NEW_HOSTNAME=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
+		echo "waiting for IP address... check... _NEW_HOSTNAME=$_NEW_HOSTNAME"
+		sleep 1
+	done
+		if [ ! "$_OLD_HOSTNAME" == "$_NEW_HOSTNAME" ];	then
+		echoinfo " _OLD_HOSTNAME=$_OLD_HOSTNAME  ...set new hostname: _NEW_HOSTNAME=$_NEW_HOSTNAME"
+		hostnamectl set-hostname $_NEW_HOSTNAME
+		echo "   ...update /etc/hosts file"
+			cp /etc/hosts /etc/hosts.bak 2>/dev/null
+			sed -i "/\s$_OLD_HOSTNAME/d" /etc/hosts
+			echo "127.0.1.1 $_NEW_HOSTNAME" >> /etc/hosts
+	else
+		echoconfirm " hostname unchaged: _OLD_HOSTNAME=$_OLD_HOSTNAME _NEW_HOSTNAME=$_NEW_HOSTNAME"
+	fi
+}
+
+__distro () { #help: check distro and set server
+echofunc ${FUNCNAME[0]}
+	# server structure /.initiv/debian/10.3/x86_64/
+	if [ -f /etc/os-release ]; then
+	. /etc/os-release
+		_ID=$ID
+		_VERSION_CODENAME=$VERSION_CODENAME
+		_VERSION_ID=$VERSION_ID
+	else
+		echoerror "can\'t find /etc/os-release"
+	fi
+	if [ -f /etc/debian_version ]; then
+		_VER=$(cat /etc/debian_version)
+	else
+		echoerror "can\'t find /etc/debian_version"
+	fi
+	_ARCH=$(uname -m)
+	_KERNEL_RELEASE="$(uname -r)"
+	# CAUTION! there is "dot" in script name
+	echoinfo "server distribution path: $_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
+}
 
 __fix () { #help: fix possible problems with filesystem, databeses, apt, dpkg etc.
 echofunc ${FUNCNAME[0]}
@@ -48,16 +188,16 @@ dpkg --configure -a # if dpkg was interrupted, correct the problem.
 dpkg-reconfigure -u dictionaries-common
 }
 
-## -- Function -- __autologin -------------------------------------------------------------------------
+## -- Function -- __useradd -------------------------------------------------------------------------
 ## |    Description: Add user and set password (default user: busyman without password)               |
 ## |         Option: -U [user]                                                                        |
 ## |        Caution: AFTER CREATE USER THE CONSOLE tty1 WILL BE RESTARTED IMMEDIATELY and NEW USER    |
 ## |                 WILL START WORK IN NEW X SESSION                                                 |
 ## |           user: user's name                                                                      |
-## |       Examples: ./initiv -U kate # create user "kate" and allow use crontab                      |
+## |       Examples: /usr/bin/initiv -U kate # create user "kate" and allow use crontab                      |
 ##----------------------------------------------------------------------------------------------------
 __useradd () { #help: add user
-	echofunc "__useradd"
+	echofunc "${FUNCNAME[0]}"
 	echoinfo "_USER=$_USER"
 	/usr/sbin/groupadd $_USER 2>/dev/null
 	/usr/sbin/useradd -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
@@ -70,42 +210,54 @@ if ! grep -q $_USER $_CAF; then
 else
 	echoinfo "$_USER already exists in $_CAF"
 fi
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __autologin -------------------------------------------------------------------------
 ## |    Description: Autologin as $_USER user without login manager in console tty1...                |
 ## |         Option: -a [user]                                                                        |
 ## |           user: existing user name                                                               |
-## |       Examples: ./initiv -a kate # set "kate" user automaticaly logged in tty1                   |
+## |       Examples: /usr/bin/initiv -a kate # set "kate" user automaticaly logged in tty1                   |
 ## ----------------------------------------------------------------------------------------------------
 ##
-__autologin () { #help: set autologin, who will be automaticaly logged in tty1
-echofunc "__autologin"
-echoinfo "_AUTOUSER=$_USER"
-# autologin as $busyuser in tty1
-_AUTOUSER=$_USER
-#if [ "$_AUTOUSER" != "" ]; then
-#		_USER=$_AUTOUSER
-#fi
-echo -e "\e[32m Autologin as \e[95m$_USER\e[0m user without login manager in console tty1...\e[0m"
-mkdir -pv /etc/systemd/system/getty@tty1.service.d 2>/dev/null
-rm /etc/systemd/system/getty@tty1.service.d/autologin.conf 2>/dev/null
+__autologin () { #help: set autologin, who will be automaticaly logged in
+echofunc "${FUNCNAME[0]}"
+if [ ! "$1" == "root" ]; then
+	# autologin as user in tty1
+	echoinfo "_AUTOUSER=$_USER"
+	_AUTOUSER=$_USER
+	echo -e "\e[32m Autologin as \e[95m$_USER\e[0m user without login manager in console tty1...\e[0m"
+	rm -R /etc/systemd/system/getty@tty1.service.d 2>/dev/null
+	mkdir -pv /etc/systemd/system/getty@tty1.service.d 2>/dev/null
 cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --autologin $_AUTOUSER --noclear %I $TERM
 EOF
 
+else
+	echoinfo "_AUTOUSER=$1"
+	# autologin as root in tty1
+rm -R /etc/systemd/system/getty@tty1.service.d 2>/dev/null
+mkdir -pv /etc/systemd/system/getty@tty1.service.d 2>/dev/null
+cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
+EOF
+fi
+
 # autologin as root in tty2
-#
+rm -R /etc/systemd/system/getty@tty2.service.d 2>/dev/null
 mkdir -pv /etc/systemd/system/getty@tty2.service.d 2>/dev/null
-rm /etc/systemd/system/getty@tty2.service.d/autologin.conf 2>/dev/null
 cat > /etc/systemd/system/getty@tty2.service.d/autologin.conf << EOF
 [Service]
 ExecStart=
 ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
 EOF
+
 systemctl set-default multi-user.target
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __autostart -------------------------------------------------------------------------
@@ -113,27 +265,41 @@ systemctl set-default multi-user.target
 ## ----------------------------------------------------------------------------------------------------
 ## |
 __autostart () {
-
-	echofunc "__autostart"
-	echoinfo "_AUTOUSER=$_USER set startx after autologing and applications after X starts..."
-cp /home/$_USER/.profile /home/$_USER/.profile.bak 2>/dev/null
-rm /home/$_USER/.profile 2>/dev/null
-# [[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
+	echofunc "${FUNCNAME[0]}"
+	if [ ! "$1" == "root" ]; then
+		echoinfo "_AUTOUSER=$_USER set startx after autologing and applications after X starts..."
+		cp /home/$_USER/.profile /home/$_USER/.profile.bak 2>/dev/null
+		rm /home/$_USER/.profile 2>/dev/null
+		# [[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
 cat > /home/$_USER/.profile  << 'EOF'
 [[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx -- vt1 &> /dev/null
 EOF
-chown $_USER:$_USER /home/$_USER/.profile
+		chown $_USER:$_USER /home/$_USER/.profile
 
-cp /home/$_USER/.xinitrc /home/$_USER/.xinitrc.bak 2>/dev/null
-rm /home/$_USER/.xinitrc 2>/dev/null
+		cp /home/$_USER/.xinitrc /home/$_USER/.xinitrc.bak 2>/dev/null
+		rm /home/$_USER/.xinitrc 2>/dev/null
 cat > /home/$_USER/.xinitrc  << 'EOF'
 #xclock
 /opt/anime.sh &
 (sleep 2; /opt/xt.sh) &
 /opt/osd.sh
 EOF
-chown $_USER:$_USER /home/$_USER/.xinitrc
-systemctl set-default multi-user.target
+		chown $_USER:$_USER /home/$_USER/.xinitrc
+		systemctl set-default multi-user.target
+		# autostart root in tty2
+cat > /root/.profile  << EOF
+[[ \$(tty) = /dev/tty2 ]] && \\
+(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+EOF
+
+	else
+		echoinfo "_AUTOUSER=$1 run 'initiv 0' after restart tty1..."
+cat > /root/.profile  << EOF
+[[ \$(tty) = /dev/tty1 ]] && \\
+(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ') && \\
+/usr/bin/initiv 0
+EOF
+	fi
 }
 
 secs_to_human() {
@@ -150,46 +316,49 @@ secs_to_human() {
 
 # set echo types
 echoerror() {
-    printf "${lred} * ERROR${lred}: %s${nocolor}\\n" "$@" 1>&2;
+    printf "${lred}   * ERROR${lred}: %s${nocolor}\\n" "$@" 1>&2;
 }
 
 echowarning() {
-    printf "${lyel} * WARNING: %s ${nocolor}\\n" "$@" 1>&2;
+    printf "${lyel}   * WARNING: %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echoinfo() {
-    printf "${lblu}   * INFO${lcya}: %s ${nocolor}\\n" "$@" 1>&2;
+    printf "${lblu} * INFO${lcya}: %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echoconfirm() {
-    printf "${mag}   * INFO${lmag}: %s ${nocolor}\\n" "$@" 1>&2;
+    printf "${mag}   * CONFIRM${lmag}: %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echofunc() {
-    printf "${lgre} * FUNCTION${gre}: %s${nocolor}\\n" "$@" 1>&2;
+    printf "${lwhi} * FUNCTION${lwhi}: %s${nocolor}\\n" "$@" 1>&2;
 }
 
-if [ $USER != "root" ]; then
-	echoinfo "... ### run this script as root to get full functionality ### ..."
+echook() {
+    printf "${lgre}    * OK${gre}: %s${nocolor}\\n" "$@" 1>&2;
+}
+if [ ! "$USER" == "root" ]; then
+	echowarning "... ### run this script as root to get full functionality ### ..."
 fi
 
 ## -- Function -- __create_recovery -------------------------------------------------------------------
 ## |    Description: create initivRecovery file, used in emergency when update goes wrong.            |
-## |          Usage: ./initivRecovery                                                                 |
-## |                 Script ./initivRecovery removes badly updated ./initiv and copy from last        |
-## |                 backup file ./initiv-*                                                           |
+## |          Usage: /usr/bin/initivRecovery                                                                 |
+## |                 Script /usr/bin/initivRecovery removes badly updated /usr/bin/initiv and copy from last        |
+## |                 backup file /usr/bin/initiv-*                                                           |
 ## ----------------------------------------------------------------------------------------------------
 ##
 __create_recovery () {
-	echofunc "__create_recovery"
+	echofunc "${FUNCNAME[0]}"
 # create recovery script 'initiv-recovery', to be using in emergency case, eg.when update went wrong
 echoinfo "_SCRIPT_PATH: $_SCRIPT_PATH/initivRecovery"
 cat > $_SCRIPT_PATH/initivRecovery  << EOF
 #/bin/bash
-rm ./initiv
-cp ./initiv-* ./initiv
+rm /usr/bin/initiv
+cp /usr/bin/initiv-* /usr/bin/initiv
 EOF
-chmod +x ./initivRecovery
+chmod +x /usr/bin/initivRecovery
 }
 
 # reset (restart) Xserver (xinit) in tty1
@@ -197,16 +366,20 @@ chmod +x ./initivRecovery
 ## |    Description: reset xinit and Xserver in default tty1                                          |
 ## ----------------------------------------------------------------------------------------------------
 __reset () {
-echofunc "reset ttyX services ... wait"
+	echofunc "${FUNCNAME[0]}"
+	echoinfo "tty1 stop"
 	service getty@tty1 stop
 	(sleep 2; service getty@tty1 restart) &
+	echoinfo "tty2 stop"
 	service getty@tty2 stop
 	(sleep 5; service getty@tty2 restart) &
-	echoinfo " ... done"
+	echoinfo "${FUNCNAME[0]} ... done"
 }
+
 
 ## -- Function -- __add_to_path -----------------------------------------------------------------------
 ## |    Description: add initiv to path                                                               |
+## |    not used                                                               |
 ## ----------------------------------------------------------------------------------------------------
 __add_to_path () {
 	echo "PATH="$PATH
@@ -222,8 +395,6 @@ __add_to_path () {
 	  ;;
 	esac
 }
-
-__add_to_path
 
 ## -- Function -- __read_data -------------------------------------------------------------------------
 ## |    Description: read data                                                                        |
@@ -247,9 +418,9 @@ case $1 in
 		esac
 	;;
 esac
-echofunc "__read_data"
-# rm ./initivData
-echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> ./initivData
+echofunc "${FUNCNAME[0]}"
+# rm /usr/bin/initivData
+echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> /usr/bin/initivData
 _DISK=$(echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
 # | tr '\n' ' '
 echoinfo "read disk usage ..." | tr '\n' ' '
@@ -260,7 +431,7 @@ echo $_DISK
 ## |    Description: remove packages                                                                  |
 ## ----------------------------------------------------------------------------------------------------
 __remove_packages () {
-	echofunc "__remove_packages"
+	echofunc "${FUNCNAME[0]}"
 # I did try remove: "ispell", but sometimes :/ needs interactive answer, hmmm
 # "keyboard-configuration"
 	declare -a _PACKAGES=(
@@ -292,6 +463,7 @@ __remove_packages () {
 		done
 	apt-get -qq autoremove
 	apt-get clean
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __update_apt_repos ------------------------------------------------------------------
@@ -313,6 +485,7 @@ deb http://deb.debian.org/debian buster-updates main
 #deb-src http://deb.debian.org/debian buster-updates main
 EOF
 apt update
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 function __output () {
@@ -332,12 +505,12 @@ function __output () {
 ## -- Function -- __install ---------------------------------------------------------------------------
 ## |    Description: install openssh-server, openssl, bc, xloadimage, xli, xosd-bin, parted           |
 ## ----------------------------------------------------------------------------------------------------
-__install () { #help: usege ./initiv -i package or ./initiv __install - to install basic packages
+__install () { #help: usege /usr/bin/initiv -i package or /usr/bin/initiv __install - to install basic packages
 	__output ${FUNCNAME[0]}
 	echofunc ${FUNCNAME[0]}
 	echoinfo " ... install basic for frepare splash and first boot ..."
 # if used short name "ssh" then openssh-server will be installed
-# usage: ./initiv -i ssh
+# usage: /usr/bin/initiv -i ssh
 #
 	[[ "$_PACKAGE" = "ssh" ]] &&	{ \
 		echoinfo "install openssh-server..  wait...."; \
@@ -347,6 +520,8 @@ __install () { #help: usege ./initiv -i package or ./initiv __install - to insta
 		declare -a stuff=(
 		"grub2-splashimages"
 		"fbi"
+		"dbus"
+		"openssh-server"
 		)
 		for _PACKAGE in ${stuff[@]}; do
 			echoinfo "install package: $_PACKAGE ............................. wait ..."
@@ -356,6 +531,7 @@ __install () { #help: usege ./initiv -i package or ./initiv __install - to insta
 		echo "install $1 ....................."
 		apt-get install -y -qq --no-install-recommends $1
 	fi
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __install_stuff1 --------------------------------------------------------------------
@@ -367,8 +543,6 @@ __install_stuff1 () {
 	echoinfo " ... install stuff from official repositories ..."
 	if [ -z $1 ]; then
 		declare -a stuff=(
-		"grub2-splashimages"
-		"openssh-server"
 		"openssl"
 		"bc"
 		"xloadimage"
@@ -381,12 +555,13 @@ __install_stuff1 () {
 			apt-get install -y -qq --no-install-recommends $_PACKAGE
 		done
 	fi
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __install_stuff2 --------------------------------------------------------------------
 ## |    Description: install stuff 2                                                                  |
 ## |         Option: -apt2 |installStuff2                                                             |
-## |       Examples: ./initiv -apt2                                                                   |
+## |       Examples: /usr/bin/initiv -apt2                                                                   |
 ## ----------------------------------------------------------------------------------------------------
 __install_stuff2 () {
 	__output ${FUNCNAME[0]}
@@ -415,7 +590,6 @@ declare -a stuff2=(
 "sqlite3"
 "xvfb"
 "tint2"
-"dbus"
 "ffmpeg"
 "python"
 "python-dev"
@@ -430,12 +604,13 @@ declare -a stuff2=(
 	done
 pip install setuptools -U # update 08-2019,
 pip install pyautogui # need for automate keys, mouse, recognise pictures on the screen
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __install_stuff3 --------------------------------------------------------------------
 ## |    Description: install google chrome                                                            |
 ## |         Option: -apt3                                                                            |
-## |       Examples: ./initiv -apt3                                                                   |
+## |       Examples: /usr/bin/initiv -apt3                                                                   |
 ## ----------------------------------------------------------------------------------------------------
 __install_stuff3 () {
 	__output ${FUNCNAME[0]}
@@ -445,7 +620,8 @@ __install_stuff3 () {
 	_PACKAGE="gnupg"
 	echoinfo "install package: $_PACKAGE ............................. wait ..."
 	apt-get install -y -qq --no-install-recommends $_PACKAGE
-# instll google-chrome
+# install google-chrome
+	__net_status google.com
 	wget --no-check-certificate -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 	#add-apt-repository 'deb http://dl.google.com/linux/chrome/deb/ stable main'
 	_GGL_REPO="deb http://dl.google.com/linux/chrome/deb/ stable main"
@@ -459,6 +635,7 @@ __install_stuff3 () {
 	_PACKAGE="google-chrome-stable"
 	echoinfo "install package: $_PACKAGE ............................. wait ..."
 	apt-get install -y -qq --no-install-recommends $_PACKAGE
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __install_stuff4 --------------------------------------------------------------------
@@ -467,26 +644,29 @@ __install_stuff3 () {
 ## |       Examples:                                                                                  |
 ## ----------------------------------------------------------------------------------------------------
 __install_stuff4 () {
-	echofunc "__install_stuff4"
+	echofunc "${FUNCNAME[0]}"
 	echoinfo " ... download and install busy4me in /opt ..."
 	_FILE="init-1"
-	if wget -q -nv -O ./$_FILE --no-check-certificate $_SERVER/$_FILE; then
+	__net_status $_SERVER
+	if wget -q -nv -O /usr/bin/$_FILE --no-check-certificate $_SERVER/$_FILE; then
 cat > /home/$_USER/.xinitrc  << 'EOF'
 openbox-session
 EOF
 		chown $_USER:$_USER /home/$_USER/.xinitrc
 		systemctl set-default multi-user.target
-		bash ./$_FILE
+		/usr/bin/initiv show 'in..progress...wait...' &
+		bash /usr/bin/$_FILE
 	else
 		echowarning "no $_FILE..."
 	fi
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __parted ----------------------------------------------------------------------------
 ## |    Description: extend linux partition to 10GB (default) on /dev/sda1                            |
-## |          Usage: ./initiv mb=2000MB parted; expand to 2GB, default part: _DEV=/dev/sda _PART=1    |
-## |                 ./initiv parted /dev/sda 1 apply                                                 |
-## |                 ./initiv [mb=] parted [device] [partition] [apply]                               |
+## |          Usage: /usr/bin/initiv mb=2000MB parted; expand to 2GB, default part: _DEV=/dev/sda _PART=1    |
+## |                 /usr/bin/initiv parted /dev/sda 1 apply                                                 |
+## |                 /usr/bin/initiv [mb=] parted [device] [partition] [apply]                               |
 ## ----------------------------------------------------------------------------------------------------
 __parted () {
 	__output ${FUNCNAME[0]}
@@ -514,21 +694,22 @@ if [ -z "$_PART" ]; then
 fi
 fdisk -l $_DEV$_PART >> /dev/null 2>&1 || (echo "could not find $_DEV$_PART - please check" && exit 1)
 
-CURRENTSIZEB=`fdisk -l $_DEV$_PART | grep "Disk $_DEV$_PART" | cut -d' ' -f5`
+CURRENTSIZEB=`/sbin/fdisk -l $_DEV$_PART | grep "Disk $_DEV$_PART" | cut -d' ' -f5`
 CURRENTSIZE=`expr $CURRENTSIZEB / 1024 / 1024`
 #_EXT=`printf %s\\n 'unit MB print list' | parted | grep "Disk ${_DEV}" | cut -d' ' -f3 | tr -d MB`
 echowarning "[ok] would/will resize to from ${CURRENTSIZE}MB to ${_EXT}"
 
 if [[ "$_APPLY" == "apply" ]] ; then
   echo "[ok] applying resize operation.."
-  parted ${_DEV} resizepart ${_PART} yes ${_EXT}
+  /sbin/parted ${_DEV} resizepart ${_PART} yes ${_EXT}
   echoinfo "[done]"
 else
   echowarning "Sandbox mode, i did not size!. $_USAGE"
 fi
 (sleep 1; echoinfo "expand filesystem ........... please wait ..."; exit 0) &
 #(sleep 2; printf "\n") &
-resize2fs $_DEV$_PART 2>/dev/null
+/sbin/resize2fs $_DEV$_PART 2>/dev/null
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __tunning ---------------------------------------------------------------------------
@@ -545,46 +726,54 @@ __tunning () {
 		rm /etc/apt/apt.conf 2>/dev/null
 	echo 'APT::Install-Recommends "false" ; APT::Install-Suggests "false" ;' >> /etc/apt/apt.conf
 
-		echoinfo " ... configure grub, add options .............."
-_GRUB="/etc/default/grub" # grub config file
+	############################################
+	# grub #####################################
+	############################################
+	echoinfo " ... configure grub, add options .............."
+	_GRUB="/etc/default/grub" # grub config file
 	cp $_GRUB $_GRUB-$_DATE_STAMP
-#	sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g' $_GRUB 2>/dev/null
-#	sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"/g' $_GRUB 2>/dev/null
-#	sed -i 's/\#GRUB_GFXMODE=640x480/GRUB_GFXMODE=800x600/g' $_GRUB 2>/dev/null
+	#	sed -i 's/GRUB_TIMEOUT=5/GRUB_TIMEOUT=0/g' $_GRUB 2>/dev/null
+	#	sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet"/GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"/g' $_GRUB 2>/dev/null
+	#	sed -i 's/\#GRUB_GFXMODE=640x480/GRUB_GFXMODE=800x600/g' $_GRUB 2>/dev/null
+	# make sure there is picture downloaded
+	# splash image 640x480, 800x600 etc. works OK,
+	__distro
+	_SERVER_PATH="$_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
+	_SPLASH="/usr/share/images/grub/network-globe.tga"
+rm $_SPLASH.bak 2>/dev/null
+cp $_SPLASH $_SPLASH.bak 2>/dev/null
+rm $_SPLASH 2>/dev/null
+	if [ ! -f $_SPLASH ]; then
+		__net_status $_SERVER
+		if ! wget -nv -O $_SPLASH --no-check-certificate $_SERVER_PATH/$_SPLASH; then
+			echoerror "there is no file "$_SPLASH" on the server $_SERVER_PATH or no response!..."
+			cp $_SPLASH.bak $_SPLASH
+		else
+			echoconfirm "file "$_SPLASH" downloaded succesfully from server $_SERVER_PATH "
+		fi
+	fi
 
-# add this to skip fsck: GRUB_CMDLINE_LINUX_DEFAULT=fsck.mode=skip
+# add this to skip fsck: GRUB_CMDLINE_LINUX_DEFAULT="fsck.mode=skip"
 cat > $_GRUB <<	EOF
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR="busy4.me"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"
 GRUB_CMDLINE_LINUX=""
 GRUB_GFXMODE=800x600
 GRUB_GFXPAYLOAD_LINUX=keep
-GRUB_BACKGROUND="/usr/share/images/grub/Plasma-lamp.tga"
+GRUB_BACKGROUND="$_SPLASH"
+GRUB_COLOR_NORMAL="black/black"
+GRUB_COLOR_HIGHLIGHT="black/black"
+COLOR_NORMAL="black/black"
+COLOR_HIGHLIGHT="black/black"
 EOF
 	update-grub 2>/dev/null
+	echoconfirm "grub updated OK"
 
-# available picture in default Debian 10
-# F-16 aeroplan
-#	050817-N-3488C-028.tga
-
-# room
-#	2006-02-15_Piping.tga
-
-# Apollo rocket
-#	Apollo_17_The_Last_Moon_Shot_Edit1.tga
-
-#	B-1B_over_the_pacific_ocean.tga
-#	BonsaiTridentMaple.tga
-#	Glasses_800_edit.tga
-#	Hortensia-1.tga
-#	Lake_mapourika_NZ.tga
-#	Moraine_Lake_17092005.tga
-#	Plasma-lamp.tga
-#	TulipStair_QueensHouse_Greenwich.tga
-#	Windbuchencom.tga
-
+	############################################
+	# system options ###########################
+	############################################
 		echoinfo " ... do not show messages durring boot ........ disable blank console ..."
 	sed -i 's/exit 0//g' /etc/rc.local 2>/dev/null
 	printf '%s\n%s\n' 'dmesg --console-off' 'exit 0' >> /etc/rc.local
@@ -599,13 +788,89 @@ EOF
 	fi
 	sed -i 's/journal+console/journal/g' /lib/systemd/system/systemd-fsck-root.service
 	sed -i 's/journal+console/journal/g' /lib/systemd/system/systemd-fsck@.service
+
+cat > /etc/systemd/journald.conf << EOF
+# This file is part of systemd.
+# generated by $_SCRIPT_FULL_NAME
+[Journal]
+Storage=none
+ForwardToSyslog=no
+ForwardToKMsg=no
+ForwardToConsole=no
+ForwardToWall=no
+MaxLevelStore=emerg
+MaxLevelSyslog=emerg
+MaxLevelKMsg=emerg
+MaxLevelConsole=emerg
+MaxLevelWall=emerg
+EOF
+
+cat > /etc/systemd/logind.conf << EOF
+# This file is part of systemd.
+# generated by $_SCRIPT_FULL_NAME
+[Login]
+NAutoVTs=6
+ReserveVT=6
+EOF
+
+cat > /etc/systemd/system.conf << EOF
+# This file is part of systemd.
+# generated by $_SCRIPT_FULL_NAME
+[Manager]
+LogLevel=emerg
+LogTarget=null
+#LogColor=yes
+#LogLocation=no
+DumpCore=no
+ShowStatus=no
+#CrashChangeVT=no
+#CrashShell=no
+CrashReboot=yes
+DefaultStandardOutput=null
+DefaultStandardError=null
+DefaultTimeoutStartSec=10s
+DefaultTimeoutStopSec=10s
+DefaultRestartSec=100ms
+DefaultStartLimitIntervalSec=10s
+DefaultStartLimitBurst=3
+EOF
+
+cat > /etc/systemd/user.conf << EOF
+# This file is part of systemd.
+# generated by $_SCRIPT_FULL_NAME
+[Manager]
+LogLevel=emerg
+LogTarget=null
+#LogColor=yes
+#LogLocation=no
+ShowStatus=no
+#CrashChangeVT=no
+#CrashShell=no
+CrashReboot=yes
+DefaultStandardOutput=null
+DefaultStandardError=null
+DefaultTimeoutStartSec=10s
+DefaultTimeoutStopSec=10s
+DefaultRestartSec=100ms
+DefaultStartLimitIntervalSec=10s
+DefaultStartLimitBurst=3
+EOF
+
+cat > /etc/systemd/logind.conf << EOF
+# This file is part of systemd.
+# generated by $_SCRIPT_FULL_NAME
+[Login]
+NAutoVTs=5
+ReserveVT=5
+EOF
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __remove_dirs -----------------------------------------------------------------------
 ## |    Description: remove directories                                                               |
 ## ----------------------------------------------------------------------------------------------------
 __remove_dirs () {
-	echofunc "__remove_dirs"
+	echofunc "${FUNCNAME[0]}"
 	echoinfo "remove directories ..."
 	if [ $_DIR == "NULL" ]; then
 		echoerror "nothing to remove ... add argument please"
@@ -634,6 +899,7 @@ rm /var/lib/apt/lists/*.* 2>/dev/null
 rm -rf /usr/share/man/?? && rm -rf /usr/share/man/??_*
 # rm -rf /usr/lib/modules/4.19.0-8-amd64/kernel/sound/pci/*
 # remove all modules, linux starts fine after that :)
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __download_files --------------------------------------------------------------------
@@ -641,99 +907,203 @@ rm -rf /usr/share/man/?? && rm -rf /usr/share/man/??_*
 ## ----------------------------------------------------------------------------------------------------
 ## |
 __download_files () {
-# download file "package.tar.gz" and unpack to "archive" directory in declared "/full/path/package"
-# help = usage ========================
-# ./initiv -d /full/path/package.tar.gz
-# all files from package.tar.gz will be extracted to "/full/path/package" directory
-#	__file=$__file
-__output ${FUNCNAME[0]}
-echofunc ${FUNCNAME[0]}
-	# server structure /.initiv/debian/10.3/x86_64/
-	if [ -f /etc/os-release ]; then
-	. /etc/os-release
-		_ID=$ID
-		_VERSION_CODENAME=$VERSION_CODENAME
-		_VERSION_ID=$VERSION_ID
-	fi
-	if [ -f /etc/debian_version ]; then
-		_VER=$(cat /etc/debian_version)
-	fi
-	_ARCH=$(uname -m)
-	_KERNEL_RELEASE="$(uname -r)"
-	echoinfo "full server distribution path: $_SERVER/.initiv/$_ID/$_VER/$_ARCH"
+	# download file "package.tar.gz" and unpack to "archive" directory in declared "/full/path/package"
+	# help = usage ========================
+	# /usr/bin/initiv -d /full/path/package.tar.gz
+	# all files from package.tar.gz will be extracted to "/full/path/package" directory
+	#	__file=$__file
+	__output ${FUNCNAME[0]}
+	echofunc ${FUNCNAME[0]}
 
-# help = usage ============================
-# ./initiv download
-# will download all files from declared default list
-# declare list of full names of files with full paths
-if [ -z "$__file" ]; then
-	echoinfo "declare list of files ......... wait ..."
-	declare -a __files=(
-#	"/usr/lib/modules/$_KERNEL_RELEASE.tar.gz" \
-	"/usr/share/pixmaps/spin.tar.gz"\
-	"/usr/share/pixmaps/dots-mouse/dots-mouse.tar.gz"\
-	"/usr/share/pixmaps/red-dots-black/red-dots-black.tar.gz"\
-	)
-else
-	echoinfo "full file name with path $__file"
-	__f=$(echo "${__file##*/}") # extract file name without path
-	__p=$(echo "${__file%/*}") # extract path only
-	echoinfo "file: $__f"
-	echoinfo "path: $__p"
-	echoinfo "download file: $__p/$__f ............................. wait ..."
-	rm -R $__p # delete old package files and directory
-	mkdir $__p
-	wget -nv -O $__file --no-check-certificate $_SERVER/.initiv/$_ID/$_VER/$_ARCH/$__path/$__file
-	tar -C $__p -zxf $__file
-	rm -R $__file # clean up
-	echoinfo "tar -C $__p -zxvf $__file"; echoinfo "... done"
-fi
-# __filex=$(echo $__file | sed 's/.*\//') # extract file without path
-# __file_path=$(echo $__file | sed 's/$__filex//g') # extract path only, not working with variable
-# easy way:
-# __file=$(echo "${__file##*/}") # extract file name without path
-# __path=$(echo "${__file%/*}") # extract path only
-# source: https://stackoverflow.com/questions/4168371/how-can-i-remove-all-text-after-a-character-in-bash
-# create archive
-# tar -zcvf spin.tar.gz ./spin
-# tar -zcvf $_KERNEL_RELEASE.tar.gz /usr/lib/modules/$_KERNEL_RELEASE
-# download file:
-	for __file in ${__files[@]}; do
+	__distro # check distro
+
+	echoinfo "server distribution path: $_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
+	_SERVER_PATH="$_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
+	# help = usage ============================
+	# /usr/bin/initiv download
+	# will download all files from declared default list
+	# declare list of full names of files with full paths
+	if [ -z "$__file" ]; then
+		echoinfo "declare list of files ......... wait ..."
+		declare -a __files=(
+	#	"/usr/lib/modules/$_KERNEL_RELEASE.tar.gz" \
+		"/usr/share/pixmaps/spin.tar.gz"\
+		"/usr/share/pixmaps/dots-mouse/dots-mouse.tar.gz"\
+		"/usr/share/pixmaps/red-dots-black/red-dots-black.tar.gz"\
+		)
+	else
+		echoinfo "full file name with path $__file"
 		__f=$(echo "${__file##*/}") # extract file name without path
 		__p=$(echo "${__file%/*}") # extract path only
+		echoinfo "file: $__f"
+		echoinfo "path: $__p"
+		echoinfo "download file: $__p/$__f ... wait ..."
+		rm -R $__p 2>/dev/null# delete old package files and directory
+		mkdir $__p
+		__net_status $_SERVER
+		wget -nv -O $__file --no-check-certificate $_SERVER_PATH/$__path/$__file
+		tar -C $__p -zxf $__file
+		rm -R $__file 2>/dev/null # clean up
+		echoinfo "tar -C $__p -zxvf $__file"; echoinfo "... done"
+	fi
+	# __filex=$(echo $__file | sed 's/.*\//') # extract file without path
+	# __file_path=$(echo $__file | sed 's/$__filex//g') # extract path only, not working with variable
+	# easy way:
+	# __file=$(echo "${__file##*/}") # extract file name without path
+	# __path=$(echo "${__file%/*}") # extract path only
+	# source: https://stackoverflow.com/questions/4168371/how-can-i-remove-all-text-after-a-character-in-bash
+	# create archive
+	# tar -zcvf spin.tar.gz /usr/bin/spin
+	# tar -zcvf $_KERNEL_RELEASE.tar.gz /usr/lib/modules/$_KERNEL_RELEASE
+	# download file:
+	for __file in ${__files[@]}; do
+		__f=$(echo "${__file##*/}") # file name without path
+		__p=$(echo "${__file%/*}") # path only
 		echoinfo "file: $__f"
 		echoinfo "path: $__p"
 		echoinfo "download file: $__file ............................. wait ..."
 		rm -R $__p # delete old package files and directory
 		mkdir $__p
+		__net_status $_SERVER
 		wget -nv -O $__file --no-check-certificate $_SERVER/.initiv/$_ID/$_VER/$_ARCH/$__path/$__file
+		# unpack archive
 		tar -C $__p -zxf $__file
 		rm -R $__file # clean up
-		echoinfo "tar -C $__p -zxvf $__file"; echoinfo "... done"
+		echoinfo "tar -C $__p -zxvf $__file"
+		echoinfo "... done"
 		done
-	# unpack archive
+
+	echoinfo "download system files ......... wait ..."
+	###############################################################
+	# update root, user, system preferences #######################
+	###############################################################
+	declare -a _FILES=(
+	"/root/.bashrc"
+	"/root/.bash_aliases"
+	"/home/$_USER/.bashrc"
+	"/home/$_USER/.bash_aliases"
+	)
+	for _FILE in ${_FILES[@]}; do
+		rm $_FILE
+		echoinfo "download file: $_FILE .......... wait ..."
+		__net_status $_SERVER
+		wget -nv -O $_FILE --no-check-certificate $_SERVER$_SERVER_DIR$_FILE
+	done
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 __service () { #help: create service
-	echofunc ${FUNCNAME[0]}
-	systemctl disable ${_SNAME}.service
+	echofunc "${FUNCNAME[0]}"
+# default services:
+# "busy-splash-redblack"
+# "busy"
+echowarning "default splash service '$_BUSY_ANIME_SERVICE'"
+
+	systemctl disable ${_BUSY_ANIME_SERVICE}.service 2>/dev/null
+	systemctl disable ${_BUSY_SERVICE}.service 2>/dev/null
+	systemctl disable ${_INITIV_1_SERVICE}.service 2>/dev/null
+
 	systemctl daemon-reload
 	echoinfo "create service which runs after reboot"
-	if [ -z "$1" ]; then
-		echowarning "you must define service name.."
-#		exit 1
+
+if [ -z "$_ANIMEDIR" ]; then
+	_ANIMEDIR="/usr/share/pixmaps/red-dots-black"
+fi
+
+############################################
+# create _BUSY_SERVICE
+############################################
+cat > /usr/bin/${_BUSY_SERVICE} << EOF
+#!/usr/bin/env bash
+# generated by $_SCRIPT_FULL_NAME
+LOGFILE=/var/log/busy4me.log
+touch \$LOGFILE 2>/dev/null # create logfile
+chmod 666 /var/log/busy4me.log
+exec &> >(tee -ia \$LOGFILE) # everything to logfile
+exec 2>&1
+logline() {
+    while IFS= read -r line; do
+        echo "\$(date +%F' '%T) \${0} - \$line" >> \$LOGFILE
+    done
+}
+
+__change_hostname () {
+echo \${FUNCNAME[0]}
+_NEW_HOSTNAME=\$(ip -4 addr | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}' | sed 's/127.0.0.1//' | tr '\\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
+_OLD_HOSTNAME=\$(cat /etc/hostname)
+	while [ -z "\$_NEW_HOSTNAME" ];	do
+		_NEW_HOSTNAME=\$(ip -4 addr | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}' | sed 's/127.0.0.1//' | tr '\\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
+		echo "_OLD_HOSTNAME=\$_OLD_HOSTNAME check... _NEW_HOSTNAME=\$_NEW_HOSTNAME" | logline
+		sleep 2
+	done
+	if [ ! "\$_OLD_HOSTNAME" == "\$_NEW_HOSTNAME" ];	then
+		echo " _OLD_HOSTNAME=\$_OLD_HOSTNAME  ...set new hostname: _NEW_HOSTNAME=\$_NEW_HOSTNAME" | logline
+		hostnamectl set-hostname \$_NEW_HOSTNAME
+		echo "...update: echo \"127.0.1.1 \$_NEW_HOSTNAME\" >> /etc/hosts ...done backup in /etc/hosts.bak" | logline
+			cp /etc/hosts /etc/hosts.bak 2>/dev/null
+			sed -i "\\/\\s\$_OLD_HOSTNAME/d" /etc/hosts
+			echo "127.0.1.1 \$_NEW_HOSTNAME" >> /etc/hosts
+			/usr/bin/initiv -r # reset ttyX consoles
+	else
+		echo " hostname unchaged: _OLD_HOSTNAME=\$_OLD_HOSTNAME _NEW_HOSTNAME=\$_NEW_HOSTNAME" | logline
 	fi
-	_SNAME=redblack # service name
-	if [ -z "$_ANIMEDIR" ]; then
-		_ANIMEDIR="/usr/share/pixmaps/red-dots-black"
-	fi
-cat > /usr/bin/${_SNAME} << EOF
+}
+
+__initiv_0 () {
+#	/usr/bin/initiv 0
+#	/usr/bin/initiv parted
+	sleep infinity
+}
+
+__run () {
+	while true; do
+		systemctl is-active --quiet getty@tty2 || echo "tty2 is down! ...start again"
+		systemctl is-active --quiet getty@tty2 || systemctl start getty@tty2
+		systemctl is-active --quiet getty@tty1 || echo "tty1 is down! ...start again"
+		systemctl is-active --quiet getty@tty1 || systemctl start getty@tty1
+		sleep 10
+	done
+}
+
+case \$1 in
+	start)
+		__change_hostname
+		__run
+#		__initiv_0
+	;;
+	stop)
+	_PID=\$(pgrep ${_BUSY_SERVICE} | awk '{print \$1}') | logline
+	kill -9 \$_PID | logline
+	;;
+esac
+EOF
+chmod +x /usr/bin/${_BUSY_SERVICE}
+cat > /etc/systemd/system/${_BUSY_SERVICE}.service << EOF
+# Contents of /etc/systemd/system/${_BUSY_ANIME_SERVICE}.service
+# generated by $_SCRIPT_FULL_NAME
+[Unit]
+Description=busy4me service
+Requires=network-online.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/$_BUSY_SERVICE start
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+############################################
+# create _BUSY_ANIME_SERVICE service
+############################################
+cat > /usr/bin/${_BUSY_ANIME_SERVICE} << EOF
 #!/bin/bash
 # generated by $_SCRIPT_FULL_NAME
 echo "_ANIMEDIR:$_ANIMEDIR"
 _ANIMEDIR='$_ANIMEDIR'
 __anime () {
-it="0.04" # interval time
+it="0.05" # interval time
 __dirlist=(\`ls \$_ANIMEDIR/\$*\`)
 while true; do
 	echo "next files from:" \$_ANIMEDIR
@@ -754,55 +1124,132 @@ case \$1 in
 	__anime
 	;;
 	stop)
-	_PID=\$(pgrep ${_SNAME} | awk '{print \$1}')
+	_PID=\$(pgrep ${_BUSY_ANIME_SERVICE} | awk '{print \$1}')
 	kill -9 \$_PID
-#	pkill ${_SNAME}
+#	pkill ${_BUSY_ANIME_SERVICE}
 	;;
 esac
 EOF
-chmod +x /usr/bin/${_SNAME}
+chmod +x /usr/bin/${_BUSY_ANIME_SERVICE}
 
-cat > /etc/systemd/system/${_SNAME}.service << EOF
-# Contents of /etc/systemd/system/${_SNAME}.service
+cat > /etc/systemd/system/${_BUSY_ANIME_SERVICE}.service << EOF
+# Contents of /etc/systemd/system/${_BUSY_ANIME_SERVICE}.service
+# generated by $_SCRIPT_FULL_NAME
 [Unit]
-Description=redblack
-After=network.target
+Description=redblack - red dots, black screen, animated splash screen it tty1
+Before=network.target
 
 [Service]
 Type=simple
 Restart=always
-ExecStart=/usr/bin/$_SNAME start
+ExecStart=/usr/bin/$_BUSY_ANIME_SERVICE start >>/dev/null 2>>/dev/null
 
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl daemon-reload
-systemctl enable ${_SNAME}.service
-echoinfo "service \"$_SNAME.service\" created, usage: service $_SNAME start|stop"
-cat > /root/.profile  << 'EOF'
-[[ $(tty) = /dev/tty2 ]] && (ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+
+############################################
+# create _INITIV_1_SERVICE service
+############################################
+cat > /usr/bin/${_INITIV_1_SERVICE} << EOF
+#!/bin/bash
+# generated by $_SCRIPT_FULL_NAME
+
+__check_osd () {
+_PROC="osd.sh" # looking for process
+_CHECK=\$(ps -e | grep \$_PROC | grep -v grep)
+while [[ ! \$_CHECK == *\$_PROC* ]]; do
+	_CHECK=\$(ps -e | grep \$_PROC | grep -v grep)
+	echo "there is no process \$_PROC? check: \$_CHECK ... wait"
+	sleep 5
+done
+echowarning "process \$_PROC running! check: \$_CHECK"
+echo ":~# ps -e | grep \$_PROC | grep -v grep"
+ps -e | grep \$_PROC | grep -v grep
+if [[ \$_CHECK == *\$_PROC* ]]; then
+	/usr/bin/initiv show 'PREPARED!...wait...' &
+	sleep 5
+	/usr/bin/initiv -S 1
+	sleep 1200 # wait 20 min, should be finished by this time
+fi
+echoconfirm "\${FUNCNAME[0]} done, run reset ..."
+}
+case \$1 in
+	start)
+	__check_osd
+	;;
+	stop)
+	_PID=\$(pgrep ${_INITIV_1_SERVICE} | awk '{print \$1}')
+	kill -9 \$_PID
+	;;
+esac
 EOF
+chmod +x /usr/bin/${_INITIV_1_SERVICE}
+
+cat > /etc/systemd/system/${_INITIV_1_SERVICE}.service << EOF
+# Contents of /etc/systemd/system/${_INITIV_1_SERVICE}.service
+# generated by $_SCRIPT_FULL_NAME
+[Unit]
+Description=start initiv 1 installation whet osd.sh is running on the X
+Before=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=/usr/bin/$_INITIV_1_SERVICE start >>/dev/null 2>>/dev/null
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable ${_BUSY_SERVICE}.service
+echoinfo "service \"$_BUSY_SERVICE.service\" created, usage: service $_BUSY_SERVICE start|stop"
+echowarning "${_BUSY_SERVICE}.service is enabled, will started after reboot"
+
+systemctl enable ${_BUSY_ANIME_SERVICE}.service
+echoinfo "service \"$_BUSY_ANIME_SERVICE.service\" created, usage: service $_BUSY_ANIME_SERVICE start|stop"
+echowarning "${_BUSY_ANIME_SERVICE}.service is enabled, will started after reboot"
+
+systemctl enable ${_INITIV_1_SERVICE}.service
+echoinfo "service \"$_INITIV_1_SERVICE.service\" created, usage: service $_INITIV_1_SERVICE start|stop"
+echowarning "${_INITIV_1_SERVICE}.service is enabled, will started after reboot"
+
+cat > /root/.profile  << `EOF`
+[[ \$(tty) = /dev/tty2 ]] && \\
+(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+`EOF`
+
+if [ "$1" == "disable" ]; then
+	service $_BUSY_ANIME_SERVICE stop
+	systemctl disable ${_BUSY_ANIME_SERVICE}.service
+	echoconfirm "${_BUSY_ANIME_SERVICE}.service is disabled "
+	systemctl daemon-reload
+else
+	echowarning "${_BUSY_ANIME_SERVICE}.service is enabled "
+fi
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 
-## cat >> ./initivHelp << 'HELP'
-## -- Function -- __anime -----------------------------------------------------------------------------
-## |    Description: create animation script (wallpaper durring installation)                         |
-## |         Option: -n [type]                                                                        |
-## |          Types: dark <default>, light, spin                                                      |
-## |       Examples: ./initiv -n light # create white background color animation, four color dots     |
-## |                 ./initiv -n dark # create black background color animation, three red dots       |
-## ----------------------------------------------------------------------------------------------------
+## cat >> /usr/bin/initivHelp << 'HELP'
+## -- Function -- __anime ------------------------------------------------------------------------------------
+## |    Description: create animation script (wallpaper durring installation)                                |
+## |         Option: -n [type]                                                                               |
+## |          Types: dark <default>, light, spin                                                             |
+## |       Examples: /usr/bin/initiv -n light # create white background color animation, four color dots     |
+## |                 /usr/bin/initiv -n dark # create black background color animation, three red dots       |
+## -----------------------------------------------------------------------------------------------------------
 __anime () {
-	echofunc "__anime"
+	echofunc "${FUNCNAME[0]}"
 if [ -z "$_ANIMEDIR" ]; then
 	_ANIMEDIR="/usr/share/pixmaps/red-dots-black"
 else
 	case $_ANIMEDIR in
-		"1"|"dark") _ANIMEDIR="/usr/share/pixmaps/red-dots-black"                        ;;
-		"2"|"light") _ANIMEDIR="/usr/share/pixmaps/dots-mouse"                           ;;
-		"3"|"spin") _ANIMEDIR="/usr/share/pixmaps/spin"                                  ;;
-		*) echowarning "usage: $0 anime [1|dark|2|light|3|spin]"; exit 0                 ;;
+		"1"|"dark") _ANIMEDIR="/usr/share/pixmaps/red-dots-black"                                                ;;
+		"2"|"light") _ANIMEDIR="/usr/share/pixmaps/dots-mouse"                                                   ;;
+		"3"|"spin") _ANIMEDIR="/usr/share/pixmaps/spin"                                                          ;;
+		*) echowarning "usage: $0 anime [1|dark|2|light|3|spin]"; _ANIMEDIR="/usr/share/pixmaps/red-dots-black"  ;;
 	esac
 fi
 echo $_THEME > /opt/anime.theme
@@ -881,13 +1328,14 @@ done
 __anime
 EOF
 chmod +x /opt/anime.fb
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __osd -------------------------------------------------------------------------------
 ## |    Description: create script to display text during installation                                |
 ## ----------------------------------------------------------------------------------------------------
 __osd () {
-	echofunc "__osd"
+	echofunc "${FUNCNAME[0]}"
 _FC=orange # font color
 
 if [[ "$_THEME" = "light" ]]; then
@@ -919,13 +1367,14 @@ __fo="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
 EOF
 chmod +x /opt/osd.sh
 echoinfo "/opt/osd.sh ... created"
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __dots ------------------------------------------------------------------------------
 ## |    Description: dots                                                                             |
 ## ----------------------------------------------------------------------------------------------------
 __dots () {
-	echofunc "__dots"
+	echofunc "${FUNCNAME[0]}"
 _TERM=$(tty)
 _PROC=$(ps -e | grep "initiv" | grep -v grep)
 echoinfo "$_PROC"
@@ -939,13 +1388,14 @@ sleep 5
 
 printf '\n' > $_TERM
 (sleep 0.1; pkill initiv) &
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __xt -----------------------------------------------------------------------------
 ## |    Description: create xterminal winodows diplayed durring installation                       |
 ## -------------------------------------------------------------------------------------------------
 __xt () {
-echofunc "__xt"
+echofunc "${FUNCNAME[0]}"
 # default theme: dark
 case $_THEME in
 	"light")
@@ -999,29 +1449,41 @@ __ip () {
 	sleep infinity
 }
 
+__progress () {
+	while true; do
+		_LINES=\$(wc -l /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//g' | tr -d '\n' | sed 's/[[:space:]]//g')
+		_MAX=4630
+		echo \$(awk -vn=\$_LINES -vz=\$_MAX 'BEGIN{printf("%.2f\\n",n*100/z)}')" %"
+		sleep 1
+	done
+}
+
 __message () {
 	_MESSAGE=\${1}
 	echo "\${1}" | tr '\n' ' '
-	sleep infinity
+	sleep 60
 }
 
 __xterm () {
 	__font="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
-	# xterm -geometry 30x20+0+0 -uc -bg black -fg grey -fn \$__font -e /opt/count.sh
+# xterm -geometry 30x20+0+0 -uc -bg black -fg grey -fn \$__font -e /opt/count.sh
 	xterm -geometry 50x3+10+10 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh time' &
-	xterm -geometry 17x2+650+545 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip'
+#	xterm -geometry 17x2+650+505 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip'
+	xterm -geometry 17x2+650+505 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh progress'
 }
 
 case \$1 in
-	message) __message \${2} ;;
-	time) __time ;;
-	count) __count ;;
-	ip) __ip       ;;
-	*) __xterm     ;;
+	message) __message \${2}   ;;
+	time) __time               ;;
+	count) __count             ;;
+	ip) __ip                   ;;
+	progress) __progress       ;;
+	*) __xterm                 ;;
 esac
 EOF
 chmod +x /opt/xt.sh
 echoinfo "/opt/xt.sh ... created"
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __new_hostname -------------------------------------------------------------------
@@ -1031,36 +1493,7 @@ __new_hostname () {
 	__output ${FUNCNAME[0]}
 	echofunc ${FUNCNAME[0]}
 	echoinfo "change hostname to \"$_NEW_HOSTNAME\""
-}
-
-## -- Function -- __update -------------------------------------------------------------------------
-## |    Description: update initiv itself                                                          |
-## -------------------------------------------------------------------------------------------------
-__update () { #help: ./initiv update itself
-	__output ${FUNCNAME[0]}
-	echofunc ${FUNCNAME[0]}
-	echoinfo " ..download update on server $_SERVER"
-	echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
-	if ! wget -nv -O ./initiv.new --no-check-certificate $_SERVER/initiv; then
-		echoerror "there is no file "$0" on the server or no response!..."
-		exit 1
-	else
-		echoinfo " ... compare version"
-		_NEW="$(cat ./initiv.new | base64)"
-		_OLD="$(cat ./initiv | base64)"
-		if [ ! "$_NEW" == "$_OLD" ]; then
-			echowarning " ... version on the server is different, update and start again..."
-			rm -rf ./initiv-*;	cp ./initiv ./initiv-$_DATE_STAMP # backup just in case
-			rm -rf ./initiv;	cp ./initiv.new ./initiv 2>/dev/null
-			chmod +x ./initiv
-			rm -rf ./initiv.new
-			echo "run again: " $_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
-$_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
-exit 0
-		else
-			echoconfirm " ... no update needed, identical version on the server"
-		fi
-fi
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __salt ---------------------------------------------------------------------------
@@ -1072,6 +1505,7 @@ __salt () { #help: install salt-minion, UUID used as minion ID if not provided, 
 	echofunc ${FUNCNAME[0]}
 	echoinfo " ... install saltstack, _SALT_MASTER=$_SALT_MASTER"
 	__install_stuff1 gnupg
+	__net_status saltstack.com
 wget -O - http://repo.saltstack.com/py3/debian/10/amd64/latest/SALTSTACK-GPG-KEY.pub | apt-key add -
 echo "deb http://repo.saltstack.com/py3/debian/10/amd64/latest buster main" >> /etc/apt/sources.list
 apt update
@@ -1087,6 +1521,7 @@ echo "$_SALT_MINION" > "$_SALT_DIR/minion_id"
 service salt-minion restart &&
 echoinfo "salt-minin ID: $_SALT_MINION"
 service salt-minion status
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 __show () {
@@ -1097,66 +1532,26 @@ __show () {
 	_FG=grey
 	__font="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
 	_MESSAGE="$1"
-	echoinfo "$_MESSAGE"
+	echoinfo "message in DISPLAY=$DISPLAY $_MESSAGE"
 	if [ -n $1 ]; then
 		xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg red -fn $__font -e '/opt/xt.sh message '$_MESSAGE
 		exit 0
 	fi
-	_PROC="osd.sh" 	# looking for process
-	_CHECK=$(ps -e | grep $_PROC | grep -v grep)
-	while [[ ! $_CHECK == *$_PROC* ]]; do
-		_CHECK=$(ps -e | grep $_PROC | grep -v grep)
-		echoerror "there is no process $_PROC? check: $_CHECK ... wait"
-		sleep 5
-	done
-	echowarning "process $_PROC running! check: $_CHECK"
-echo ":~# ps -e | grep $_PROC | grep -v grep"
-ps -e | grep $_PROC | grep -v grep
 	# install progress in xterm during first interface...
-#	xterm -geometry 105x4+10+540 -bw 0 -uc -bg $_BG -fg $_FG -fn $__font -e '/root/initiv removePackages'
-while true; do
-	xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg $_FG -e '/root/initiv removePackages'
-	xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg $_FG -e '/root/initiv apt1'
-	xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg $_FG -e '/root/initiv tunning'
-done
+#while true; do
+#	xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg $_FG -e '/root/initiv removePackages'
+#	xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg $_FG -e '/root/initiv apt1'
+#	xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg $_FG -e '/root/initiv tunning'
+#done
 }
 
 __prepare () {
 	echofunc ${FUNCNAME[0]}
-cat > /opt/check << EOF
-#!/bin/bash
-# generated by $_SCRIPT_FULL_NAME
-_PROC="osd.sh" 	# looking for process
-_CHECK=\$(ps -e | grep \$_PROC | grep -v grep)
-while [[ ! \$_CHECK == *\$_PROC* ]]; do
-	_CHECK=\$(ps -e | grep \$_PROC | grep -v grep)
-	echo "there is no process \$_PROC? check: \$_CHECK ... wait"
-	sleep 5
-done
-echowarning "process \$_PROC running! check: \$_CHECK"
-echo ":~# ps -e | grep \$_PROC | grep -v grep"
-ps -e | grep \$_PROC | grep -v grep
-$_SCRIPT_FULL_NAME -S 1
-EOF
-chmod +x /opt/check
-echoinfo "/opt/check ... created"
-
-# create "check" service
-# or login as root and execute as below:
-# mkdir -pv /etc/systemd/system/getty@tty2.service.d 2>/dev/null
-# rm /etc/systemd/system/getty@tty2.service.d/autologin.conf 2>/dev/null
-# cat > /etc/systemd/system/getty@tty2.service.d/autologin.conf << EOF
-# [Service]
-# ExecStart=
-# ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
-# EOF
-# systemctl set-default multi-user.target
-
 cat > /root/.profile  << 'EOF'
-[[ $(tty) = /dev/tty2 ]] && /opt/check
+[[ $(tty) = /dev/tty2 ]] && /usr/bin/prepare
 EOF
 
-_PROC="osd.sh" 	# looking for process
+_PROC="osd.sh" # looking for process
 _CHECK=$(ps -e | grep $_PROC | grep -v grep)
 while [[ ! $_CHECK == *$_PROC* ]]; do
 	_CHECK=$(ps -e | grep $_PROC | grep -v grep)
@@ -1167,8 +1562,11 @@ echowarning "process $_PROC running! check: $_CHECK"
 echo ":~# ps -e | grep $_PROC | grep -v grep"
 ps -e | grep $_PROC | grep -v grep
 if [[ $_CHECK == *$_PROC* ]]; then
-	$_SCRIPT_FULL_NAME show PREPARED! &
+	/usr/bin/initiv show 'PREPARED! wait...' &
+	sleep 5
+	/usr/bin/initiv -S 1
 fi
+echoconfirm "${FUNCNAME[0]} done, run reset ..."
 }
 
 __no_option () {
@@ -1187,15 +1585,18 @@ __install_x () {
 	echofunc ${FUNCNAME[0]}
 	echoinfo "install X"
 apt-get install -y -V --no-install-recommends xorg
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 __interface () {
 	echofunc ${FUNCNAME[0]}
+	__net_status $_SERVER
 	echoinfo "set interface ..."
 picture="wallpaper.jpg"
 	rm /opt/$picture 2>/dev/null
 	wget -nv -O /opt/$picture --no-check-certificate $_SERVER/$picture
 chmod 777 /opt/$picture
+echoconfirm "${FUNCNAME[0]} done"
 }
 
 __count () { #help: generate specific output in terminal
@@ -1269,6 +1670,11 @@ __version() { #help: show help...
 echo -e "\e[95m$0 -- Version $_SCRIPT_VERSION\e[0m"
 }
 
+__cron () {
+echofunc ${FUNCNAME[0]}
+echowarning "hello from crontab ... :)"
+}
+
 __help () { #help: show short functions descriptions
 __output ${FUNCNAME[0]}
 echofunc ${FUNCNAME[0]}
@@ -1280,24 +1686,24 @@ echo -e "\e[32m  =================== help file end ==============\e[0m"
 
 __func_help () { #help: show short functions descriptions
 echoinfo "=== $_SCRIPT_NAME === Ver.$_SCRIPT_VERSION ======== help =============="
-echofunc "__func_help"
+echofunc "${FUNCNAME[0]}"
   LANG=en_US.UTF_8
 echoinfo "=== Functions list ==="
   grep -E '^_.+ #help' "$0" | sed -e 's|() { #help: |.|g' | column -s"..." -t | sort
 }
 
 __stuff_help () { #help: show short functions descriptions
-echofunc "__stuff_help"
+echofunc "${FUNCNAME[0]}"
   LANG=en_US.UTF_8
 echoinfo "=== Stuff list ==="
 echoinfo "   *TODO"
 }
 
 ##
-cat > ./updated << EOF
+cat > /usr/bin/updated << EOF
 ## === udpate every time ===========================================================================
 ## | run automaticaly udate every time on start!
-## | try ./initiv -k                                                   |
+## | try: initiv -k 		to skip update                                                             |
 ## =================================================================================================
 EOF
 ## __update
@@ -1308,13 +1714,13 @@ EOF
 ## =================================================================================================
 ## Available options:
 ##
-while getopts ':a: b d: f F h H: i: k l n: o: r: s: S v T: t: u U: w x X' opt
+while getopts ':a: b d: f F h H: i: k l n: o: r s: S v T: t: u U: w x X' opt
 do
   case "${opt}" in
     a ) _AUTOUSER="$OPTARG"; __autologin; __autostart                                       ;;
 ## -a <user>	set who will be automaticaly logged in tty1, start X session and execute X apps
 		b ) __install_stuff4; exit 0                                                            ;;
-## -b		install stuff4 & exit (List of stuff: ./initiv -l)
+## -b		install stuff4 & exit (List of stuff: /usr/bin/initiv -l)
 ## -c		option "c"
 		d ) __file="$OPTARG"; __download_files; exit 0                                          ;;
 ## -d <file>	download specific file, eg,: initiv -d file.txt
@@ -1324,13 +1730,13 @@ do
 ## -f <function>	execute specific function!
 		F ) __fix                                                                               ;;
 ## -F	fix possible problems with filesystem, databeses, apt, dpkg etc
-## 		examples: ./initiv -f __timer	# execute __timer function
+## 		examples: /usr/bin/initiv -f __timer	# execute __timer function
 ## -g		option "g"
     h|\? ) __help; exit 0                                                                   ;;
 ## -h	or -?	this help
 		H ) _THEME="$OPTARG"; _ANIMEDIR="$OPTARG"; __anime; __xt; __osd; __reset                ;;
 ## -H <value>	Pass the loading theme. values: <light> or <dark> (default)
-		i ) _PACKAGE="$OPTARG"; __install_stuff                                                 ;;
+		i ) _PACKAGE="$OPTARG"; __install                                                       ;;
 ## -i <package>	Install particular package, could be defined short name, eg. initiv -p ssh
 ## 		available short names: ssh (install openssh-server)
 ##
@@ -1340,14 +1746,14 @@ do
 		l ) __stuff_help                                                                        ;;
 ## -l		Stuff list *TODO
 ## -m		option "m"
-		n )  _ANIMEDIR="$OPTARG"; echoinfo "_ANIMEDIR=$OPTARG"                                   ;;
+		n )  _ANIMEDIR="$OPTARG"; echoinfo "_ANIMEDIR=$OPTARG"                                  ;;
 ## -n <dir)	Set background animation, where <dir> contains pictures for animation *TODO
-		r ) _DIR="$OPTARG"; __remove_dirs; exit 0                                               ;;
-## -r <dir>	remove particular directories *TODO
+		r ) __reset; exit 0                                                                     ;;
+## -r reset ttyX consoles
 		s ) _SALT_MASTER="$OPTARG"                                                              ;;
 ## -s <server>	set salt-master server IP address or DNS name (default: saltmaster.localhost)
 ## 		stored in ${_SALT_DIR}/minion.d/99-master-address.conf
-		S ) _SHOW="true"                                                                         ;;
+		S ) _SHOW="true"                                                                        ;;
 ## show execution in xterm, on tty1, user's X session
 ## use this option if you want see output on DISPLAY:0 instead terminal
 		t ) _SALT_MINION="$OPTARG"                                                              ;;
@@ -1370,11 +1776,14 @@ do
 ## -X		install X server and reset tty1
 ## -y		option "y"
 ## -z		option "z"
-		:) echowarning "Option -$OPTARG requires an argument." >&2        		                   ;;
-		* )  __help; exit 0                                                                      ;;
+		:) echowarning "Option -$OPTARG requires an argument." >&2                              ;;
+		* )  __help; exit 0                                                                     ;;
   esac
 done
 shift $((OPTIND-1))
+
+__bashcolor
+__net_status google.com
 
 ## === actions ======================================================================================
 ## | actions                                                                                        |
@@ -1391,9 +1800,9 @@ case $1 in
 ## remove_files - remove unneded files
 	"removePackages"|"remove-packages" )	__remove_packages                              ;;
 ## remove_packages - remove unnided packages
-	"autostart"|"autostartSet"|"autostart-set" )	__autostart                            ;;
+	"autostart"|"autostartSet"|"autostart-set" )	__autostart $2                         ;;
 ## autostart	set programs tu run in user files: .profile and .xinitrc
-	"autologin"|"autologinSet"|"autologin-set" )	__autologin                            ;;
+	"autologin"|"autologinSet"|"autologin-set" )	__autologin $2                         ;;
 ## autologin	set who will be logged in tty1
 	"tunning" )	__tunning                                                                ;;
 ## tunning	visual cosmetic tunning
@@ -1423,50 +1832,78 @@ case $1 in
 ## busy	install stuff4, download and execute script init-1
 	"timer" )	__timer                                                                    ;;
 ## timer	show timer test
+	"cron" )	__cron                                                                    ;;
+## timer	show timer test
 	"show" )	__show $2                                                                  ;;
 ## show	run xterm small window with installation scripts
 	"service" )	__service $2                                                             ;;
 ## create service
+## usage: /usr/bin/initiv service [service-name] - create service witch providead name
+## 		/usr/bin/initiv service - withou parameters will craete service "busy" and "busy-flash-redblack"
 	"prepare" )	__prepare                                                                ;;
 ## prepare	set distro to distribution
+## - do it on fresh installed distro
 	"install" )
 		__read_data
-		__install
 		__remove_packages
-		__useradd
-		__autostart
-		__autologin
+		__update_apt_repos
+		__install
+		__change_hostname
 		__tunning
-		__interface
+		__service
 		__download_files
-		__anime
+		__anime dark
+		__autologin root
+		__autostart root
 		__read_data
+		service $_BUSY_SERVICE start
+		systemctl disable $_BUSY_ANIME_SERVICE
+		sleep 1
+#		service $_BUSY_ANIME_SERVICE start &
+#		(sleep 10; /usr/bin/initiv reset)
+#		(sleep 2; bash --rcfile <(echo '. ~/.bashrc; /usr/bin/initiv reset'))
+#		(sleep 1, reboot) &
+#		service $_BUSY_ANIME_SERVICE start
 		;;
 ## install basic packages for splash and first boot
+## - do it automatically just after first run (partiton will be expanded, and VM file will grow)
 	"0" )
 ## 0	execute all initial options, remove packages, set user, install X and basic stuff
 		__read_data
+		__interface
+		__useradd
+		__change_hostname # used for waiting online
 		__update
 		__update_apt_repos
 		__install_stuff1
+		__parted
 		__install_x
 		__download_files
+		__autologin
+		__autostart
 		__anime
 		__osd
 		__xt
 		__read_data
-		(sleep 2; __reset) &
-		(sleep 10; $_SCRIPT_FULL_NAME prepare) &
+		systemctl disable $_BUSY_ANIME_SERVICE
+		systemctl stop $_BUSY_ANIME_SERVICE
+		service $_BUSY_ANIME_SERVICE stop
+		service $_INITIV_1_SERVICE start
+#		(sleep 2; __prepare) &
+		echo "... reset in 5s"
+		sleep 5
+		(sleep 2; /usr/bin/initiv reset)
 		;;
 	"1" )
 ## 1	execute installation process just after download and first run by user
-#		echoinfo "__parted"
-		__parted
 		__fix
 		__salt
 		__install_stuff2
 		__install_stuff3
 		__install_stuff4
+		(sleep 2; systemctl disable $_INITIV_1_SERVICE)
+		(sleep 4; systemctl stop $_INITIV_1_SERVICE)
+		(sleep 6; service $_INITIV_1_SERVICE stop)
 		__reset
 		;;
 	"2" )
@@ -1482,26 +1919,26 @@ case $1 in
 esac
 ##
 ## Examples:
-## ./initiv -U baltazar	#create user "baltasar", set autologin and autostart, reset tty1
-## ./initiv 0		#virgin init on fresh distro, remove packages, tunning, install stuff,
+## /usr/bin/initiv -U baltazar	#create user "baltasar", set autologin and autostart, reset tty1
+## /usr/bin/initiv 0		#virgin init on fresh distro, remove packages, tunning, install stuff,
 ##			prepare 1st interface)
-## ./initiv 1		#install stuff just after 1st run in VM, download ./inti-1 (install busy4me in /opt)
-## ./initiv 2		#
-## ./initiv -u		#update itself
-## ./initiv -S apt	#show apt update in the screen :0
-## ./initiv -S apt1	#show suff1 installation in the screen :0
-## ./initiv -S __download_files	#show files download process in the screen :0
-## ./initiv prepare	#set to run all intallation process after next reboot, use it when you want prepare
+## /usr/bin/initiv 1		#install stuff just after 1st run in VM, download /usr/bin/inti-1 (install busy4me in /opt)
+## /usr/bin/initiv 2		#
+## /usr/bin/initiv -u		#update itself
+## /usr/bin/initiv -S apt	#show apt update in the screen :0
+## /usr/bin/initiv -S apt1	#show suff1 installation in the screen :0
+## /usr/bin/initiv -S __download_files	#show files download process in the screen :0
+## /usr/bin/initiv prepare	#set to run all intallation process after next reboot, use it when you want prepare
 ##		and distribute. CAUNTION! after next run, partition will be expanded and the filesystem will
 ##		grow a lot when all stuff will be installed
-## ./initiv -S 1	CAUTION! install all stuff
-## ./initiv -a user1 -n light -A "master.hipposite.com" install
+## /usr/bin/initiv -S 1	CAUTION! install all stuff
+## /usr/bin/initiv -a user1 -n light -A "master.hipposite.com" install
 ##
-## ./initiv -s '192.168.1.30' -t 'saltminionID' salt
+## /usr/bin/initiv -s '192.168.1.30' -t 'saltminionID' salt
 ##		install saltstack with salt-master and salt-minion defined
 ##
 ##
-[[ -f ./initivRecovery ]] ||	{ echoinfo "create script initivRecovery ... "; __create_recovery; }
+[[ -f /usr/bin/initivRecovery ]] ||	{ echoinfo "create script initivRecovery ... "; __create_recovery; }
 
 echo -e $coloroff
 secs_to_human "$(($(date +%s) - ${_START}))"

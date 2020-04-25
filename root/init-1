@@ -43,7 +43,8 @@ if [ $USER != "root" ]
 	then
 		echo -e "\e[31mRun this script as root! exit...\e[0m"
 		echo "Run this script as root! exit..." | logline
-		exit 1
+#		exit 1
+# not running as service
 	else
 		echo -e "\e[32mRun OK as root...\e[0m" | logline
 fi
