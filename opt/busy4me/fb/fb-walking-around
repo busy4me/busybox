@@ -6,6 +6,11 @@ LOGFILE=/var/log/busy4me.log
 source /opt/busy4me/busy-functions # global functions
 source /opt/busy4me/fb/fb-config # fb variables from there
 
+if [[ "$1" == "--debug" ]]; then
+  exec &> >(tee -ia $LOGFILE)
+  exec 2>&1
+fi
+
 export DISPLAY=:0
 screen_name="xterm-"$DISPLAY
 screen_task="/opt/busy4me/xterm.sh --screen fb-walking-around"$DISPLAY
@@ -21,7 +26,7 @@ logline() {
 login=$(cat "$login_source")
 echo 'login =' $login | logline
 login_string=$login
-login_string=$(echo $login_string | tr '@' '-')
+login_string=$(echo $login_string | tr '@.' '-')
 echo 'login_string =' $login_string | logline
 user_db="/opt/busy/fb/db/fb_$login_string.db"
 echo 'Use database:' $user_db | logline
@@ -120,9 +125,13 @@ xdotool key --delay $kd Up Up Up Up Page_Up
 xdotool key --delay $kd_2 Escape
 
 xdotool key --delay 300 Ctrl+f
-xdotool type --delay $kds 'English (UK)'
+xdotool type --delay $kds 'English ('
 xdotool key --delay $kd Escape keydown Shift Tab keyup Shift Tab Escape
 xdotool key --delay $kds Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Escape
+xdotool key --delay $kdl Down Down Down Down Down Down Down
+xdotool key --delay $kds Down Down Down Down Down Down Down Down Down Down Down Down Down Down
+xdotool key --delay $kdl Up Up Up Up Up Up Up Up Up Up Up Up
+xdotool key --delay $kdl Tab Tab Tab Tab Tab Tab Tab Tab Escape
 
 for (( i=1; i<$random; i++ )); do
         echo -e '... \e[44m Tab \e[0m ... key'

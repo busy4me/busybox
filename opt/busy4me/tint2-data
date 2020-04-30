@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+if [ "$1" == "--log" ]; then
+  echo "log"
+fi
+
+user_db=/opt/busy/fb/db/fb_$(echo $(cat /opt/busy/fb/fb-login) | tr [:punct:] '-').db
+echo "database:"$user_db
+sql=$(sqlite3 -column $user_db "SELECT url,CheckDate,label FROM fb_posts WHERE url LIKE '%permalink%' ORDER BY CheckDate DESC LIMIT 3;")
+
+
+if [ -n $sql ]; then
+echo "Last 3 jobs:" $sql | sed 's/fb.com/\n/g'
+else
+tail -3 /var/log/busy4me.log
+fi

@@ -765,7 +765,22 @@
   </application>
 
 	<application class="xli">
-	<decor>no</decor>
+		<focus>no</focus>
+    <shade>yes</shade>
+		<layer>above</layer>
+		<decor>no</decor>
+  </application>
+	<application class="feh">
+		<focus>no</focus>
+    <shade>yes</shade>
+		<layer>above</layer>
+		<decor>no</decor>
+  </application>
+	<application class="qiv">
+		<focus>no</focus>
+    <shade>yes</shade>
+		<layer>above</layer>
+		<decor>no</decor>
   </application>
 </applications>
 

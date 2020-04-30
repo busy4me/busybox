@@ -15,7 +15,7 @@ logline_cron() {
 
 echo "fb_login: " $(cat /home/busyman/busy4me/fb/fb-login)
 	old_hostname=$(cat /etc/hostname)
-	old_hostname=$(cat /home/busyman/busy4me/fb/fb-login | tr '@.' '_')
+	old_hostname=$(cat /home/busyman/busy4me/fb/fb-login | tr '@.' '-')
 
 if [ "$old_hostname" == "$old_hostname" ]
 then

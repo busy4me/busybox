@@ -5,6 +5,11 @@ LOGFILE=/var/log/busy4me.log
 source /opt/busy4me/busy-functions # global functions
 source /opt/busy4me/fb/fb-config # fb variables from there
 
+if [[ "$1" == "--debug" ]]; then
+  exec &> >(tee -ia $LOGFILE)
+  exec 2>&1
+fi
+
 # move mouse away...
 echo -e "\e[33m move mouse away....\e[0m" | logline
 xdotool mousemove 800 600
@@ -103,7 +108,7 @@ while [[ ! $_valid == "OK" ]]; do
   _regex="^([A-Za-z]+[A-Za-z0-9]*((\.|\-|\_)?[A-Za-z]+[A-Za-z0-9]*){1,})@(([A-Za-z]+[A-Za-z0-9]*)+((\.|\-|\_)?([A-Za-z]+[A-Za-z0-9]*)+){1,})+\.([A-Za-z]{2,})+$"
     if [[ $login =~ ${_regex} ]]; then
       printf "* %-48s \e[1;32m[pass]\e[m\n" "$login"
-      zenity --info --title="login validation" --text="Social Media Assistant:\n login=$login correct" --width 350 --height 150 --timeout 2
+      zenity --info --title="login validation" --text="Social Media Assistant:\n login=$login get ready..." --width 350 --height 150 --timeout 2
       _valid="OK"
     else
       printf "* %-48s \e[1;31m[fail]\e[m\n" "$login"
@@ -168,7 +173,7 @@ login_start
 login_string=$login
 echo -e "\e[42m\e[0m"$login_string | logline
 login_string=$(echo $login_string | tr '@.' '-')
-echo -e '\e[32login_string =\e[0m' $login_string | logline
+echo -e '\e[32mlogin_string =\e[0m' $login_string | logline
 
 # create sqlite database
 # there can be more databases, each for one user
@@ -266,40 +271,46 @@ for i in {1..1000} ; do
 #			exit 0
 		;;
 		*"$mark09"*)
-			echo -e "\e[42m   \e[0m \e[32m Logged successfuly... save-device page  mark09=$mark09 \e[0m"
+			echo -e "\e[42m   \e[0m \e[32m Logged successfuly... save-device page  mark09=$mark09 \e[0m" | logline
 			zenity --info --title="page_probe" --text="Logged successfuly...save-device page" --timeout $tol
 			sleep 2
-			xdotool key --delay $kd Ctrl+l && xdotool type --delay $kds $SPOT01url && xdotool key Return
+			xdotool key --delay $kd Ctrl+l
+      xdotool type --delay $kds $SPOT01url
+      xdotool key Return
 			sleep 2
 #			/bin/bash /opt/busy4me/fb/fb-scroll &
 			exit 0
 		;;
 		*"$mark08"*)
-			echo -e "\e[42m   \e[0m \e[32m Logged successfuly... mark08=$mark08 \e[0m"
+			echo -e "\e[42m   \e[0m \e[32m Logged successfuly... mark08=$mark08 \e[0m" | logline
 			zenity --info --title="page_probe" --text="Logged successfuly..." --timeout $tol
 			sleep 2
-			xdotool key --delay $kd Ctrl+l && xdotool type --delay $kds $SPOT01url && xdotool key Return
+			xdotool key --delay $kd Ctrl+l
+      xdotool type --delay $kds $SPOT01url
+      xdotool key Return
 			sleep 2
 #			/bin/bash /opt/busy4me/fb/fb-scroll &
 			exit 0
 		;;
 		*"$mark07"*)
-			echo -e "\e[42m   \e[0m \e[32m Logged successfuly... mark07=$mark07 \e[0m"
+			echo -e "\e[42m   \e[0m \e[32m Logged successfuly... mark07=$mark07 \e[0m" | logline
 			zenity --info --title="page_probe" --text="Logged successfuly..." --timeout $tol
 			sleep 2
-			xdotool key --delay $kd Ctrl+l && xdotool type --delay $kds $SPOT01url && xdotool key Return
+			xdotool key --delay $kd Ctrl+l
+      xdotool type --delay $kds $SPOT01url
+      xdotool key Return
 			sleep 2
 #			/bin/bash /opt/busy4me/fb/fb-scroll &
 			exit 0
 		;;
 		*"$mark02"*)
-			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark02 ... go to login..."
+			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark02 ... go to login..." | logline
 			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark02\"... go to login..." --timeout $tos
 			login_start
       break
 		;;
 		*"$mark03"*)
-			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark03=$mark03"
+			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark03=$mark03" | logline
 			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark03\"... go to login..." --timeout $tos
 			login_start
 		;;
@@ -324,18 +335,18 @@ for i in {1..1000} ; do
 			xdotool key --delay $kd Ctrl+l
 			xdotool type $fb_login_url
 			xdotool key --delay $kd Return
-			echo -e "\e[41m --> \e[0m \e[31m Login in cache... Tap to login... Switch to fb_login_url \e[0mmark13=$mark13"
+			echo -e "\e[41m --> \e[0m \e[31m Login in cache... Tap to login... Switch to fb_login_url \e[0mmark13=$mark13" | logline
 			zenity --info --title="Tap to login" --text="Login in cache... Tap to login... Switch to fb_login_url" --timeout $tol
 			break
 		;;
 		*)
-			echo -e "\e[44m   \e[0m \e[34m probe again... \e[0m"
+			echo -e "\e[44m   \e[0m \e[34m probe again... \e[0m" | logline
 			zenity --info --title="page_probe" --text="probe again..." --timeout $tos
 		;;
 		esac
 done
 }
-echo -e "\e[33m...Entry to page_probe function ...\e[0m"
+echo -e "\e[33m...Entry to page_probe function ...\e[0m" | logline
 page_probe
 echo "clipboard clean ... execute:  xclip -selection clipboard /opt/busy/files/blank"
 

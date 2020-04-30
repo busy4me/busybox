@@ -87,12 +87,27 @@ echo -e "\e[33m Clean google-chrome busyman data... \e[0m"
 
 # download big files
 download_big_files () {
+declare -a _FILES=(
+"/opt/busy/images/wallpaper.jpg"
+"/opt/busy/images/wallpaper0.jpg"
+"/opt/busy/images/wallpaper1.jpg"
+"/opt/busy/images/wallpaper2.jpg"
+"/opt/busy/images/wallpaper3.jpg"
+"/opt/busy/images/wall00.png"
+"/opt/busy/images/wall01.png"
+"/opt/busy/images/wall02.png"
+"/opt/busy/images/wall03.png"
+"/opt/busy/images/wall-blue.png"
+"/opt/busy/images/mouse.png"
+"/opt/busy/images/wall_black_with_vertical_logo.jpg"
+"/opt/busy/sounds/cafe_noise.mp3"
+"/opt/busy/sounds/calm_piano.mp3"
+)
+for _FILE in ${_FILES[@]}; do
+	wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
+done
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/files/chromedriver -O /opt/busy/files/chromedriver | logline
 	chmod +x /opt/busy/files/chromedriver
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/sounds/cafe_noise.mp3 -O /opt/busy/sounds/cafe_noise.mp3 | logline
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/sounds/calm_piano.mp3 -O /opt/busy/sounds/calm_piano.mp3 | logline
 }
 
 # download binaries
@@ -137,6 +152,7 @@ openbox_config () {
 # download busy4me files
 download_busy4me_files () {
 	cd /opt/$PROJECT
+	rm /opt/$PROJECT/*
 	echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy-config
@@ -160,12 +176,16 @@ download_busy4me_files () {
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stream_to_facebook.sh
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stream_to_twitch.sh
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/system-meminfo.sh
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/tint2rc00
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/tint2-data
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-check.sh
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-uneeded-close.sh
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/xterm.sh
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/xterm-transparent
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/zenity
 	wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html
+	chmod +x /opt/$PROJECT/*
+	chmod +x /opt/$PROJECT/*.*
 }
 
 # download fb files
@@ -206,6 +226,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-02.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-around.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-position.py
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-position.sh
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-show.py
 	chmod +x /opt/$PROJECT/*
 	chmod +x /opt/$PROJECT/*.*
@@ -220,7 +241,7 @@ cat > /home/busyman/.config/openbox/autostart << EOF
 # Programs that will run after Openbox windows manager has started
 xrandr --output default --mode 800x600 &
 xrandr --output Virtual1 --mode 800x600 &
-feh --bg-scale /opt/busy/images/wallpaper.jpg &
+feh --bg-scale /opt/busy/images/wall03.png &
 xset -dpms &
 xset s off &
 xcompmgr &
@@ -290,6 +311,9 @@ case $1 in
 		openbox_config
 		logrotate
 	;;
+	--busy4me)
+		download_busy4me_files
+	;;
 	--logrotate)
 		root_check
 		logrotate
@@ -301,6 +325,9 @@ case $1 in
 	--binaries)
 		root_check
 		download_binaries
+	;;
+	--big-files|--big)
+		download_big_files
 	;;
 	--tint2rc|tint2rc)
 		tint2rc

@@ -9,7 +9,20 @@ PROJECT_DIR=/opt/busy4me/fb # with root permision 755, read only for users
 
 mkdir -p $SAVE_DIR 2>/dev/null
 
+__wallpaper_change () {
+  # open fullscreen image and set above off all to hide web browser loading
+  INT=$(( $INT +1 ))
+  if [ $INT -eq 4 ]; then
+    INT=0
+  fi
+#_SPLASH="/opt/busy/images/wall0$INT.png"
+#xli -fullscreen $_SPLASH &
+#wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,above
+feh --bg-scale /opt/busy/images/wall0$INT.png
+}
+
 logline() {
+  __wallpaper_change
     while IFS= read -r line; do
         echo -e "$(date +%F' '%T) $USER $SCRIPT - $line\e[0m" | tee -a $LOGFILE
     done
@@ -74,24 +87,49 @@ xdotool search --onlyvisible --class "$PROC01" windowkill | logline
 spot01_position_size () {
 _WINDOW=$(xdotool search --onlyvisible --name "$SPOT01")
 echo -e "\e[96m *F:spot01_position_size, move and resize window... _WINDOW=\e[0m$_WINDOW" | logline
-xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
+xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap| logline
+transset -a 0
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-sleep 1
+transset -a 0
+for i in {1..10} ; do
+  __wallpaper_change
+  sleep 0.1
+done
+__wallpaper_change
 echo "reset zoom...."
 xdotool key --delay $kd Ctrl+0 | logline # reset zoom
-sleep 1
-zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
+for i in {1..10} ; do
+  __wallpaper_change
+  sleep 0.1
+done
+transset -a 0
+#zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
+__wallpaper_change
 echo "set zoom to 75%...."
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
 xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove 0 -81 | logline
-zenity --info --title="zoom" --text="move window...." --timeout $to
+transset -a 0
+#zenity --info --title="zoom" --text="move window...." --timeout $to
+__wallpaper_change
 echo "move window...."
 xdotool key Alt_L+space m | logline
 xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
 xdotool key --delay 500 Return | logline
+#xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
+xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+# unhide browser window
+wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,below
+pkill xli
+feh --bg-scale /opt/busy/images/wall-blue.png
+transset -a 0.2; sleep 0.5
+transset -a 0.4; sleep 0.5
+transset -a 0.6; sleep 0.5
+transset -a 0.8; sleep 0.5
+transset -a 1
+# set fullscreen image below and kill it
 echo "shake...."
-zenity --info --title="shake" --text="shake...." --timeout $to
+#zenity --info --title="shake" --text="shake...." --timeout $to
 shake
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+f type 111 | logline
@@ -110,7 +148,10 @@ if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
 		xdotool key Return | logline
 		xdotool key --delay $kd Ctrl+0 | logline # reset zoom
 		xdotool key --delay $kd Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
-    sleep 5
+    for i in {1..50} ; do
+      __wallpaper_change
+      sleep 0.1
+    done
 fi
 }
 
@@ -128,13 +169,17 @@ while  [ 1 ]; do
 		spot01_position_size
 		break
 	fi
-sleep 5
+  for i in {1..50} ; do
+    __wallpaper_change
+    sleep 0.1
+  done
 done
 }
 
+
 BR01_run () {
   $BR01 --window-size="800,600" \
-  --window-position="0,0" \
+  --window-position="800,600" \
   --incognito \
   --disable-notifications \
   --mute-audio \
@@ -158,9 +203,28 @@ BR01_run () {
 }
 
 echo -e "\e[96m *F:BR01_run, first run \"$BR01\" \e[0m" | logline
+
+#( _PTH="/opt/busy/images"; \
+#for i in {1..20}; do; feh --bg-scale $_PTH/wall00.png; sleep 1; \
+#feh --bg-scale $_PTH/wall01.png; sleep 1; \
+#feh --bg-scale /opt/busy/images/wall02.png; sleep 1; \
+#feh --bg-scale /opt/busy/images/wall03.png; sleep 1; \
+#done ) | logline
+
+feh --bg-scale /opt/busy/images/wall00.png
 BR01_run
-sleep 10
+for i in {1..20} ; do
+  xdotool search --sync --onlyvisible --class chrome windowactivate | logline
+  transset -a 0
+#  __wallpaper_change
+  sleep 0.25 | logline
+done
+for i in {1..50} ; do
+  __wallpaper_change
+  sleep 0.1
+done
+transset -a 0
 SPOT01_probe
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
-transset -a 0.7
+transset -a 0.9
 feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg

@@ -182,6 +182,8 @@ chown -R busyman:busyman /home/busyman/.config | logline
 rm -R /home/busyman/.config/openbox/autostart | logline
 cat > /home/busyman/.config/openbox/autostart << EOF
 # Programs that will run after Openbox windows manager has started
+# to see connected screen:
+# xrandr  | grep -w connected
 xrandr --output default --mode 800x600 &&
 xrandr --output Virtual1 --mode 800x600 &&
 feh --bg-scale /opt/busy/images/wallpaper.jpg &&

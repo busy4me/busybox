@@ -67,10 +67,10 @@ echo "Start /opt/busy4me/fb/fb-init..." | logline
 /bin/bash /opt/busy4me/fb/fb-init
 
 echo "Start /opt/busy4me/fb/fb-login..." | logline
-/bin/bash /opt/busy4me/fb/fb-login
+/bin/bash /opt/busy4me/fb/fb-login --debug
 
 echo "Start /opt/busy4me/fb/fb-scroll..." | logline
-/bin/bash /opt/busy4me/fb/fb-scroll
+/bin/bash /opt/busy4me/fb/fb-scroll --debug
 
 #echo "Start /opt/busy4me/fb/fb-save-my-groups..." | logline
 #/bin/bash /opt/busy4me/fb/fb-save-my-groups
