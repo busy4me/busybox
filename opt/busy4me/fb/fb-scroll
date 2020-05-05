@@ -90,7 +90,7 @@ echo "Difference: $difference"
 echo "Factor: $factor"
 
 # scroll_count=1
-# scroll page down until usage memory excess 1024MB or more than 1000 Down key pressed
+# scroll page down until usage memory excess $limit=1024MB or scroll steps 1000 Down key pressed
 scroll_limit=1000
 scroll () {
 while [ $mem -lt $limit ]
@@ -116,11 +116,9 @@ do
 	echo "Difference: $difference"
 	echo "Factor: $factor"
 	echo "# Random wall content... \nThis is just a scroll page down and memory usage test.\n \
-	Available system memory: 2048 MB\n\
-	set limit: $limit MB\n\
+	Scroll step: $scroll_count/$scroll_limit ...please wait\n\
 	\n\
-	$mem MB \n\
-	Scroll step: $scroll_count ...please wait"
+	Usage system memory bar: $mem/$limit MB"
 	#echo "$(( ($mem - $memory) *$factor ))"
 	usage=$(bc <<< "scale = 0; (( ($mem - $memory) * $factor))")
 	echo "$usage"

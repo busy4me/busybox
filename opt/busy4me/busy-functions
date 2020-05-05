@@ -165,7 +165,7 @@ echo ""
 
 # enable crontab job
 enable-crontab-job () {
-echo ""
+echo "enable-crontab-job empty"
 }
 
 function status () {

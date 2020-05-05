@@ -95,7 +95,12 @@ fi
 __update () { #help: /usr/bin/initiv update itself
 	__output ${FUNCNAME[0]}
 	echofunc ${FUNCNAME[0]}
-	echoinfo " ..download update on server $_SERVER"
+	echoinfo "_UPDATE=$_UPDATE"
+	if [[ "$_UPDATE" == "no" || "$_UPDATE" == "false" ]]; then
+		return 0
+	else
+		echoinfo "_UPDATE=yes, continue update ..."
+	fi
 	# initive should be always in /usr/bin directory, so even will be downloaded in different location
 	# will change itself
 	if [ ! "$_SCRIPT_FULL_NAME" == "/usr/bin/initiv" ]; then
@@ -110,6 +115,7 @@ __update () { #help: /usr/bin/initiv update itself
 		echoconfirm "$_SCRIPT_FULL_NAME ... correct"
 	fi
 
+	echoinfo " ..download update on server $_SERVER"
 	__net_status $_SERVER
 		echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
 	if ! wget -nv -O /usr/bin/initiv.new --no-check-certificate $_SERVER/initiv; then
@@ -204,6 +210,10 @@ __useradd () { #help: add user
 	/usr/sbin/useradd -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
 #	useradd -p $(openssl passwd -1 $_PASS) -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
 	/usr/sbin/usermod -a -G "cdrom,floppy,dip,plugdev,netdev,audio,video" $_USER
+# add user to sudoers and allow execute commands without password
+	/usr/sbin/usermod -a -G "sudo" $_USER
+	echo "$_USER	ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
+
 	_CAF="/etc/cron.allow" # Cron Allow File
 if ! grep -q $_USER $_CAF; then
 	echo "$_USER" >> $_CAF
@@ -372,11 +382,19 @@ chmod +x /usr/bin/initivRecovery
 __reset () {
 	echofunc "${FUNCNAME[0]}"
 	echoinfo "tty1 stop"
-	service getty@tty1 stop
-	(sleep 2; service getty@tty1 restart) &
-	echoinfo "tty2 stop"
-	service getty@tty2 stop
-	(sleep 5; service getty@tty2 restart) &
+	if [ -x "$(command -v sudo)" ]; then
+		sudo /sbin/service getty@tty1 stop
+		(sleep 2; sudo /sbin/service getty@tty1 restart) &
+		echoinfo "tty2 stop"
+		sudo /sbin/service getty@tty2 stop
+		(sleep 5; sudo /sbin/service getty@tty2 restart) &
+	else
+		bash -c $(/sbin/service getty@tty1 stop)
+		(sleep 2; /sbin/service getty@tty1 restart) &
+		echoinfo "tty2 stop"
+		bash -c $(/sbin/service getty@tty2 stop)
+		(sleep 5; /sbin/service getty@tty2 restart) &
+	fi
 	echoinfo "${FUNCNAME[0]} ... done"
 }
 
@@ -500,7 +518,7 @@ function __output () {
 		export XAUTHORITY='/home/'$_USER'/.Xauthority'
 		echowarning "_SHOW=$_SHOW execute in xterm in DISPLAY=$DISPLAY"
 		__read_data theme
-		xterm -geometry 125x3+5+535 -bw 0 -uc -bg $_BG -fg $_FG -e "$_SCRIPT_FULL_NAME $_FUNC"
+		xterm -geometry 90x3+5+535 -bw 0 -uc -bg $_BG -fg $_FG -e "$_SCRIPT_FULL_NAME $_FUNC"
 	else
 		echoinfo "standard output ..."
 	fi
@@ -547,6 +565,7 @@ __install_stuff1 () {
 	echoinfo " ... install stuff from official repositories ..."
 	if [ -z $1 ]; then
 		declare -a stuff=(
+		"sudo"
 		"openssl"
 		"bc"
 		"xloadimage"
@@ -606,6 +625,8 @@ declare -a stuff2=(
 		echoinfo "install package: $_PACKAGE ............................. wait ..."
 		apt-get install -y -qq --no-install-recommends $_PACKAGE
 	done
+pip install wheel # need for tzupdate using geolocation from Chris Down https://github.com/cdown/tzupdate
+pip install -U tzupdate # update time zone
 pip install setuptools -U # update 08-2019,
 pip install pyautogui # need for automate keys, mouse, recognise pictures on the screen
 echoconfirm "${FUNCNAME[0]} done"
@@ -725,7 +746,7 @@ __tunning () {
 	echoinfo "modify /etc/ssh/sshd_config: PermitRootLogin yes"
 	sed -i 's/without-password/yes/g' /etc/ssh/sshd_config # deb8
 	sed -i 's/\#PermitRootLogin\ prohibit-password/PermitRootLogin\ yes/g' /etc/ssh/sshd_config #deb10
-	service sshd reload
+	/sbin/service sshd reload
 		echoinfo " ... set /etc/apt/apt.conf: Install-Recommends \"false\""
 		rm /etc/apt/apt.conf 2>/dev/null
 	echo 'APT::Install-Recommends "false" ; APT::Install-Suggests "false" ;' >> /etc/apt/apt.conf
@@ -1273,7 +1294,7 @@ cat > /root/.profile  << `EOF`
 `EOF`
 
 if [ "$1" == "disable" ]; then
-	service $_BUSY_ANIME_SERVICE stop
+	/sbin/service $_BUSY_ANIME_SERVICE stop
 	systemctl disable ${_BUSY_ANIME_SERVICE}.service
 	echoconfirm "${_BUSY_ANIME_SERVICE}.service is disabled "
 	systemctl daemon-reload
@@ -1566,7 +1587,7 @@ __xterm () {
 # xterm -geometry 30x20+0+0 -uc -bg black -fg grey -fn \$__font -e /opt/count.sh
 	xterm -geometry 50x3+10+10 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh time' &
 #	xterm -geometry 17x2+650+505 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip'
-	xterm -geometry 17x2+650+505 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh progress'
+	xterm -geometry 17x2+710+564 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh progress'
 }
 
 case \$1 in
@@ -1615,9 +1636,9 @@ EOF
 	# Drop the minion id if passed
 [ ! -d "$_SALT_DIR" ] && mkdir -p "$_SALT_DIR"
 echo "$_SALT_MINION" > "$_SALT_DIR/minion_id"
-service salt-minion restart &&
+/sbin/service salt-minion restart &&
 echoinfo "salt-minin ID: $_SALT_MINION"
-service salt-minion status
+/sbin/service salt-minion status
 echoconfirm "${FUNCNAME[0]} done"
 }
 
@@ -1631,7 +1652,7 @@ __show () {
 	_MESSAGE="$1"
 	echoinfo "message in DISPLAY=$DISPLAY $_MESSAGE"
 	if [ -n $1 ]; then
-		xterm -geometry 105x5+1+540 -bw 0 -uc -bg $_BG -fg red -fn $__font -e '/opt/xt.sh message '$_MESSAGE
+		xterm -geometry 60x5+3+540 -bw 0 -uc -bg $_BG -fg red -fn $__font -e '/opt/xt.sh message '$_MESSAGE
 		exit 0
 	fi
 	# install progress in xterm during first interface...
@@ -1811,7 +1832,7 @@ EOF
 ## =================================================================================================
 ## Available options:
 ##
-while getopts ':a: b d: f F h H: i: k l n: o: r s: S v T: t: u U: w x X' opt
+while getopts ':a: b d: f F h H: i: k l n: o: r s: S v T: t: u: U: w x X' opt
 do
   case "${opt}" in
     a ) _AUTOUSER="$OPTARG"; __autologin; __autostart                                       ;;
@@ -1859,7 +1880,7 @@ do
     T ) _NEW_HOSTNAME="$OPTARG"; __new_hostname                                             ;;
 ## -T <hostname>	pass host name value and execute change hostname -T hostname, -T node (default)
 ## -q		option "q"
-		u ) __update; __version                                                                 ;;
+		u ) _UPDATE="$OPTARG"                                                                   ;;
 ## -u		Update itself (download new version from server and replace the script)
 		U ) _USER="$OPTARG"; __useradd; __anime; __autologin; __autostart; __reset              ;;
 ## -U <username>	Add user to the system, set autologin and autostart, reset xinit(Xorg) in tty1
@@ -1879,7 +1900,15 @@ do
 done
 shift $((OPTIND-1))
 
+## ==================================================================================================
+## === pre actions befor all actions ================================================================
+## | actions executed                                                                               |
+## ==================================================================================================
+## ==================================================================================================
+##
+##
 __bashcolor
+__update
 __net_status google.com
 
 ## === actions ======================================================================================
@@ -1953,18 +1982,20 @@ case $1 in
 		__autologin root
 		__autostart root
 		__read_data
-
-		service $_BUSY_SERVICE start
+		/sbin/service $_BUSY_SERVICE start
 		systemctl disable $_BUSY_ANIME_SERVICE
-		sleep 1
-		(sleep 2; echo -e "\n\e[32mREADY!... installation will start after reboot or reset console tty1\e[0m \n")
-		echo "$_DATE_STAMP initiv ready" > $_LOGFILE
-		service $_BUSY_ANIME_SERVICE start
 		systemctl enable $_BUSY_ANIME_SERVICE
+#		sleep 1
+		(sleep 1; echo -e "\n\e[32m * READY! \n\
+		... installation will start after reboot or reset tty1 console \n\
+		type: 'halt -p' and hit ENTER to switch machine off.\n\
+		Virtual machine is ready for distribution.\e[0m")
+		echo "$_DATE_STAMP initiv ready" > $_LOGFILE
+#		/sbin/service $_BUSY_ANIME_SERVICE start
 #		(sleep 10; /usr/bin/initiv reset)
 #		(sleep 2; bash --rcfile <(echo '. ~/.bashrc; /usr/bin/initiv reset'))
 #		(sleep 1, reboot) &
-#		service $_BUSY_ANIME_SERVICE start
+#		/sbin/service $_BUSY_ANIME_SERVICE start
 		;;
 ## install basic packages for splash and first boot
 ## - do it automatically just after first run (partiton will be expanded, and VM file will grow)
@@ -1972,11 +2003,11 @@ case $1 in
 ## 0	execute all initial options, remove packages, set user, install X and basic stuff
 		__read_data
 		__interface
-		__useradd
 		__change_hostname # used for waiting online
 		__update
 		__update_apt_repos
 		__install_stuff1
+		__useradd
 		__parted
 		__install_x
 		__download_files
@@ -1988,8 +2019,8 @@ case $1 in
 		__read_data
 		systemctl disable $_BUSY_ANIME_SERVICE
 		systemctl stop $_BUSY_ANIME_SERVICE
-		service $_BUSY_ANIME_SERVICE stop
-		service $_INITIV_1_SERVICE start
+		/sbin/service $_BUSY_ANIME_SERVICE stop
+		/sbin/service $_INITIV_1_SERVICE start
 #		(sleep 2; __prepare) &
 		echo "... reset in 5s"
 		sleep 5
@@ -2005,7 +2036,7 @@ case $1 in
 		systemctl disable $_BUSY_SERVICE
 		(sleep 2; systemctl disable $_INITIV_1_SERVICE)
 		(sleep 4; systemctl stop $_INITIV_1_SERVICE)
-		(sleep 6; service $_INITIV_1_SERVICE stop)
+		(sleep 6; /sbin/service $_INITIV_1_SERVICE stop)
 		(sleep 8; systemctl reboot now)
 #		__reset
 		;;

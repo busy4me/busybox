@@ -196,8 +196,8 @@ touch /opt/busy/fb/fb-last-name | logline
 #===================================================================================================
 create_database () {
 if [ -s $user_db ];then
-	rows=$(sqlite3 $user_db  "SELECT COUNT (*) FROM groups";)
-	echo -e "\e[32mBase $login_string.db exists. There is " $rows " rows. Continue...\e[0m" | logline
+	rows=$(sqlite3 $user_db  "SELECT COUNT (*) FROM fb_groups";)
+	echo -e "\e[32mBase fb_$login_string.db exists. There is " $rows " rows. Continue...\e[0m" | logline
     break
 else
 	echo -e "\e[31mThere is no $login_string database, create:\e[0m $login_string.db" | logline

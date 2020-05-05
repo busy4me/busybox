@@ -47,6 +47,7 @@ DISPLAY=:0
 XAUTHORITY='/home/busyman/.Xauthority'
 
 source /opt/busy4me/fb/fb-config
+
 if [ -s $login_source ];then
 		echo -e "\e[32m file $login_source exists and is not empty \e[0m" | logline
 		/bin/bash /opt/busy4me/change_hostname.sh

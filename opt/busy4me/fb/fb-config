@@ -5,11 +5,11 @@ sql_engine="sqlite3"
 
 login_source="/opt/busy/fb/fb-login"
 password_source="/opt/busy/fb/fb-password"
-user_name=$(cat "/opt/busy/fb/fb-name")
-user_first_name=$(cat "/opt/busy/fb/fb-first-name")
-user_last_name=$(cat "/opt/busy/fb/fb-last-name")
-login=$(cat "$login_source")
-password=$(cat "$password_source")
+user_name=$(cat "/opt/busy/fb/fb-name" 2>/dev/null)
+user_first_name=$(cat "/opt/busy/fb/fb-first-name" 2>/dev/null)
+user_last_name=$(cat "/opt/busy/fb/fb-last-name" 2>/dev/null)
+login=$(cat "$login_source" 2>/dev/null)
+password=$(cat "$password_source" 2>/dev/null)
 #login_string=$login
 login_string=$(echo $login | tr [:punct:] '-')
 #login_string=$(echo $login_string | tr '@.' '_')
