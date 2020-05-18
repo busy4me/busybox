@@ -90,4 +90,4 @@ pyautogui.moveTo(20, 28, 1, pyautogui.easeOutQuad)
 pyautogui.moveTo(750, 25, 3, pyautogui.easeOutQuad)
 circle_01()
 
-pyautogui.moveTo(780, 470, 0.7, pyautogui.easeOutQuad)
+pyautogui.moveTo(10, 10, 0.7, pyautogui.easeOutQuad)
