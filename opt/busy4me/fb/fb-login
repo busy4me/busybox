@@ -180,13 +180,6 @@ echo -e '\e[32mlogin_string =\e[0m' $login_string | logline
 user_db="/opt/busy/fb/db/fb_$login_string.db"
 echo -e "\e[42m\e[30m user_db = \e[0m\e[32m" $user_db "\e[0m" | logline
 
-# change hostname and minion_id - it must be done as root, moved to change_hostname.sh
-hostnamectl set-hostname $login_string
-echo $login_string > /etc/salt/minion_id
-rm /etc/salt/pki/minion/minion.*
-rm /etc/salt/pki/minion/minion_master.*
-service salt-minion restart &
-
 touch /opt/busy/fb/fb-name | logline
 touch /opt/busy/fb/fb-first-name | logline
 touch /opt/busy/fb/fb-last-name | logline

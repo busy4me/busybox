@@ -110,15 +110,17 @@ pip install pyautogui # need for automate keys, mouse, recognise pictures on the
 echo -e "\e[100m Install dbus ... \e[0m" | logline
 apt-get install -y dbus | logline >> $LOGFILE
 
+
 # change hostname to unique name, pattern: busy-UUID
-echo -e "\e[100m Change hostname maching to product_uuid... \e[0m" | logline
-old_hostname=$(cat /etc/hostname)
-new_hostname=busy-$(cat /sys/class/dmi/id/product_uuid)
-hostnamectl set-hostname "$new_hostname"
-echo -e "\e[36m   ......update /etc/hosts file \e[0m"
-cp /etc/hosts /etc/hosts.bak
-sed -i "/\s$old_hostname/d" /etc/hosts
-echo "127.0.1.1 $new_hostname" >> /etc/hosts
+# === DELETED === run in 'initiv'
+#echo -e "\e[100m Change hostname maching to product_uuid... \e[0m" | logline
+#old_hostname=$(cat /etc/hostname)
+#new_hostname=busy-$(cat /sys/class/dmi/id/product_uuid)
+#hostnamectl set-hostname "$new_hostname"
+#echo -e "\e[36m   ......update /etc/hosts file \e[0m"
+#cp /etc/hosts /etc/hosts.bak
+#sed -i "/\s$old_hostname/d" /etc/hosts
+#echo "127.0.1.1 $new_hostname" >> /etc/hosts
 
 sysctl vm.swappiness=10
 # set swappiness permamently
@@ -128,18 +130,19 @@ echo "vm.swappiness = 10" >> /etc/sysctl.conf
 echo 'deb http://deb.debian.org/debian jessie-backports main' >> /etc/apt/sources.list
 
 #add main repo & install SaltStack
-echo -e "\e[100m Saltstack install Start ... \e[0m" | logline
-rm /etc/apt/sources.list.d/saltstack.list 2>/dev/null | logline
-echo 'deb http://repo.saltstack.com/apt/debian/8/amd64/latest jessie main' >> /etc/apt/sources.list.d/saltstack.list | logline
-echo -e "\e[100m repo Saltstack certificate ... \e[0m" | logline
-wget -O - https://repo.saltstack.com/apt/debian/8/amd64/latest/SALTSTACK-GPG-KEY.pub | apt-key add - | logline
-apt-get update
-apt-get install -y salt-common salt-minion
-rm /etc/salt/minion
-cat > /etc/salt/minion  << EOF
-master: 192.168.121.155
-EOF
-echo -e "\e[100m Saltstack install End ... \e[0m" | logline
+# === DELETED === run in 'initiv'
+#echo -e "\e[100m Saltstack install Start ... \e[0m" | logline
+#rm /etc/apt/sources.list.d/saltstack.list 2>/dev/null | logline
+#echo 'deb http://repo.saltstack.com/apt/debian/8/amd64/latest jessie main' >> /etc/apt/sources.list.d/saltstack.list | logline
+#echo -e "\e[100m repo Saltstack certificate ... \e[0m" | logline
+#wget -O - https://repo.saltstack.com/apt/debian/8/amd64/latest/SALTSTACK-GPG-KEY.pub | apt-key add - | logline
+#apt-get update
+#apt-get install -y salt-common salt-minion
+#rm /etc/salt/minion
+#cat > /etc/salt/minion  << EOF
+#master: 192.168.121.155
+#EOF
+#echo -e "\e[100m Saltstack install End ... \e[0m" | logline
 
 # install ffmpeg ffplay for streaming desktop
 echo -e "\e[100m Install ffmpeg... \e[0m" | logline

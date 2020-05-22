@@ -69,10 +69,17 @@ echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-cert
 chown busyman:busyman /home/$BUSYUSER/.*
 
 # create backup in tmp
+backup_all_project_files () {
+echo -e "\e[32m Backup ...\e[0m"
 TMP_DIR="/tmp/$PROJECT-tmp/$(date +%Y-%m-%d--%H-%M-%S)"
 mkdir $TMP_DIR
 cp -R /opt/$PROJECT/* $TMP_DIR
-
+BCK_DIR="/var/backups/$PROJECT/$(date +%Y-%m-%d--%H-%M-%S)"
+mkdir $BCK_DIR
+cp -R /opt/$PROJECT/* $BCK_DIR
+ln -s $BCK_DIR /opt/var-backups-$PROJECT
+}
+backup_all_project_files
 
 # delete all project files and folders
 delete_all_project_files () {
@@ -152,6 +159,8 @@ openbox_config () {
 # download busy4me files
 download_busy4me_files () {
 	cd /opt/$PROJECT
+	mkdir /opt/$PROJECT-backup/
+	cp /opt/$PROJECT/* /opt/$PROJECT-backup/
 	rm /opt/$PROJECT/*
 	echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy
@@ -214,6 +223,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-login
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-open
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-post
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-respond-to-requests
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-scroll
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-links-sel.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-my-friends

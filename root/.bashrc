@@ -45,15 +45,7 @@ PS1='${debian_chroot:+($debian_chroot)}\[\033[01;31m\]\u@\h\[\033[00m\]:\[\033[0
 PATH=$PATH:/opt/busy4me:/opt/busy4me/fb:/var/log
 DISPLAY=:0
 XAUTHORITY='/home/busyman/.Xauthority'
-
 source /opt/busy4me/fb/fb-config
-
-if [ -s $login_source ];then
-		echo -e "\e[32m file $login_source exists and is not empty \e[0m" | logline
-		/bin/bash /opt/busy4me/change_hostname.sh
-	else
-		echo -e "\e[34m file $login_source not exists, not fb login yet ... \e[0m" | logline
-fi
 
 # if the command-not-found package is installed, use it
 if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-not-found ]; then

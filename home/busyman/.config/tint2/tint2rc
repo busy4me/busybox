@@ -44,7 +44,7 @@ background_color = #006699 16
 border_color = #FFFFFF 68
 
 # Panel
-panel_items = PPEE:EFEC
+panel_items = PPPEE:EFEC
 panel_monitor = all
 panel_position = bottom center horizontal
 panel_size = 98% 50
@@ -140,7 +140,7 @@ battery_background_id = 0
 
 # log
 execp = log
-execp_command = wc -l /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//'; wc -m /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//'
+execp_command = echo "LOG:"; wc -l /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//'; wc -m /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//'
 execp_interval = 5
 execp_font = sans 7
 execp_markup = 1
@@ -159,9 +159,11 @@ execp_tooltip = Memory usage
 
 # screen
 execp = screen
-execp_command = user_db=/opt/busy/fb/db/fb_$(echo $(cat /opt/busy/fb/fb-login) | tr [:punct:] '_').db; sql=$(sqlite3 -column $user_db "SELECT url,CheckDate,label FROM fb_posts WHERE url LIKE '%permalink%' ORDER BY CheckDate DESC LIMIT 3;"); echo "Last 3 jobs:" $sql | sed 's/fb.com/\n/g'
-execp_interval = 2
-execp_font = sans 7
+#execp_command = user_db=/opt/busy/fb/db/fb_$(echo $(cat /opt/busy/fb/fb-login) | tr [:punct:] '_').db; sql=$(sqlite3 -column $user_db "SELECT url,CheckDate,label FROM fb_posts WHERE url LIKE '%permalink%' ORDER BY CheckDate DESC LIMIT 3;"); echo "Last 3 jobs:" $sql | sed 's/fb.com/\n/g'
+#execp_command = echo "task: fb-walking-around"; echo "description: random no-interactive walking around pages..."; echo "place: facebook"
+execp_command = cat /sys/class/net/$(ip route show default | awk '/default/ {print $5}')/address | tr ':' ' ' | tr '\n' ' ' | sed 's/[[:space:]]//g'
+execp_interval = 5
+execp_font = sans 28
 execp_markup = 2
 execp_font_color = #aaa500 100
 execp_padding = 2 0
@@ -170,11 +172,12 @@ execp_tooltip = Shows last jobs
 # name_ip
 execp = name_ip
 execp_command = cat /opt/busy/fb/fb-login | sed 's/net/\*\*\*/'; (sleep 10; ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+execp_command = echo "Virtual Assistant"; echo "VA-001178"; (sleep 10; ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
 execp_interval = 0
-execp_font = sans 8
+execp_font = sans 7
 execp_markup = 1
 execp_font_color = #00ff41 80
-execp_padding = 5 5
+execp_padding = 1 1
 execp_tooltip = IP address and ID name
 #execp_lclick_command = zenity --info "--text=$(uname -sr)"
 
@@ -188,8 +191,9 @@ execp_tooltip = IP address and ID name
 #execp_padding = 2 0
 
 button = update
-button_text = update
-button_font = sans 10
+#button_text = update
+button_text = STOP
+button_font = sans 9
 button_font_color = #ffff00 100
 button_background_id = 3
 button_padding = 1 1
@@ -199,9 +203,21 @@ button_lclick_command = /opt/busy4me/update --all
 button_rclick_command = echo "Will update busy4 software in background"
 button_tooltip = Click to update busy4 software in background
 
+button = start
+button_text = START
+button_font = Droid Sans 9
+button_font_color = #ff5050 100
+button_background_id = 3
+button_padding = 1 1
+button_centered = 0
+button_max_icon_size = 30
+button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum restart :0 & (sleep 3 & /usr/bin/initiv -u no reset)
+button_rclick_command = echo "Will reset what you see and login again."
+button_tooltip = Click to reset and login again
+
 button = reset
 button_text = reset
-button_font = Droid Sans 10
+button_font = Droid Sans 9
 button_font_color = #ff5050 100
 button_background_id = 3
 button_padding = 1 1

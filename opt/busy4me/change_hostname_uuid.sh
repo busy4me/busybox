@@ -1,8 +1,9 @@
 #!/bin/bash
-
+# unused
+# this is done by 'initiv __change_hostname'
 # change hostname and minion_id match to UUID
 
-SCRIPT=change_hostname.sh
+SCRIPT=change_hostname_uuid.sh
 LOGFILE=/var/log/busy4me.log
 LOGFILE_CRON=/var/log/busy4me_cron.log
 source /opt/busy4me/fb/fb-config

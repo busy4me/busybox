@@ -2,7 +2,7 @@
 
 # change hostname and minion_id from fb-login
 
-SCRIPT=change_hostname.sh
+SCRIPT=stream_desktop.sh
 LOGFILE=/var/log/busy4me.log
 LOGFILE_CRON=/var/log/busy4me_cron.log
 source /opt/busy4me/fb/fb-config

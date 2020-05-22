@@ -41,26 +41,85 @@ cron-enable () {
 echo ""
 }
 
+start () {
+	_TASK=$1
+#	screen -dmS $_TASK$DISPLAY '/opt/busy4me/fb/$_TASK'
+	screen_start=$(screen -dmS $_TASK$DISPLAY '/opt/busy4me/fb/fb-walking-around')
+#	echo $screen_start
+	screen -ls
+}
+
+stop () {
+	_TASK=$1
+	screen -ls
+	echo -e "\e[95m stop $_TASK in screen $DISPLAY...\e[0m"
+	screen_stop=$(screen -S $_TASK$DISPLAY -X kill)
+	if [[ $screen_stop == *"There are several suitable screens"* ]]; then
+		echo -e "\e[41m Error... There are several suitable screens... kill them... \e[0m"
+		pkill screen
+	fi
+	screen -ls
+}
+
 start-walking () {
-echo -e "\e[32m start fb-walking-around in screen $DISPLAY...\e[0m"
-screen_start=$(screen -dmS fb-walking-around$DISPLAY '/opt/busy4me/fb/fb-walking-around')
-echo $screen_start
+	echo -e "\e[32m start fb-walking-around in screen $DISPLAY...\e[0m"
+	screen_start=$(screen -dmS fb-walking-around$DISPLAY '/opt/busy4me/fb/fb-walking-around')
+	echo $screen_start
 }
 
 stop-walking () {
-screen -ls
-echo -e "\e[95m stop fb-walking-around in screen $DISPLAY...\e[0m"
-screen_stop=$(screen -S fb-walking-around$DISPLAY -X kill)
-if [[ $screen_stop == *"There are several suitable screens"* ]]; then
-	echo -e "\e[41m Error... There are several suitable screens... kill them... \e[0m"
-	pkill screen
-fi
-screen -ls
+	screen -ls
+	echo -e "\e[95m stop fb-walking-around in screen $DISPLAY...\e[0m"
+	screen_stop=$(screen -S fb-walking-around$DISPLAY -X kill)
+	if [[ $screen_stop == *"There are several suitable screens"* ]]; then
+		echo -e "\e[41m Error... There are several suitable screens... kill them... \e[0m"
+		pkill screen
+	fi
+	screen -ls
 }
 
 stop-mouse-move-around () {
 echo -e "\e[95m stop stop-mouse-move-around in screen $DISPLAY...\e[0m"
 screen -S mouse-move-around$DISPLAY -X kill
+}
+
+stop-fb-save-my-groups () {
+	screen_stop=$(screen -S fb-save-my-groups$DISPLAY -X kill)
+	if [[ $screen_stop == *"There are several suitable screens"* ]]; then
+		echo -e "\e[41m Error... There are several suitable screens... kill them... \e[0m"
+		pkill screen
+	fi
+}
+
+start-fb-save-my-groups () {
+	screen_start=$(screen -dmS fb-save-my-groups$DISPLAY '/opt/busy4me/fb/fb-save-my-groups')
+	echo $screen_start
+}
+
+function status () {
+_TASK=$1
+screen -ls
+_TASK_VAR=$(echo "$_TASK" | tr '-' '_' | tr ':' '_')
+if ! screen -list | grep -q "$_TASK"; then
+		_VAL="false"
+		IFS= read -r "$_TASK_VAR" <<<"false"
+	else
+		_VAL="true"
+		IFS= read -r "$_TASK_VAR" <<<"true"
+fi
+#echo $_TASK_VAR
+#export "$_TASK_VAR=$_VAL"
+#ptintf -v $_TASK_VAR %s "$_VAL"# create variable named $_TASK_VAR with value $_VAL
+#echo $_TASK_VAR
+#echo -e "\e[33m$_TASK_VAR=$_VAL\e[0m"
+#if ! screen -list | grep -q "fb-walking-around$DISPLAY"; then
+#		echo -e "\e[33m ... screen fb-walking-around$DISPLAY not exists! \e[0m"
+		#screen -S ScreenName -X quit
+#	else
+#
+#		echo -e "\e[33m ... screen fb-walking-around$DISPLAY exists \e[0m"
+#fi
+
 }
 
 function COMMENT () {
@@ -166,17 +225,6 @@ echo ""
 # enable crontab job
 enable-crontab-job () {
 echo "enable-crontab-job empty"
-}
-
-function status () {
-screen -ls
-if ! screen -list | grep -q "fb-walking-around$DISPLAY"; then
-		echo -e "\e[33m ... screen fb-walking-around$DISPLAY not exists! \e[0m"
-		#screen -S ScreenName -X quit
-	else
-		echo -e "\e[33m ... screen fb-walking-around$DISPLAY exists \e[0m"
-fi
-
 }
 
 function FIND () {

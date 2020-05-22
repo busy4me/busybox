@@ -57,17 +57,29 @@ case $1 in
 	status
 	exit 0
 	;;
-	--stop-walking|stop-walking)
+	--stop-walking|stop-walking|stop-fb-walking-around)
 	stop-walking
 	;;
-	--start-walking|start-walking)
+	--start-walking|start-walking|start-fb-walking-around)
 	start-walking
 	;;
 	--stop-mouse-move-around|stop-mouse-move-around)
 	stop-mouse-move-around
 	;;
+	--start-fb-save-my-groups|start-fb-save-my-groups)
+	stop-walking
+	stop-mouse-move-around
+	start-fb-save-my-groups
+	;;
+	start)
+	start $2
+	;;
+	stop)
+	stop $2
+	;;
 	status)
-	status
+	status $2
+	echo -e "\e[33m$_TASK_VAR=$_VAL\e[0m"
 	;;
 	--set_crontab|set_crontab)
 	set_crontab $2

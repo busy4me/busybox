@@ -108,7 +108,7 @@ sleep 3
 scrot_local
 
 set +x
-
+detect_input_field
 xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up
 key_repeat=40
 echo -e '\e[92mkey_repeat = ' $key_repeat | logline
@@ -119,19 +119,22 @@ for (( key_step=1; key_step<$key_repeat; key_step++ )); do
 done
 set -x
 
-xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up
-xdotool key --delay $kds Down Down Down Down Down Down Down Down Down Down Down Down Down Down
-xdotool key --delay $kd Up Up Up Up Page_Up
-xdotool key --delay $kd_2 Escape
-
+xdotool key --delay $kd_2 Down Escape Down Escape Down Escape Page_Down Escape Page_Up
+xdotool key --delay $kds Down Escape Down Page_Down Escape Down Escape Down Escape Down Escape Page_Down Down Escape
+xdotool key --delay $kds Down Escape Down Escape Page_Down Up Down Escape Down Escape Down Up Up Escape Down Escape
+xdotool key --delay $kd Up Escape Up Escape Up Escape Up Escape Page_Up Escape
 xdotool key --delay 300 Ctrl+f
-xdotool type --delay $kds 'English ('
+# switch to english language
+switch_to_english
 xdotool key --delay $kd Escape keydown Shift Tab keyup Shift Tab Escape
-xdotool key --delay $kds Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Tab Escape
-xdotool key --delay $kdl Down Down Down Down Down Down Down
-xdotool key --delay $kds Down Down Down Down Down Down Down Down Down Down Down Down Down Down
-xdotool key --delay $kdl Up Up Up Up Up Up Up Up Up Up Up Up
-xdotool key --delay $kdl Tab Tab Tab Tab Tab Tab Tab Tab Escape
+xdotool key --delay $kds Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
+xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
+xdotool key --delay $kdl Down Escape Down Escape Down Escape Down Escape Down Escape Down Escape Down
+xdotool key --delay $kds Down Escape Down Escape Down Down Up Down Down Down Up Up Down Up Down Down Down Down Down Down
+xdotool key --delay $kdl Up Escape Up Escape Up Escape Up Up Down
+xdotool key --delay $kds Up Up Up Down Up Up Up Up Down Down
+xdotool key --delay $kd_2 Up Escape Up Escape Up Escape Up Up Down
+xdotool key --delay $kdl Tab Escape Tab Escape Tab Tab Tab Tab Tab Tab Escape
 
 for (( i=1; i<$random; i++ )); do
         echo -e '... \e[44m Tab \e[0m ... key'
@@ -140,15 +143,16 @@ for (( i=1; i<$random; i++ )); do
 done
 # Press Enter only between 8am and 11pm
 H=$(date +%k)
-if (( 8 <= 10#$H && 10#$H < 13 )); then
-    echo between 8AM and 1PM
+if (( 8 <= $H && $H < 13 )); then
+    echo "between 8AM and 1PM, hit enter..."
 	xdotool key --delay 500 Return
-elif (( 13 <= 10#$H && 10#$H < 23 )); then
-    echo between 1PM and 11PM
+elif (( 13 <= $H && $H < 23 )); then
+    echo "between 1PM and 11PM, hit enter..."
 	xdotool key --delay 500 Return
-else
+  else
 	echo -e "go to bed"
 fi
+
 echo -e '... ... ... ... ... \e[44m ENTER only between 8am and 11pm \e[0m ... key'
 echo -e '\e[33m'
 #(sleep 2 && wmctrl -F -a "Active click" -b add,above) & zenity --info --title="Active click" --text="Active click after $random Tabs...\n\ Active profile is effective :\)..." --timeout 3
@@ -211,9 +215,10 @@ echo -e '\e[0m'
 	echo -e "\e[35m page probe after Active click..............................\e[0m" | logline
 #	zenity --info --title="page probe" --text="page probe after Active click..." --timeout 3
 	xclip -selection clipboard /opt/busy/files/blank
+  transset -a 0 # hide window
 	xdotool key --delay 100 Ctrl+a Ctrl+c Ctrl+Shift+a
-	sleep 3
-
+  transset -a 0.9
+	# sleep 3
 	# screenshot
 	scrot_local
 
@@ -246,36 +251,108 @@ echo -e '\e[0m'
 #			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
 		;;
 		esac
-/bin/bash /opt/busy4me/windows-check.sh
-xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up Down Down Down
-/bin/bash /opt/busy4me/windows-check.sh
-xdotool key --delay $kd Up Up Up Up Up Up Up Up
-/bin/bash /opt/busy4me/windows-check.sh
-xdotool key --delay $kd_2 Escape Escape
-xdotool key --delay $kd Escape Escape
+  /bin/bash /opt/busy4me/windows-check.sh
+  xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up Down Down Down
+  /bin/bash /opt/busy4me/windows-check.sh
+  xdotool key --delay $kd Up Up Up Up Up Up Up Up
+  /bin/bash /opt/busy4me/windows-check.sh
+  xdotool key --delay $kd_2 Escape Escape
+  xdotool key --delay $kd Escape Escape
+}
+
+detect_input_field () {
+  xclip -selection clipboard /opt/busy/files/blank
+  xdotool key --delay $kd Home Shift+End
+#	xdotool key --delay $kd Shift+F10
+  xdotool key --delay $kd Ctrl+c
+  clip=$(xclip -out -selection clipboard )
+  case "$clip" in
+    "https://")
+    echo ".. this is address bar, escape from here"
+    zenity --info --title="Address bar" --text=".. this is address bar, escape from here" --timeout 3
+    xdotool key --delay $kds Tab Tab Tab Tab Tab
+#    return
+    ;;
+    *)
+    xdotool type --delay $kdl 'abc'
+    xdotool key --delay $kdl Home Shift+End
+    xdotool key --delay $kdl Ctrl+c
+    clip2=$(xclip -out -selection clipboard )
+      if [[ "$clip2" == "abc" ]]; then
+        echo ".. this is input field, escape from here"
+        zenity --info --title="Input field" --text=".. this input field, escape from here" --timeout 3
+        xdotool key --delay $kds Tab Tab Tab
+#        return
+      fi
+    ;;
+  esac
+}
+
+switch_to_english () {
+  xclip -selection clipboard /opt/busy/files/blank
+  xdotool type --delay $kds 'English ('
+  xdotool key --delay $kds Escape
+  xdotool key --delay $kds Shift+End
+  xdotool key --delay 100 Ctrl+c
+  clip=$(xclip -out -selection clipboard )
+  if [[ "$clip" == "English (US)" ]]; then
+    echo "on position: English (US)"
+    xdotool key --delay $kd Return
+    sleep 1
+    xclip -selection clipboard /opt/busy/files/blank
+    transset -a 0 # hide window
+    xdotool key --delay $kds Ctrl+a Ctrl+c Ctrl+Shift+a
+    transset -a 0.9
+    clip=$(xclip -out -selection clipboard )
+    case "$clip" in
+      "english (us)?")
+      xdotool key --delay $kds Tab Return
+#      sleep 3
+      ;;
+      *)
+      echo "already english"
+      ;;
+    esac
+    zenity --info --title="Check language" --text="Check language..." --timeout 3
+  fi
 }
 
 loop () {
-# how many steps to do
-iter=1000
-for (( step=1; step<$iter; step++ )); do
+  # how many steps to do
+  iter=100
+  for (( step=1; step<$iter; step++ )); do
+  declare -a _SPOTS=(
+#  "https://www.facebook.com/groups/"
+  "https://www.facebook.com/jobs"
+  "https://www.facebook.com/marketplace/"
+  "https://www.facebook.com/watch/"
+  "https://www.facebook.com/watch/shows/"
+  "https://www.facebook.com/watch/live/"
+  "https://www.facebook.com/pages/"
+  "https://www.facebook.com/marketplace/groups/"
+  "https://www.facebook.com/videos"
+  "https://www.facebook.com/jobs"
+  "https://www.facebook.com/offers/v2/wallet"
+  )
+  for SPOT01url in ${_SPOTS[@]}; do
     echo "# Active profile is effective..."
     echo "$(( (i * 100) /$iter ))%"
-	echo -e "\e[32m walking_around_wall...\e[91m"  $step "\e[32mstep of\e[91m" $iter "\e[0m" | logline
-		# start move mouse with python
-		echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
-#		killall -s KILL python
-			echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-around...\e[0m" | logline
-			screen -S mouse-move-around -X kill
-			screen -S mouse-move-around$DISPLAY -X kill
-			screen -dmS mouse-move-around$DISPLAY '/opt/busy4me/fb/mouse-move-around.py'
-#		python /opt/busy4me/fb/mouse-move-around.py &
-	echo -e '\e[35m\e[7m'
-	screen -ls
-	echo -e '\e[0m'
-		walking_around_wall
-	sleep 0.2
-    shift 1
+        echo -e "\e[32m walking_around_wall... step: $step#$iter SPOT: $SPOT01url\e[0m" | logline
+#  start move mouse with python
+                echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
+#               killall -s KILL python
+                        echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-around...\e[0m" | logline
+                        screen -S mouse-move-around -X kill
+                        screen -S mouse-move-around$DISPLAY -X kill
+                        screen -dmS mouse-move-around$DISPLAY '/opt/busy4me/fb/mouse-move-around.py'
+#               python /opt/busy4me/fb/mouse-move-around.py &
+        echo -e '\e[35m\e[7m'
+        screen -ls
+        echo -e '\e[0m'
+        walking_around_wall
+        sleep 0.2
+  shift 1
+  done
 done
 }
 

@@ -143,16 +143,30 @@ __update () { #help: /usr/bin/initiv update itself
 	echoconfirm "${FUNCNAME[0]} done"
 }
 
-__change_hostname () { #help: change hostname like IP address, also used for waiting online
+__change_hostname () { #help: change hostname mached IP address, also used for waiting IP from DHCP
 	echofunc ${FUNCNAME[0]}
+	_UUID=$(cat /sys/class/dmi/id/product_uuid | sed 's/.*-//')
+	_UUID_MAC=$(echo $_UUID | sed 's/.*-//')
+	echo $_UUID_MAC
+	_MAC=$(cat /sys/class/net/$(ip route show default | awk '/default/ {print $5}')/address | tr ':' ' ' | tr '\n' ' ' | sed 's/[[:space:]]//g')
 	_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
-	_NEW_HOSTNAME=$(echo $_IP | tr '.' '-' | sed 's/[[:space:]]//g')
+	_IP_END=$(echo $_IP | sed 's/.*\.//')
+	_EXT_IP=$(curl -s http://icanhazip.com | tr '\n' ' ' | sed 's/[[:space:]]//g')
+#	_NEW_HOSTNAME=$(echo $_IP | tr '.' '-' | sed 's/[[:space:]]//g')
+#	_NEW_HOSTNAME="$_UUID-$_MAC"
+# ============================================================
+# === hostname structure:                                  ===
+# === HWMACADDRESS-NETMACADRESS                            ===
+# === where: HWMACADDRESS - hardware MAC address from UUID ===
+# ===        NETMACADDRESS - network card MAC address      ===
+# ============================================================
+	_NEW_HOSTNAME="$_UUID_MAC-$_MAC"
 	_OLD_HOSTNAME=$(cat /etc/hostname)
-	while [ -z "$_NEW_HOSTNAME" ];	do
-		_NEW_HOSTNAME=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
-		echo "waiting for IP address... check... _NEW_HOSTNAME=$_NEW_HOSTNAME"
-		sleep 1
-	done
+#	while [ -z "$_NEW_HOSTNAME" ];	do
+#		_NEW_HOSTNAME=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
+#		echo "waiting for IP address... check... _NEW_HOSTNAME=$_NEW_HOSTNAME"
+#		sleep 1
+#	done
 		if [ ! "$_OLD_HOSTNAME" == "$_NEW_HOSTNAME" ];	then
 		echoinfo " _OLD_HOSTNAME=$_OLD_HOSTNAME  ...set new hostname: _NEW_HOSTNAME=$_NEW_HOSTNAME"
 		hostnamectl set-hostname $_NEW_HOSTNAME
@@ -1604,16 +1618,6 @@ echoinfo "/opt/xt.sh ... created"
 echoconfirm "${FUNCNAME[0]} done"
 }
 
-## -- Function -- __new_hostname -------------------------------------------------------------------
-## |    Description: new hostname                                                                  |
-## -------------------------------------------------------------------------------------------------
-__new_hostname () {
-	__output ${FUNCNAME[0]}
-	echofunc ${FUNCNAME[0]}
-	echoinfo "change hostname to \"$_NEW_HOSTNAME\""
-	echoconfirm "${FUNCNAME[0]} done"
-}
-
 ## -- Function -- __salt ---------------------------------------------------------------------------
 ## |    Description: install saltstack                                                             |
 ## -------------------------------------------------------------------------------------------------
@@ -1621,6 +1625,33 @@ __new_hostname () {
 __salt () { #help: install salt-minion, UUID used as minion ID if not provided, restart salt-minion service
 	__output ${FUNCNAME[0]}
 	echofunc ${FUNCNAME[0]}
+	# scenario:
+	# 1. install salt-miniton with ID UUID (client ask server for registration)
+	# 2. auto-register on server side (server)
+	# 3. auto-register and associate UUID to unique ID in MySQL (server)
+	#  Server MySQL, DB: `b4m.nodes`
+	#  | node_id   |              node_uuid               |  node_registration  | status |     secret_key     |
+	#  | 000001176 | 17221794-e1ef-4adc-8e3a-6dd9860c2350 | 2020-05-05 18:24:01 |    1   |
+	#  | 000001177 | 17221794-e1ef-4adc-8e3a-6dd9860c2350 | 2020-05-05 18:24:01 |    1   |
+	#  where:
+	# ID: Primary Key: Unique ID
+	# UUID: not unique?, could be a clone?
+	#  RegDate: registratin time
+	#  IP last seen ext IP
+	#  Status - 1-online, 0-offline
+	# 4. save ID in sqlite3 (client side), by salt grains or pilar?
+	# 5. display ID on the VA screen
+	# 6. User will register ID number in Studio
+	# `b4m.key_value`
+	#  |         key        |       name        | value |
+	#  | va000001176.status | fb-walking-around |  true |
+	#  | 000001177 | 17221794-e1ef-4adc-8e3a-6dd9860c2350 | 2020-05-05 18:24:01 |
+	# key:
+	# ext_ip, int_ip,
+	# send UUID to saltmaster server and get unique ID
+		# how?
+	UUID=$(cat /sys/class/dmi/id/product_uuid) # same as minion_id
+
 	echoinfo " ... install saltstack, _SALT_MASTER=$_SALT_MASTER"
 	__install_stuff1 gnupg
 	__net_status saltstack.com
@@ -1877,7 +1908,7 @@ do
 		t ) _SALT_MINION="$OPTARG"                                                              ;;
 ## -t <name>	set salt-minion ID (default: machine UUID)
 ## 		stored in ${_SALT_DIR}/minion_id
-    T ) _NEW_HOSTNAME="$OPTARG"; __new_hostname                                             ;;
+    T ) _NEW_HOSTNAME="$OPTARG"; __change_hostname                                             ;;
 ## -T <hostname>	pass host name value and execute change hostname -T hostname, -T node (default)
 ## -q		option "q"
 		u ) _UPDATE="$OPTARG"                                                                   ;;
@@ -2003,7 +2034,8 @@ case $1 in
 ## 0	execute all initial options, remove packages, set user, install X and basic stuff
 		__read_data
 		__interface
-		__change_hostname # used for waiting online
+		__net_status # used for waitng for IP from DHCP
+		__change_hostname # previously used for waiting for IP from DHCP
 		__update
 		__update_apt_repos
 		__install_stuff1
@@ -2029,6 +2061,7 @@ case $1 in
 	"1" )
 ## 1	execute installation process just after download and first run by user
 		__fix
+		__change_hostname
 		__salt
 		__install_stuff2
 		__install_stuff3
