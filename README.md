@@ -179,4 +179,4 @@ wget busy4.me/init-0 && bash ./init-0
 ⚠️ Caution: use carefully  
 
 # Wiki
-busy4me Wiki 🚧 Under construction
+[busy4me Wiki 🚧 Under construction](https://github.com/busy4me/busy/wiki)
