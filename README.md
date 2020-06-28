@@ -1,7 +1,24 @@
-# busy
-🐙 busy commands set - to manage personal "Genius Assistant" 🌐
+1. [Wiki index](https://github.com/busy4me/busy/wiki)  
+2. [What is ./busy4.me?](https://github.com/busy4me/busy/wiki#busy4me-is)
+3. [Where ./busy4.me can run?](https://github.com/busy4me/busy/wiki#busy4me-can-run)
+4. [Main goals](https://github.com/busy4me/busy/wiki#main-goals)
+5. User guide  
+ • 5.1. Installation  
+ • 5.2. Setup  
+ • 5.3. Commands  
+ • 5.4. Uninstall  
+7. [Genesis](https://github.com/busy4me/busy/wiki#genesis)  
+• 7.1  
+• 7.2  
+8. Developers guide  
+  • 8.1 Basic syntax  
+  • 8.2 Advanced syntax  
+  • 8.3 [Old syntax](https://github.com/busy4me/busy/wiki#%EF%B8%8F-old-syntax)  
+  • 8.4 [Update](https://github.com/busy4me/busy/wiki#update)  
+9. [Copyrights](https://github.com/busy4me/busy/wiki#copyrights-busy4me)
 
-### based on StratumOS  
+# busy
+🐙 busy commands set - to manage "Virtual Assistant" 🌐
 
 basic usage
 ``` shell
@@ -14,7 +31,7 @@ or
 busy [sub_command] [--option=value]... [:place]
 ```
 
-# Available options:
+# Selected available options:
 🚧 Under construction
 
 ## --like
@@ -163,12 +180,15 @@ busy --screen=on --cmd="htop" # run _htop_ in screen session
 ```
 
 # INSTALL
-1. Install minimal Debian 8 Jessie, just base, skip everything,  
+1. Install minimal Debian 10 Buster in  [VirtualBox](https://www.virtualbox.org/wiki/Downloads), just base, skip everything,  
 ISO CD image from official website
-[debian.org/debian-8.11.iso](https://cdimage.debian.org/cdimage/archive/8.11.1/amd64/iso-cd/debian-8.11.1-amd64-netinst.iso) << 257MB direct link
+[debian.org/debian-10.4.iso](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.4.0-amd64-netinst.iso) << 336MB direct link
 2. Run bellow script in fresh terminal console  
- (everythings will be installed from Debian repository)
-
+ (all main software will be installed from official Debian repository)
+ ``` shell
+ wget busy4.me/initiv && bash ./initiv install
+ ```
+[...See more](https://github.com/busy4me/busy/wiki)  
 
 ``` shell
 wget busy4.me/init-0 && bash ./init-0
