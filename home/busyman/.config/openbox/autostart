@@ -1,0 +1,9 @@
+xrandr --output default --mode 800x600 &
+xrandr --output Virtual1 --mode 800x600 &
+feh --bg-scale /opt/busy/images/wall03.png &
+xset -dpms &
+xset s off &
+xcompmgr &
+(sleep 2s && tint2) &
+/opt/busy4me/frame00 &
+/opt/busy4me/frame99 &

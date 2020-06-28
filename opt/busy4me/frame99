@@ -24,6 +24,8 @@ echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
     done
 }
 
+
+
 # disable crontab job
 crontab -l | sed "/^[^#].*export DISPLAY=:99 && \/opt\/busy4me\/fb\/fb-post -c all/s/^/#/" | crontab -
 crontab -l | sed "/^[^#].*export DISPLAY=:99 && \/opt\/busy4me\/busy/s/^/#/" | crontab -

@@ -764,6 +764,22 @@
 	<decor>no</decor>
   </application>
 
+	<application class="screen">
+    <focus>no</focus>
+    <shade>yes</shade>
+    <layer>above</layer>
+    <size>
+      <width>400</width>
+      <height>190</height>
+    </size>
+    <position force="no">
+      <x>390</x>
+      <y>340</y>
+      <monitor>1</monitor>
+    </position>
+	<decor>no</decor>
+  </application>
+
 	<application class="xli">
 		<focus>no</focus>
     <shade>yes</shade>
@@ -777,6 +793,12 @@
 		<decor>no</decor>
   </application>
 	<application class="qiv">
+		<focus>no</focus>
+    <shade>yes</shade>
+		<layer>above</layer>
+		<decor>no</decor>
+  </application>
+	<application class="Vncviewer">
 		<focus>no</focus>
     <shade>yes</shade>
 		<layer>above</layer>

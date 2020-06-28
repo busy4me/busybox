@@ -10,8 +10,8 @@ if [[ "$1" == "--debug" ]]; then
   exec &> >(tee -ia $LOGFILE)
   exec 2>&1
 fi
-
-export DISPLAY=:0
+echo "DISPLAY=$DISPLAY"
+# export DISPLAY=:0
 screen_name="xterm-"$DISPLAY
 screen_task="/opt/busy4me/xterm.sh --screen fb-walking-around"$DISPLAY
 screen -S $screen_name -X kill # kill screen on this display
@@ -83,7 +83,8 @@ sleep 0.3
 #xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
 
 walking_around_wall () {
-
+echo ${FUNCNAME[0]}
+echo "DISPLAY=$DISPLAY"
 kds=50 # Key Delay Short [ms]
 kd=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
 kd_2=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]

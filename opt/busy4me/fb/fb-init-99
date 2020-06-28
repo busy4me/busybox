@@ -47,6 +47,8 @@ sleep 5
 pkill ffmpeg
 sleep 5
 
+# create DISPLAY 99
+# (moved from fb-init-99)
 # run Xvfb & stream by ffmpeg
 # Xvfb :99 -screen 0 800x600x16 -ac +extension GLX +extension RANDR +render -noreset &
 Xvfb :99 -screen 0 800x600x16 -ac +extension GLX +extension RANDR +extension RENDER -noreset &
@@ -61,7 +63,6 @@ Xvfb :99 -screen 0 800x600x16 -ac +extension GLX +extension RANDR +extension REN
 #                        /etc/xpra/xorg.conf'.
 #
 # xpra insted xvfb, test with xpra
-
 # xpra start :99 --bind-tcp=0.0.0.0:6699 --html=on --pulseaudio=no --notifications=no --start="xrandr -s 800x600"
 
 # ffmpeg -d option: daemon
@@ -127,10 +128,10 @@ done
 
 PROC01_probe () {
 while  [ 1 ]; do
-	export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="PROC01_probe... $PROC01... " --timeout $to
+	export DISPLAY=:99 && zenity --info --title="PROC01_probe while..." --text="Open chrome window with facebook... $PROC01... " --timeout $to
 	if [ -z "$( export DISPLAY=:99 && xdotool search --onlyvisible --class "$PROC01" )" ]
 		then
-export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="$PROC01 non exists... open  $PROC01 browser... " --timeout $to
+export DISPLAY=:99 && zenity --info --title="PROC01_probe $PROC01 non exists" --text="$PROC01 non exists... open  $PROC01 browser... " --timeout $to
 		echo "$PROC01 non exists... open  $PROC01 browser..." | logline
 	# run browser with fake user 'bu99'
 		FAKEUSER="bu99-fake-chrome-user"
@@ -171,7 +172,7 @@ export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..
 		--disable-session-crashed-bubble \
 		$SPOT01url & 2>/dev/null | logline
 	else
-		export DISPLAY=:99 && zenity --info --title="Open chrome window with facebook ..." --text="$date \n\ class with $PROC01 opened successfuly...." --timeout $to
+		export DISPLAY=:99 && zenity --info --title="PROC01_probe opened..." --text="$date \n\ class with $PROC01 opened successfuly...." --timeout $to
 		echo "$date class with $PROC01 opened successfuly...." | logline
 		echo "check SPOT...." | logline
 		SPOT01_probe

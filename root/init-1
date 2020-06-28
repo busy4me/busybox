@@ -97,8 +97,8 @@ echo -e "\e[100m Install xorg ... \e[0m" | logline
 apt-get install -y -V --no-install-recommends xorg | logline >> $LOGFILE # without lightdm for now
 echo -e "\e[100m Install openbox google-chrome-stable ... \e[0m" | logline
 apt-get install -y --no-install-recommends openbox google-chrome-stable | logline
-echo -e "\e[100m Install xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 Xvfb ... \e[0m" | logline
-apt-get install -y xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 Xvfb tint2 | logline >> $LOGFILE
+echo -e "\e[100m Install xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 xvfb ... \e[0m" | logline
+apt-get install -y xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 xvfb tint2 | logline >> $LOGFILE
 
 # coppied from init-2
 apt-get -y install python python-dev python-tk
@@ -173,7 +173,7 @@ chown $BUSYUSER:$BUSYUSER /home/busyman/.profile | logline
 # download big files
 wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
 wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
-feh --bg-scale /opt/busy/images/wallpaper.jpg | logline
+#feh --bg-scale /opt/busy/images/wallpaper.jpg | logline
 
 #echo 'Run google-chrome.sh script.....................'
 rm -R /home/busyman/.config/openbox/ | logline
@@ -183,28 +183,29 @@ cp -R /etc/xdg/openbox /home/busyman/.config | logline
 chown -R busyman:busyman /home/busyman/.config | logline
 
 rm -R /home/busyman/.config/openbox/autostart | logline
-cat > /home/busyman/.config/openbox/autostart << EOF
+cat > /home/busyman/.config/openbox/autostart << 'EOF'
 # Programs that will run after Openbox windows manager has started
-# to see connected screen:
-# xrandr  | grep -w connected
-xrandr --output default --mode 800x600 &&
-xrandr --output Virtual1 --mode 800x600 &&
-feh --bg-scale /opt/busy/images/wallpaper.jpg &&
-xset -dpms &&
-xset s off &&
+xrandr --output default --mode 800x600 &
+xrandr --output Virtual1 --mode 800x600 &
+feh --bg-scale /opt/busy/images/wall03.png &
+xset -dpms &
+xset s off &
 xcompmgr &
-/opt/busy4me/frame00 &
+(sleep 2s && tint2) &
+if [ $(echo $DISPLAY) = ":98" ]; then
+    export DISPLAY=:98 && /opt/busy4me/frame00 &
+fi
+if [ $(echo $DISPLAY) = ":97" ]; then
+    export DISPLAY=:97 && /opt/busy4me/frame00 &
+fi
+if [ $(echo $DISPLAY) = ":96" ]; then
+    export DISPLAY=:96 && /opt/busy4me/frame00 &
+fi
+if [ $(echo $DISPLAY) = ":0" ]; then
+    export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
+fi
 EOF
 
-cat > /home/busyman/.config/openbox/autostart << EOF
-# Programs that will run after Openbox windows manager has started
-xrandr --output default --mode 800x600 &&
-feh --bg-scale /opt/busy/images/wallpaper.jpg &&
-xset -dpms &&
-xset s off &&
-xcompmgr &
-/opt/busy4me/frame00 &
-EOF
 chown busyman:busyman /home/busyman/.config/openbox/*
 chmod +x /home/busyman/.config/openbox/autostart | logline
 
@@ -234,7 +235,7 @@ wget -nv --no-check-certificate https://busy4.me/busy/opt/busy4me/menu-init -O /
 chmod +x /opt/busy4me/*
 ls -la /opt/$PROJECT
 echo "Start /opt/busy4me/update..." | logline
-/bin/bash /opt/busy4me/update --full | logline
+/bin/bash /opt/busy4me/update -t full | logline
 
 echo -e "\e[32m New groups: \e[33m" | logline
 getent group $ADMIN_USER

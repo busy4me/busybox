@@ -41,15 +41,15 @@ crontab -l | sed "/^[^#].*export DISPLAY=:0 && \/opt\/busy4me\/fb\/fb-post -c al
 crontab -l | sed "/^[^#].*export DISPLAY=:0 && \/opt\/busy4me\/busy/s/^/#/" | crontab -
 
 # kill all screen sessions
-screen -S fb-walking-around -X kill
+#screen -S fb-walking-around -X kill
 screen -S fb-walking-around$DISPLAY -X kill
-screen -S windows-uneeded-close -X kill
+#screen -S windows-uneeded-close -X kill
 screen -S windows-uneeded-close$DISPLAY -X kill
-screen -S mouse-move-around -X kill
+#screen -S mouse-move-around -X kill
 screen -S mouse-move-around$DISPLAY -X kill
-screen -S mouse-move-01 -X kill
+#screen -S mouse-move-01 -X kill
 screen -S mouse-move-01$DISPLAY -X kill
-screen -S mouse-move-02 -X kill
+#screen -S mouse-move-02 -X kill
 screen -S mouse-move-02$DISPLAY -X kill
 
 # move mouse away...

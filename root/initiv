@@ -30,7 +30,7 @@ _BG=black # default background color, used by xterm option -bg
 _FG=grey # default foreground color, used by xterm option -fg
 _SALT_DIR="/etc/salt"
 _SALT_MASTER="192.168.121.250"
-_SALT_MINION=$(cat /sys/class/dmi/id/product_uuid)
+_SALT_MINION=$(cat /sys/class/dmi/id/product_uuid) # temporary Salt Minion ID, later will change to hostname
 # change hostname to present IP
 exec &> >(tee -ia $_LOGFILE)
 exec 2>&1
@@ -43,6 +43,7 @@ o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lblu}
 _SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}" 2>/dev/null
 
 __net_status () {
+	[[ $_SKIP_NET == "true" ]] && return
 	_HOST=$(echo $1 | sed 's/http:\/\///g' | sed 's/https:\/\///g')
 	echofunc ${FUNCNAME[0]} $@
 #	_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
@@ -83,7 +84,7 @@ fi
 __bashcolor () {
 	echofunc ${FUNCNAME[0]}
 # set bashcolors ===============================================================
-__net_status $_SERVER
+# __net_status $_SERVER
 if ! wget -q -nv -O /usr/bin/bashcolors --no-check-certificate $_SERVER/bashcolors; then
 	echoerror "OFFLINE! ...can't connect to bashcolors in $_SERVER"
 fi
@@ -93,7 +94,7 @@ fi
 ## |    Description: update initiv itself                                                          |
 ## -------------------------------------------------------------------------------------------------
 __update () { #help: /usr/bin/initiv update itself
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	echoinfo "_UPDATE=$_UPDATE"
 	if [[ "$_UPDATE" == "no" || "$_UPDATE" == "false" ]]; then
@@ -133,8 +134,8 @@ __update () { #help: /usr/bin/initiv update itself
 			cp /usr/bin/initiv.new /usr/bin/initiv 2>/dev/null
 			chmod +x /usr/bin/initiv
 			rm -rf /usr/bin/initiv.new
-			echo "run again: " $_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
-			$_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS
+			echo "run again: $_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS"
+			$_SCRIPT_FULL_NAME $_SCRIPT_ARGUMENTS &
 			exit 0
 		else
 			echoconfirm " ... no update needed, identical version on the server"
@@ -146,34 +147,28 @@ __update () { #help: /usr/bin/initiv update itself
 __change_hostname () { #help: change hostname mached IP address, also used for waiting IP from DHCP
 	echofunc ${FUNCNAME[0]}
 	_UUID=$(cat /sys/class/dmi/id/product_uuid | sed 's/.*-//')
-	_UUID_MAC=$(echo $_UUID | sed 's/.*-//')
-	echo $_UUID_MAC
+	_HWMAC=$(cat /sys/class/dmi/id/product_uuid | cut -c 33-) # last four characters
 	_MAC=$(cat /sys/class/net/$(ip route show default | awk '/default/ {print $5}')/address | tr ':' ' ' | tr '\n' ' ' | sed 's/[[:space:]]//g')
+	_NETMAC=$(echo $_MAC | cut -c 7-) # last six characters
 	_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
 	_IP_END=$(echo $_IP | sed 's/.*\.//')
 	_EXT_IP=$(curl -s http://icanhazip.com | tr '\n' ' ' | sed 's/[[:space:]]//g')
-#	_NEW_HOSTNAME=$(echo $_IP | tr '.' '-' | sed 's/[[:space:]]//g')
-#	_NEW_HOSTNAME="$_UUID-$_MAC"
-# ============================================================
-# === hostname structure:                                  ===
-# === HWMACADDRESS-NETMACADRESS                            ===
-# === where: HWMACADDRESS - hardware MAC address from UUID ===
-# ===        NETMACADDRESS - network card MAC address      ===
-# ============================================================
-	_NEW_HOSTNAME="$_UUID_MAC-$_MAC"
+# ========================================================================================
+# === hostname structure:                                                              ===
+# === HWMAC (dash) NETMAC last six characters                                          ===
+# === where: HWMAC - last four characters of hardware UUID                             ===
+# ===        NETMAC - last six characters of network card MAC address                  ===
+# === eg.:   e733-acb52e                                                               ===
+# ========================================================================================
+	_NEW_HOSTNAME="$_HWMAC-$_NETMAC"
 	_OLD_HOSTNAME=$(cat /etc/hostname)
-#	while [ -z "$_NEW_HOSTNAME" ];	do
-#		_NEW_HOSTNAME=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
-#		echo "waiting for IP address... check... _NEW_HOSTNAME=$_NEW_HOSTNAME"
-#		sleep 1
-#	done
-		if [ ! "$_OLD_HOSTNAME" == "$_NEW_HOSTNAME" ];	then
+	if [ ! "$_OLD_HOSTNAME" == "$_NEW_HOSTNAME" ];	then
 		echoinfo " _OLD_HOSTNAME=$_OLD_HOSTNAME  ...set new hostname: _NEW_HOSTNAME=$_NEW_HOSTNAME"
 		hostnamectl set-hostname $_NEW_HOSTNAME
 		echo "   ...update /etc/hosts file"
-			cp /etc/hosts /etc/hosts.bak 2>/dev/null
-			sed -i "/\s$_OLD_HOSTNAME/d" /etc/hosts
-			echo "127.0.1.1 $_NEW_HOSTNAME" >> /etc/hosts
+		cp /etc/hosts /etc/hosts.bak 2>/dev/null
+		sed -i "/\s$_OLD_HOSTNAME/d" /etc/hosts
+		echo "127.0.1.1 $_NEW_HOSTNAME" >> /etc/hosts
 	else
 		echoconfirm " hostname unchaged: _OLD_HOSTNAME=$_OLD_HOSTNAME _NEW_HOSTNAME=$_NEW_HOSTNAME"
 	fi
@@ -474,7 +469,7 @@ __remove_packages () {
 	"acpi"
 	"acpid"
 	"eject"
-	"gcc-4.8-base:amd64"
+#	"gcc-4.8-base:amd64"
 	"os-prober"
 	"laptop-detect"
 	"manpages"
@@ -489,7 +484,7 @@ __remove_packages () {
 	"installation-report"
 	"kbd"
 	"xxd"
-	"libc-l10n"
+#	"libc-l10n"
 	"pciutils"
 	"apparmor"
 	)
@@ -506,7 +501,7 @@ __remove_packages () {
 ## |    Description: update apt                                                                       |
 ## ----------------------------------------------------------------------------------------------------
 __update_apt_repos () {
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	cp /etc/apt/sources.list /etc/apt/sources.list.bak; rm /etc/apt/sources.list
 		#add main repo Debian 8 Jessie
@@ -532,17 +527,17 @@ function __output () {
 		export XAUTHORITY='/home/'$_USER'/.Xauthority'
 		echowarning "_SHOW=$_SHOW execute in xterm in DISPLAY=$DISPLAY"
 		__read_data theme
-		xterm -geometry 90x3+5+535 -bw 0 -uc -bg $_BG -fg $_FG -e "$_SCRIPT_FULL_NAME $_FUNC"
+		xterm -geometry 110x6+10+36 -bw 0 -uc -bg $_BG -fg $_FG -e "$_SCRIPT_FULL_NAME -N $_FUNC"
 	else
 		echoinfo "standard output ..."
 	fi
 }
 
 ## -- Function -- __install ---------------------------------------------------------------------------
-## |    Description: install openssh-server, openssl, bc, xloadimage, xli, xosd-bin, parted           |
+## |    Description: install grub2-splashimages fbi dbus openssh-server |
 ## ----------------------------------------------------------------------------------------------------
 __install () { #help: usege /usr/bin/initiv -i package or /usr/bin/initiv __install - to install basic packages
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	echoinfo " ... install basic for frepare splash and first boot ..."
 # if used short name "ssh" then openssh-server will be installed
@@ -574,11 +569,13 @@ __install () { #help: usege /usr/bin/initiv -i package or /usr/bin/initiv __inst
 ## |    Description: install openssh-server, openssl, bc, xloadimage, xli, xosd-bin, parted           |
 ## ----------------------------------------------------------------------------------------------------
 __install_stuff1 () {
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	echoinfo " ... install stuff from official repositories ..."
 	if [ -z $1 ]; then
+		echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
 		declare -a stuff=(
+		"locales"
 		"sudo"
 		"openssl"
 		"bc"
@@ -591,6 +588,10 @@ __install_stuff1 () {
 			echoinfo "install package: $_PACKAGE ............................. wait ..."
 			apt-get install -y -qq --no-install-recommends $_PACKAGE
 		done
+	else
+		_PACKAGE=$1
+		echoinfo "install package: $_PACKAGE ............................. wait ..."
+		apt-get install -y -qq --no-install-recommends $_PACKAGE
 	fi
 	echoconfirm "${FUNCNAME[0]} done"
 }
@@ -601,7 +602,7 @@ __install_stuff1 () {
 ## |       Examples: /usr/bin/initiv -apt2                                                                   |
 ## ----------------------------------------------------------------------------------------------------
 __install_stuff2 () {
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	echoinfo " ... install stuff2 from Debian repositories ..."
 # install stuff during "installation ..." message
@@ -627,6 +628,7 @@ declare -a stuff2=(
 "sqlite3"
 "xvfb"
 "tint2"
+"psmisc"
 "ffmpeg"
 "python"
 "python-dev"
@@ -652,9 +654,9 @@ echoconfirm "${FUNCNAME[0]} done"
 ## |       Examples: /usr/bin/initiv -apt3                                                                   |
 ## ----------------------------------------------------------------------------------------------------
 __install_stuff3 () {
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
-	echoinfo " ... install stuff3 from other repositories ..."
+	echoinfo " ... install google-chrome from Google repositories ..."
 	# needs to be installed before add google key below
 	_PACKAGE="gnupg"
 	echoinfo "install package: $_PACKAGE ............................. wait ..."
@@ -678,11 +680,104 @@ __install_stuff3 () {
 }
 
 ## -- Function -- __install_stuff4 --------------------------------------------------------------------
+## |    Description: install vncserver and vncviewer                                                |
+## |         Option:                                                                                  |
+## |       Examples:                                                                                  |
+## ----------------------------------------------------------------------------------------------------
+# loks like tigervnc is best
+__install_stuff4 () {
+	echofunc "${FUNCNAME[0]}"
+	echoinfo " ... install vncserver and viewer ..."
+declare -a stuff4=(
+	"vnc4server"
+	"tigervnc-viewer"
+	"tigervnc-common"
+)
+
+for _PACKAGE in ${stuff4[@]}; do
+	echoinfo "install package: $_PACKAGE . . . . . . . . . . wait . . ."
+	apt-get install -y -qq --no-install-recommends $_PACKAGE
+done
+
+# create vncserver script and service
+cat > /home/$_USER/.vncserver  << 'EOF'
+#!/bin/bash
+PATH="$PATH:/usr/bin/"
+DISPLAY="98"
+DEPTH="16"
+GEOMETRY="800x600"
+NAME="vncserver"
+
+while getopts ':d: :g:' opt
+do
+  case "${opt}" in
+    d ) DISPLAY="$OPTARG"
+    ;;
+    g ) GEOMETRY="$OPTARG"
+    ;;
+  esac
+done
+shift $((OPTIND-1))
+
+OPTIONS="-depth ${DEPTH} -geometry ${GEOMETRY} :${DISPLAY} -name ${NAME} -alwaysshared"
+#OPTIONS=":${DISPLAY} -name ${NAME} -alwaysshared"
+
+case "$1" in
+	start)
+#		/opt/TurboVNC/bin/vncserver ${OPTIONS}
+		/usr/bin/vncserver ${OPTIONS}
+	;;
+	stop)
+#		/opt/TurboVNC/bin/vncserver -kill :${DISPLAY}
+		/usr/bin/vncserver -kill :${DISPLAY}
+	;;
+	restart)
+		$0 stop
+		$0 start
+	;;
+esac
+exit 0
+EOF
+chmod +x /home/$_USER/.vncserver
+chown $_USER:$_USER /home/$_USER/.vncserver
+
+cat > /etc/systemd/system/vncserver.service << EOF
+# Contents of /etc/systemd/system/vncserver.service
+# generated by $_SCRIPT_FULL_NAME
+[Unit]
+Description=Manage VNC Server executed by $_USER
+
+[Service]
+Type=forking
+ExecStart=/home/$_USER/.vncserver start
+ExecStop=/home/$_USER/.vncserver stop
+ExecReload=/home/$_USER/.vncserver restart
+User=$_USER
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable vncserver.service
+echoinfo "service \"vncserver.service\" created, usage: service vncserver start|stop"
+echowarning "vncserver.service is enabled, will started after reboot"
+# set password for vncserver
+rm /home/$_USER/.vnc/passwd 2>/dev/null
+_PASSWD="busy4me"
+mkdir /home/$_USER/.vnc
+echo $_PASSWD | vncpasswd -f > /home/$_USER/.vnc/passwd
+chown -R $_USER:$_USER /home/$_USER/.vnc
+chmod 600 /home/$_USER/.vnc/passwd
+# start vncserver without vncconfig
+sed -i 's/vncconfig/#vncconfig/g' /etc/X11/Xvnc-session
+}
+
+## -- Function -- __install_init-1 --------------------------------------------------------------------
 ## |    Description: download and install busy4me in /opt                                             |
 ## |         Option:                                                                                  |
 ## |       Examples:                                                                                  |
 ## ----------------------------------------------------------------------------------------------------
-__install_stuff4 () {
+__install_init-1 () {
 	echofunc "${FUNCNAME[0]}"
 	echoinfo " ... download and install busy4me in /opt ..."
 	_FILE="init-1"
@@ -708,7 +803,7 @@ EOF
 ## |                 /usr/bin/initiv [mb=] parted [device] [partition] [apply]                               |
 ## ----------------------------------------------------------------------------------------------------
 __parted () {
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	_PACK=$(apt list parted)
 if [[ $_PACK == *"installed"* ]]; then
@@ -755,7 +850,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## |    Description: tunning                                                                          |
 ## ----------------------------------------------------------------------------------------------------
 __tunning () {
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	echoinfo "modify /etc/ssh/sshd_config: PermitRootLogin yes"
 	sed -i 's/without-password/yes/g' /etc/ssh/sshd_config # deb8
@@ -924,7 +1019,7 @@ __remove_dirs () {
 ## ----------------------------------------------------------------------------------------------------
 ##
 __remove_files () {
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	echoinfo "rm /var/cache/apt/*.bin"
 rm /var/cache/apt/*.bin 2>/dev/null
@@ -951,7 +1046,7 @@ __download_files () {
 	# /usr/bin/initiv -d /full/path/package.tar.gz
 	# all files from package.tar.gz will be extracted to "/full/path/package" directory
 	#	__file=$__file
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 
 	__distro # check distro
@@ -1071,25 +1166,7 @@ logline() {
 }
 
 __change_hostname () {
-echo \${FUNCNAME[0]}
-_NEW_HOSTNAME=\$(ip -4 addr | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}' | sed 's/127.0.0.1//' | tr '\\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
-_OLD_HOSTNAME=\$(cat /etc/hostname)
-	while [ -z "\$_NEW_HOSTNAME" ];	do
-		_NEW_HOSTNAME=\$(ip -4 addr | grep -oP '(?<=inet\\s)\\d+(\\.\\d+){3}' | sed 's/127.0.0.1//' | tr '\\n' ' ' | tr '.' '-' | sed 's/[[:space:]]//g')
-		echo "_OLD_HOSTNAME=\$_OLD_HOSTNAME check... _NEW_HOSTNAME=\$_NEW_HOSTNAME" | logline
-		sleep 2
-	done
-	if [ ! "\$_OLD_HOSTNAME" == "\$_NEW_HOSTNAME" ];	then
-		echo " _OLD_HOSTNAME=\$_OLD_HOSTNAME  ...set new hostname: _NEW_HOSTNAME=\$_NEW_HOSTNAME" | logline
-		hostnamectl set-hostname \$_NEW_HOSTNAME
-		echo "...update: echo \"127.0.1.1 \$_NEW_HOSTNAME\" >> /etc/hosts ...done backup in /etc/hosts.bak" | logline
-			cp /etc/hosts /etc/hosts.bak 2>/dev/null
-			sed -i "\\/\\s\$_OLD_HOSTNAME/d" /etc/hosts
-			echo "127.0.1.1 \$_NEW_HOSTNAME" >> /etc/hosts
-			/usr/bin/initiv -r # reset ttyX consoles
-	else
-		echo " hostname unchaged: _OLD_HOSTNAME=\$_OLD_HOSTNAME _NEW_HOSTNAME=\$_NEW_HOSTNAME" | logline
-	fi
+/usr/bin/initiv __change_hostname
 }
 
 __initiv_0 () {
@@ -1100,11 +1177,11 @@ __initiv_0 () {
 
 __run () {
 	while true; do
+		sleep 10
 		systemctl is-active --quiet getty@tty2 || echo "tty2 is down! ...start again"
 		systemctl is-active --quiet getty@tty2 || systemctl start getty@tty2
 		systemctl is-active --quiet getty@tty1 || echo "tty1 is down! ...start again"
 		systemctl is-active --quiet getty@tty1 || systemctl start getty@tty1
-		sleep 10
 	done
 }
 
@@ -1113,6 +1190,7 @@ case \$1 in
 		__change_hostname
 		__run
 #		__initiv_0
+# __initiv_0 runs in tty1, parted function cant be done by service
 	;;
 	stop)
 	_PID=\$(pgrep ${_BUSY_SERVICE} | awk '{print \$1}') | logline
@@ -1560,13 +1638,13 @@ done
 
 __count () {
 	# generate specific output in terminal
-	__ms=\$((10 * 100000))
+	_MS=\$((10 * 100000))
 	echo -e -n "\x1b[\x36 q" # change cursor to steady bar
 	while true; do
 		__c=\$(( __c+1 ))
-		echo -ne " \$__ms \033[0K\r \$__c "
+		echo -ne " \$_MS \033[0K\r \$__c "
 		sleep 0.01
-		: \$(( __ms-- ))
+		: \$(( _MS-- ))
 	done
 }
 
@@ -1596,12 +1674,19 @@ __message () {
 	sleep 60
 }
 
+__id () {
+	_HOSTNAME=\$(cat /etc/hostname)
+	echo "\$_HOSTNAME"
+	sleep infinity
+}
+
 __xterm () {
 	__font="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
 # xterm -geometry 30x20+0+0 -uc -bg black -fg grey -fn \$__font -e /opt/count.sh
 	xterm -geometry 50x3+10+10 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh time' &
-#	xterm -geometry 17x2+650+505 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip'
-	xterm -geometry 17x2+710+564 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh progress'
+	xterm -geometry 17x2+320+568 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh id' &
+	xterm -geometry 17x2+650+505 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip' &
+	xterm -geometry 17x2+710+568 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh progress'
 }
 
 case \$1 in
@@ -1609,6 +1694,7 @@ case \$1 in
 	time) __time               ;;
 	count) __count             ;;
 	ip) __ip                   ;;
+	id) __id                   ;;
 	progress) __progress       ;;
 	*) __xterm                 ;;
 esac
@@ -1623,7 +1709,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## -------------------------------------------------------------------------------------------------
 ## |
 __salt () { #help: install salt-minion, UUID used as minion ID if not provided, restart salt-minion service
-	__output ${FUNCNAME[0]}
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 	# scenario:
 	# 1. install salt-miniton with ID UUID (client ask server for registration)
@@ -1639,8 +1725,9 @@ __salt () { #help: install salt-minion, UUID used as minion ID if not provided, 
 	#  RegDate: registratin time
 	#  IP last seen ext IP
 	#  Status - 1-online, 0-offline
-	# 4. save ID in sqlite3 (client side), by salt grains or pilar?
+	# 4. save unique ID in sqlite3 (client side), by salt grains?, txt file?
 	# 5. display ID on the VA screen
+	# 5. install software?
 	# 6. User will register ID number in Studio
 	# `b4m.key_value`
 	#  |         key        |       name        | value |
@@ -1661,14 +1748,18 @@ apt update
 apt install -y salt-common salt-minion
 	# Drop the master address if passed
 [ ! -d "$_SALT_DIR/minion.d" ] && mkdir -p "$_SALT_DIR/minion.d"
-cat > $_SALT_DIR/minion.d/99-master-address.conf << EOF
-master: $_SALT_MASTER
-EOF
+echo "master: $_SALT_MASTER" > $_SALT_DIR/minion.d/99-master-address.conf
 	# Drop the minion id if passed
 [ ! -d "$_SALT_DIR" ] && mkdir -p "$_SALT_DIR"
-echo "$_SALT_MINION" > "$_SALT_DIR/minion_id"
-/sbin/service salt-minion restart &&
-echoinfo "salt-minin ID: $_SALT_MINION"
+
+_SALT_MINION=$(cat /etc/hostname)
+if [ -n $_SALT_MINION ]; then
+#	echo "$_SALT_MINION" > "$_SALT_DIR/minion_id"
+	echoinfo "new salt-minion ID: $_SALT_MINION"
+	/sbin/service salt-minion restart
+fi
+
+# cp /etc/hostname $_SALT_DIR/minion_id
 /sbin/service salt-minion status
 echoconfirm "${FUNCNAME[0]} done"
 }
@@ -1683,7 +1774,7 @@ __show () {
 	_MESSAGE="$1"
 	echoinfo "message in DISPLAY=$DISPLAY $_MESSAGE"
 	if [ -n $1 ]; then
-		xterm -geometry 60x5+3+540 -bw 0 -uc -bg $_BG -fg red -fn $__font -e '/opt/xt.sh message '$_MESSAGE
+		xterm -geometry 60x5+10+36 -bw 0 -uc -bg $_BG -fg red -fn $__font -e '/opt/xt.sh message '$_MESSAGE
 		exit 0
 	fi
 	# install progress in xterm during first interface...
@@ -1750,13 +1841,13 @@ echoconfirm "${FUNCNAME[0]} done"
 
 __count () { #help: generate specific output in terminal
 	echofunc ${FUNCNAME[0]}
-	__ms=$((10 * 100000))
+	_MS=$((10 * 100000))
 	echo -e -n "\x1b[\x36 q" # change cursor to steady bar
 	while true; do
 		__c=$(( __c+1 ))
-		echo -ne " $__ms \033[0K\r $__c "
+		echo -ne " $_MS \033[0K\r $__c "
 		sleep 0.01
-		: $(( __ms-- ))
+		: $(( _MS-- ))
 	done
 }
 
@@ -1778,7 +1869,7 @@ chmod +x /opt/timer
 echoinfo "/opt/timer ... created, usege: /opt/timer"
 
 	declare -a _DOTS=("0." "1.." "2..." "3...." "4....." "5....." "6......." "7........" "8........." "9..........")
-	_START=$(date +%s)
+		_START=$(date +%s)
 while true; do
 	_ELAPSED=$(($(date +%s) - ${_START}))
 	for _DOT in ${_DOTS[@]}; do
@@ -1825,7 +1916,7 @@ echowarning "hello from crontab ... :)"
 }
 
 __help () { #help: show short functions descriptions
-__output ${FUNCNAME[0]}
+[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 echofunc ${FUNCNAME[0]}
 echoinfo "=== $_SCRIPT_NAME === Ver.$_SCRIPT_VERSION ======== help =============="
   LANG=en_US.UTF_8
@@ -1863,7 +1954,7 @@ EOF
 ## =================================================================================================
 ## Available options:
 ##
-while getopts ':a: b d: f F h H: i: k l n: o: r s: S v T: t: u: U: w x X' opt
+while getopts ':a: b d: f F h H: i: k l n: N o: r s: S v T: t: u: U: w x X' opt
 do
   case "${opt}" in
     a ) _AUTOUSER="$OPTARG"; __autologin; __autostart                                       ;;
@@ -1897,6 +1988,8 @@ do
 ## -m		option "m"
 		n )  _ANIMEDIR="$OPTARG"; echoinfo "_ANIMEDIR=$OPTARG"                                  ;;
 ## -n <dir)	Set background animation, where <dir> contains pictures for animation *TODO
+		N ) _SKIP_NET="true"                                                                 ;;
+## -N	skip __net_status check
 		r ) __reset; exit 0                                                                     ;;
 ## -r reset ttyX consoles
 		s ) _SALT_MASTER="$OPTARG"                                                              ;;
@@ -2019,8 +2112,9 @@ case $1 in
 #		sleep 1
 		(sleep 1; echo -e "\n\e[32m * READY! \n\
 		... installation will start after reboot or reset tty1 console \n\
+		type: 'reboot' and hit ENTER to start installation now or\n\
 		type: 'halt -p' and hit ENTER to switch machine off.\n\
-		Virtual machine is ready for distribution.\e[0m")
+		V-Assistant machine is ready for distribution.\e[0m")
 		echo "$_DATE_STAMP initiv ready" > $_LOGFILE
 #		/sbin/service $_BUSY_ANIME_SERVICE start
 #		(sleep 10; /usr/bin/initiv reset)
@@ -2032,10 +2126,12 @@ case $1 in
 ## - do it automatically just after first run (partiton will be expanded, and VM file will grow)
 	"0" )
 ## 0	execute all initial options, remove packages, set user, install X and basic stuff
+##
 		__read_data
 		__interface
 		__net_status # used for waitng for IP from DHCP
 		__change_hostname # previously used for waiting for IP from DHCP
+		__salt
 		__update
 		__update_apt_repos
 		__install_stuff1
@@ -2059,13 +2155,13 @@ case $1 in
 		(sleep 2; /usr/bin/initiv reset)
 		;;
 	"1" )
-## 1	execute installation process just after download and first run by user
+## 1	execute installation process just after download and first X run by user
 		__fix
 		__change_hostname
-		__salt
 		__install_stuff2
 		__install_stuff3
 		__install_stuff4
+		__install_init-1
 		systemctl disable $_BUSY_SERVICE
 		(sleep 2; systemctl disable $_INITIV_1_SERVICE)
 		(sleep 4; systemctl stop $_INITIV_1_SERVICE)
@@ -2075,7 +2171,7 @@ case $1 in
 		;;
 	"2" )
 ## 2	download and run init-1 script which next install busy4.me package and reboot
-		__install_stuff4
+		__install_init-1
 		;;
 	$1)
 	$1 $2

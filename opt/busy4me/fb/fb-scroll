@@ -91,7 +91,7 @@ echo "Factor: $factor"
 
 # scroll_count=1
 # scroll page down until usage memory excess $limit=1024MB or scroll steps 1000 Down key pressed
-scroll_limit=1000
+scroll_limit=200
 scroll () {
 while [ $mem -lt $limit ]
 do

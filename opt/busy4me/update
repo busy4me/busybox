@@ -132,6 +132,10 @@ tint2rc () {
 	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
 	chown busyman:busyman /home/busyman/.config/tint2/*
 #	killall -SIGUSR1 tint2 # reload tint2
+if [[ "$_EXCLUDE" == "tint2" ]]; then
+	echo "exlude run tint2"
+	return
+fi
 	export DISPLAY=:0
 	t_proc=$(ps -e | grep tint2)
 	if [[ t_proc == *"tint2"* ]]; then
@@ -140,12 +144,11 @@ tint2rc () {
 		pkill tint2
 		if [ "$USER" = "root" ]; then
 			export XAUTHORITY=/home/busyman/.Xauthority
-			runuser -l busyman -c 'export DISPLAY=:0 && tint2 -c /home/busyman/.config/tint2/tint2rc &'
+			runuser -l busyman -c 'export DISPLAY=:0 && tint2 -c /home/busyman/.config/tint2/tint2rc &' &
 		else
 			tint2 -c /home/busyman/.config/tint2/tint2rc &
 		fi
 	fi
-
 }
 
 openbox_config () {
@@ -247,7 +250,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 openbox_autostart () {
 echo -e "\e[44m ................... update Openbox autostart file \e[0m"
 rm /home/busyman/.config/openbox/autostart
-cat > /home/busyman/.config/openbox/autostart << EOF
+cat > /home/busyman/.config/openbox/autostart << 'EOF'
 # Programs that will run after Openbox windows manager has started
 xrandr --output default --mode 800x600 &
 xrandr --output Virtual1 --mode 800x600 &
@@ -256,8 +259,18 @@ xset -dpms &
 xset s off &
 xcompmgr &
 (sleep 2s && tint2) &
-/opt/busy4me/frame00 &
-/opt/busy4me/frame99 &
+if [ $(echo $DISPLAY) = ":98" ]; then
+    export DISPLAY=:98 && /opt/busy4me/frame00 &
+fi
+if [ $(echo $DISPLAY) = ":97" ]; then
+    export DISPLAY=:97 && /opt/busy4me/frame00 &
+fi
+if [ $(echo $DISPLAY) = ":96" ]; then
+    export DISPLAY=:96 && /opt/busy4me/frame00 &
+fi
+if [ $(echo $DISPLAY) = ":0" ]; then
+    export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
+fi
 EOF
 chown busyman:busyman /home/busyman/.config/openbox/*
 }
@@ -303,9 +316,19 @@ EOF
 # #################################################################
 # read arguments
 # #################################################################
+while getopts ':t' opt
+do
+  case "${opt}" in
+		t) _EXCLUDE="tint2"; echo "  * - exclude: tint2, _EXCLUDE=$_EXCLUDE" # exlude run tint2, usage: "update -t --all"
+		;;
+		:) echo "Option -$OPTARG requires an argument." >&2
+		;;
+	esac
+done
+shift $((OPTIND-1))
 
 case $1 in
-    --full|--all)
+    --full|--all|all|full)
 		echo -e '\e[47m\e[31m start update all files ...\e[0m\e[31m CAUTION! update big files...  \e[0m'
 		echo -e '\e[31m full update with big files in /opt/busy directory... please wait ...\e[0m'
 		root_check
@@ -321,22 +344,22 @@ case $1 in
 		openbox_config
 		logrotate
 	;;
-	--busy4me)
+	--busy4me|busy4me)
 		download_busy4me_files
 	;;
-	--logrotate)
+	--logrotate|logrotate)
 		root_check
 		logrotate
 	;;
-	--cron_task)
+	--cron_task|cron_task)
 		root_check
 		cron_task
 	;;
-	--binaries)
+	--binaries|binaries)
 		root_check
 		download_binaries
 	;;
-	--big-files|--big)
+	--big-files|--big|big-files|big)
 		download_big_files
 	;;
 	--tint2rc|tint2rc)
@@ -349,12 +372,7 @@ case $1 in
 		root_check
 		update_preferences
 	;;
-    -f | --file)
-		echo 'option file'
-    ;;
-    -i | --interactive)
-    ;;
-    -h | --help)
+    -h|--help|help)
 		echo -e '\e[100m\e[32m' $SCRIPT $VERSION 'project: ' $PROJECT '\e[0m'
 		echo -e $"\e[32m Usage: \n\
 		update [option]
@@ -367,7 +385,7 @@ case $1 in
 		\e[0m"
 		exit 0
     ;;
-	--update)
+	--update|update)
 		root_check
 		echo -e "\e[44m start update file: "update" ...\e[0m\e[31m CAUTION! update itself...  \e[0m"
 		if ! wget -nv -O /opt/busy4me/update.new --no-check-certificate http://busy4.me/busy/opt/busy4me/update; then
@@ -388,7 +406,7 @@ case $1 in
 		fi
 		exit 0
 	;;
-	--busy)
+	--busy|busy)
 		root_check
 			echo -e "\e[44m start update files in busy directory \e[0m"
 		if ! wget -nv -O /opt/busy/$UPDATE_FILE_2.new --no-check-certificate http://busy4.me/busy/opt/busy/$UPDATE_FILE_2; then
@@ -465,8 +483,8 @@ echo "ls -la /opt/$PROJECT"
 	ls --color -lAGbh --time-style='+%b %d %Y %H:%M' /opt/$PROJECT
 echo "ls -la /opt/$PROJECT"/fb
 	ls --color -lAGbh --time-style='+%b %d %Y %H:%M' /opt/$PROJECT/fb
-echo "ls -la /var/www/html"
-	ls --color -lAGbh --time-style='+%b %d %Y %H:%M' /var/www/html
+#echo "ls -la /var/www/html"
+#	ls --color -lAGbh --time-style='+%b %d %Y %H:%M' /var/www/html
 
 echo -e "\e[32m OK \e[0m"
 # set +x
