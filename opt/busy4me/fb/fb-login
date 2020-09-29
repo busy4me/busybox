@@ -91,7 +91,7 @@ login_insert () {
 while [[ ! $_valid == "OK" ]]; do
 	rm -rf /opt/busy/fb/* # remove old files
 
-    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,130,70,540,250 & zenity --forms --title="Login" --text="busy4.me automation:\n\...Social Media Assistant: \n\   ...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login (email)" --add-entry="Password" --width 450 --height 200)
+    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,130,70,540,250 & zenity --forms --title="Login" --text="Social Media Automation Studio:\n\...Virtual Assistant: \n\   ...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login (email)" --add-entry="Password" --width 450 --height 200)
 	accepted=$?
 	if ((accepted != 0)); then
 		echo -e "\e[32m Start again...\e[0m" | logline

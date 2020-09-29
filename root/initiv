@@ -7,9 +7,10 @@
 # try: /usr/bin/initiv -h
 ## * Usage: /usr/bin/initiv [-o]... [parameter]... <action>
 ## where -o is option with or without parameter
-##
+## initiv install - to prepare installation (after that, distro is redy for cloning)
+
 # Everything below will go to the file 'initiv.log':
-_LOGFILE=/var/log/busy4me.log
+_LOGFILE=/var/log/busy4me.log # default colorful log file, check cat /var/log/busy4me.log
 _START=$(date +%s) # calculate how long script runs (see on the end)
 _EXECUTOR_PATH=`pwd`
 _SCRIPT_PATH="/usr/bin"
@@ -46,6 +47,8 @@ __net_status () {
 	[[ $_SKIP_NET == "true" ]] && return
 	_HOST=$(echo $1 | sed 's/http:\/\///g' | sed 's/https:\/\///g')
 	echofunc ${FUNCNAME[0]} $@
+	echofunc ${FUNCNAME[0]}
+	echook "host: $_HOST"
 #	_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
 if [ ! "$_IP_STATUS" == "OK" ]; then
 	while [ -z "$_IP" ];	do
@@ -57,13 +60,13 @@ if [ ! "$_IP_STATUS" == "OK" ]; then
 fi
 
 if [ ! -z $_HOST ]; then
-	wget -q --tries=10 --timeout=20 --spider http://$_HOST
+	wget --no-check-certificate -q --tries=10 --timeout=20 --spider http://$_HOST
 	if [[ $? -eq 0 ]]; then
 			_HOST_STATUS="OK"
-	    echook "$_HOST Online :) _HOST_STATUS=OK"
+	    echook "$_HOST online response with 0 error code :) _HOST_STATUS=OK"
 	else
 			"$_HOST"_STATUS="no response"
-	    echoerror "$_HOST Offline :("
+	    echoerror "$_HOST offline? response with 0 error code :("
 	fi
 fi
 
@@ -313,14 +316,19 @@ cat > /root/.profile  << EOF
 EOF
 
 	else
+		_UPDATE="/usr/bin/initiv update"
 		case $_THEME in
-			light) _LINE="/usr/bin/initiv -H light 0" ;;
-			*) _LINE="/usr/bin/initiv 0" ;;
+			light)
+			_LINE="/usr/bin/initiv -H light -k 0"  # -k skip update
+			;;
+			*)
+			_LINE="/usr/bin/initiv -k 0"  # -k skip update
+			;;
 		esac
 		echoinfo "_AUTOUSER=$1 run 'initiv 0' after restart tty1..."
 cat > /root/.profile  << EOF
 [[ \$(tty) = /dev/tty1 ]] && \\
-(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ') && $_LINE
+(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ') && $_UPDATE && $_LINE
 EOF
 	fi
 }
@@ -812,11 +820,12 @@ else
 	echoinfo "install parted package ....  "
 	apt-get install -y -qq --no-install-recommends parted
 fi
-
+echoconfirm "disk usage:"
+df -h
 [[ -z $_DEV ]] && _DEV=/dev/sda
 [[ -z $_PART ]] && _PART=1
 [[ -z $_APPLY ]] && _APPLY=apply
-[[ -z $_EXT ]] && _EXT="10000MB" # max size 10GB
+[[ -z $_EXT ]] && _EXT="10000MB" # extend to size: 10GB
 
 echoinfo "_DEV=$_DEV; _PART=$_PART; _APPLY=$_APPLY; _EXT=$_EXT"
 _USAGE="eg. preview usage: initiv parted /dev/sda 1; apply usage: initiv parted /dev/sda 1 apply"
@@ -1167,11 +1176,14 @@ logline() {
 
 __change_hostname () {
 /usr/bin/initiv __change_hostname
+# do not run initiv from service and from .profile at the same time, double update will
+# broke initiv
 }
 
 __initiv_0 () {
 #	/usr/bin/initiv 0
 #	/usr/bin/initiv parted
+# parted can not be done with parted
 	sleep infinity
 }
 
@@ -1187,7 +1199,7 @@ __run () {
 
 case \$1 in
 	start)
-		__change_hostname
+#		__change_hostname
 		__run
 #		__initiv_0
 # __initiv_0 runs in tty1, parted function cant be done by service
@@ -1655,7 +1667,7 @@ __ip () {
 		_IP=\$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
 	sleep 1
 	done
-	echo "\$_IP" | tr '\n' ' '
+	echo "\$_IP"
 	sleep infinity
 }
 
@@ -1684,8 +1696,8 @@ __xterm () {
 	__font="-misc-fixed-bold-r-normal--18-120-100-100-c-90-iso8859-1"
 # xterm -geometry 30x20+0+0 -uc -bg black -fg grey -fn \$__font -e /opt/count.sh
 	xterm -geometry 50x3+10+10 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh time' &
-	xterm -geometry 17x2+320+568 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh id' &
-	xterm -geometry 17x2+650+505 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip' &
+	xterm -geometry 11x2+320+568 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh id' &
+	xterm -geometry 16x2+440+568 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh ip' &
 	xterm -geometry 17x2+710+568 -bw 0 -uc -bg $_BG -fg $_FG -fn \$__font -e '/opt/xt.sh progress'
 }
 
@@ -2031,9 +2043,11 @@ shift $((OPTIND-1))
 ## ==================================================================================================
 ##
 ##
-__bashcolor
-__update
-__net_status google.com
+if [ ! -e /usr/bin/bashcolors ]; then
+	__bashcolor
+fi
+# __update # prevent double update
+# __net_status google.com
 
 ## === actions ======================================================================================
 ## | actions                                                                                        |
@@ -2095,6 +2109,8 @@ case $1 in
 ## - do it on fresh installed distro
 	"install" )
 		__read_data
+		__net_status google.com
+		__update # use -k option to skip update
 		__remove_packages
 		__update_apt_repos
 		__install
@@ -2173,8 +2189,11 @@ case $1 in
 ## 2	download and run init-1 script which next install busy4.me package and reboot
 		__install_init-1
 		;;
-	$1)
-	$1 $2
+	"$1")
+	$1 $2 2>/dev/null
+	if [ ! $? == "0" ]; then
+		echoerror "$1 - command not found, try $0 --help"
+	fi
 	;;
 	*)
 	 	__help
@@ -2204,5 +2223,6 @@ esac
 [[ -f /usr/bin/initivRecovery ]] ||	{ echoinfo "create script initivRecovery ... "; __create_recovery; }
 
 echo -e $coloroff
+echook "END of script"
 secs_to_human "$(($(date +%s) - ${_START}))"
 exit 0

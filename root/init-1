@@ -91,7 +91,15 @@ apt-get install -y software-properties-common | logline # for Debian
 echo -e "\e[100m Install wget curl ... \e[0m" | logline
 apt-get install -y wget curl | logline
 wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - | logline
-add-apt-repository 'deb http://dl.google.com/linux/chrome/deb/ stable main' | logline
+_GGL_REPO="deb http://dl.google.com/linux/chrome/deb/ stable main"
+_SRC_FILE="/etc/apt/sources.list"
+if grep -x -q "$_GGL_REPO" $_SRC_FILE; then
+    echoinfo "$_GGL_REPO exists..."
+  else
+    echo $_GGL_REPO >> $_SRC_FILE
+fi
+# added above if, to avoid double it
+# add-apt-repository 'deb http://dl.google.com/linux/chrome/deb/ stable main' | logline
 apt-get update | logline >> $LOGFILE
 echo -e "\e[100m Install xorg ... \e[0m" | logline
 apt-get install -y -V --no-install-recommends xorg | logline >> $LOGFILE # without lightdm for now
@@ -127,7 +135,8 @@ sysctl vm.swappiness=10
 echo "vm.swappiness = 10" >> /etc/sysctl.conf
 
 # backorts need for install salt-common which can't be installed without python-systemd
-echo 'deb http://deb.debian.org/debian jessie-backports main' >> /etc/apt/sources.list
+echo "used in Debian 8"
+# echo 'deb http://deb.debian.org/debian jessie-backports main' >> /etc/apt/sources.list
 
 #add main repo & install SaltStack
 # === DELETED === run in 'initiv'
@@ -145,16 +154,17 @@ echo 'deb http://deb.debian.org/debian jessie-backports main' >> /etc/apt/source
 #echo -e "\e[100m Saltstack install End ... \e[0m" | logline
 
 # install ffmpeg ffplay for streaming desktop
-echo -e "\e[100m Install ffmpeg... \e[0m" | logline
-rm /etc/apt/sources.list.d/deb-multimedia.list 2>/dev/null
-cat > /etc/apt/sources.list.d/deb-multimedia.list  << EOF
-deb http://www.deb-multimedia.org jessie main non-free
-deb-src http://www.deb-multimedia.org jessie main non-free
-EOF
-apt-get update
-apt-get -y --force-yes install deb-multimedia-keyring
-apt-get update
-apt-get install -y build-essential libmp3lame-dev libvorbis-dev libtheora-dev libspeex-dev yasm pkg-config libfaac-dev libopenjpeg-dev libx264-dev
+echo -e "\e[100m Install ffmpeg... deleted \e[0m" | logline
+#rm /etc/apt/sources.list.d/deb-multimedia.list 2>/dev/null
+#cat > /etc/apt/sources.list.d/deb-multimedia.list  << EOF
+#deb http://www.deb-multimedia.org jessie main non-free
+#deb-src http://www.deb-multimedia.org jessie main non-free
+#EOF
+#apt-get update
+#apt-get -y install deb-multimedia-keyring
+#apt-get -y --force-yes install deb-multimedia-keyring # --force-yes is deprecated,
+#apt-get update
+#apt-get install -y build-essential libmp3lame-dev libvorbis-dev libtheora-dev libspeex-dev yasm pkg-config libfaac-dev libopenjpeg-dev libx264-dev
 apt-get install -y libav-tools
 
 echo 'Download local webservice menu file.....................' | logline
