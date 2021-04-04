@@ -825,7 +825,7 @@ df -h
 [[ -z $_DEV ]] && _DEV=/dev/sda
 [[ -z $_PART ]] && _PART=1
 [[ -z $_APPLY ]] && _APPLY=apply
-[[ -z $_EXT ]] && _EXT="10000MB" # extend to size: 10GB
+[[ -z $_EXT ]] && _EXT="1100000MB" # extend to size: 10GB
 
 echoinfo "_DEV=$_DEV; _PART=$_PART; _APPLY=$_APPLY; _EXT=$_EXT"
 _USAGE="eg. preview usage: initiv parted /dev/sda 1; apply usage: initiv parted /dev/sda 1 apply"
