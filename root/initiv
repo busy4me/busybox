@@ -1170,7 +1170,7 @@ exec &> >(tee -ia \$LOGFILE) # everything to logfile
 exec 2>&1
 logline() {
     while IFS= read -r line; do
-        echo "\$(date +%F' '%T) \${0} - \$line" >> \$LOGFILE
+        echo "\$(date +%F' '%T) \${0} - \$line line from busy4me.service" >> \$LOGFILE
     done
 }
 
