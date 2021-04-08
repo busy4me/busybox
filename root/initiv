@@ -152,7 +152,7 @@ __change_hostname () { #help: change hostname mached IP address, also used for w
 	_UUID=$(cat /sys/class/dmi/id/product_uuid | sed 's/.*-//')
 	_HWMAC=$(cat /sys/class/dmi/id/product_uuid | cut -c 33-) # last four characters
 	_MAC=$(cat /sys/class/net/$(ip route show default | awk '/default/ {print $5}')/address | tr ':' ' ' | tr '\n' ' ' | sed 's/[[:space:]]//g')
-	_NETMAC=$(echo $_MAC | cut -c 7-) # last six characters
+	_NETMAC=$(echo $_MAC | cut -c 9-) # last four characters
 	_IP=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
 	_IP_END=$(echo $_IP | sed 's/.*\.//')
 	_EXT_IP=$(curl -s http://icanhazip.com | tr '\n' ' ' | sed 's/[[:space:]]//g')
@@ -160,8 +160,8 @@ __change_hostname () { #help: change hostname mached IP address, also used for w
 # === hostname structure:                                                              ===
 # === HWMAC (dash) NETMAC last six characters                                          ===
 # === where: HWMAC - last four characters of hardware UUID                             ===
-# ===        NETMAC - last six characters of network card MAC address                  ===
-# === eg.:   e733-acb52e                                                               ===
+# ===        NETMAC - last four characters of network card MAC address                  ===
+# === eg.:   e733-b52e                                                               ===
 # ========================================================================================
 	_NEW_HOSTNAME="$_HWMAC-$_NETMAC"
 	_OLD_HOSTNAME=$(cat /etc/hostname)
