@@ -694,6 +694,7 @@ __install_stuff3 () {
 ## ----------------------------------------------------------------------------------------------------
 # loks like tigervnc is best
 __install_stuff4 () {
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc "${FUNCNAME[0]}"
 	echoinfo " ... install vncserver and viewer ..."
 declare -a stuff4=(
@@ -2128,8 +2129,9 @@ case $1 in
 #		sleep 1
 		(sleep 1; echo -e "\n\e[32m * READY! \n\
 		... installation will start after reboot or reset tty1 console \n\
-		type: 'reboot' and hit ENTER to start installation now or\n\
-		type: 'halt -p' and hit ENTER to switch machine off.\n\
+		type: 'reboot' and hit ENTER to reboot and start installation or\n\
+		type: 'service getty@tty1 stop' and hit ENTER to start installation now' or\n\
+		type: 'halt -p' and hit ENTER to switch machine off and clone machine for others.\n\
 		V-Assistant machine is ready for distribution.\e[0m")
 		echo "$_DATE_STAMP initiv ready" > $_LOGFILE
 #		/sbin/service $_BUSY_ANIME_SERVICE start
