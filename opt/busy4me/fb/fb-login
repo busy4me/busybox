@@ -68,6 +68,7 @@ open_mobile_page
 echo -e "\e[33m      ...         ...set variables ...\e[0m"
 empty01=""
 mark02='Forgotten'
+mark022='Forgot Password'
 mark03='Help Centre'
 mark04='Facebook'
 mark05='https://m.facebook.com'
@@ -299,6 +300,12 @@ for i in {1..1000} ; do
 		*"$mark02"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark02 ... go to login..." | logline
 			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark02\"... go to login..." --timeout $tos
+			login_start
+      break
+		;;
+    *"$mark022"*)
+			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark022 ... go to login..." | logline
+			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark022\"... go to login..." --timeout $tos
 			login_start
       break
 		;;
