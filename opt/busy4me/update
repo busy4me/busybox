@@ -224,6 +224,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-live-stream
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-config
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-login
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-mouse-on-element.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-open
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-post
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-respond-to-requests
