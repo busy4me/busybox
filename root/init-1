@@ -101,22 +101,30 @@ fi
 # added above if, to avoid double it
 # add-apt-repository 'deb http://dl.google.com/linux/chrome/deb/ stable main' | logline
 apt-get update | logline >> $LOGFILE
-echo -e "\e[100m Install xorg ... \e[0m" | logline
-apt-get install -y -V --no-install-recommends xorg | logline >> $LOGFILE # without lightdm for now
-echo -e "\e[100m Install openbox google-chrome-stable ... \e[0m" | logline
-apt-get install -y --no-install-recommends openbox google-chrome-stable | logline
-echo -e "\e[100m Install xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 xvfb ... \e[0m" | logline
-apt-get install -y xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 xvfb tint2 | logline >> $LOGFILE
+# all 6 lines below commented 24-08-2021, it is installed by initiv script earlier
+#echo -e "\e[100m Install xorg ... \e[0m" | logline
+#apt-get install -y -V --no-install-recommends xorg | logline >> $LOGFILE # without lightdm for now
+#echo -e "\e[100m Install openbox google-chrome-stable ... \e[0m" | logline
+#apt-get install -y --no-install-recommends openbox google-chrome-stable | logline
+#echo -e "\e[100m Install xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 xvfb ... \e[0m" | logline
+#apt-get install -y xdotool wmctrl xcompmgr feh nginx bc ntp zenity xclip ntpdate scrot screen sqlite3 xvfb tint2 | logline >> $LOGFILE
 
 # coppied from init-2
-apt-get -y install python python-dev python-tk
-apt-get install -y python-pip python-xlib python-pillow scrot
+# 2 lines below commented 24-08-2021, it is installed by initiv script earlier
+#apt-get -y install python python-dev python-tk
+#apt-get install -y python-pip python-xlib python-pillow scrot
 pip install setuptools -U # update 08-2019,
 pip install pyautogui # need for automate keys, mouse, recognise pictures on the screen
+# 4 lines below added 24-08-2021,
+pip install numpy
+pip install imutils
+pip --no-cache-dir install opencv-python==4.2.0.32
+# Python 2.7 is not supported anymore in opencv-python-4.3.0.38 the support was dropped since 4.3.0.36
 
 #hostnamectl seems to need dbus, hostnamectl used for change hostname
-echo -e "\e[100m Install dbus ... \e[0m" | logline
-apt-get install -y dbus | logline >> $LOGFILE
+# 2 lines below commented 24-08-2021, it is installed by initiv script earlier
+#echo -e "\e[100m Install dbus ... \e[0m" | logline
+#apt-get install -y dbus | logline >> $LOGFILE
 
 
 # change hostname to unique name, pattern: busy-UUID
@@ -165,7 +173,7 @@ echo -e "\e[100m Install ffmpeg... deleted \e[0m" | logline
 #apt-get -y --force-yes install deb-multimedia-keyring # --force-yes is deprecated,
 #apt-get update
 #apt-get install -y build-essential libmp3lame-dev libvorbis-dev libtheora-dev libspeex-dev yasm pkg-config libfaac-dev libopenjpeg-dev libx264-dev
-apt-get install -y libav-tools
+# apt-get install -y libav-tools # commented 24-08-2021
 
 echo 'Download local webservice menu file.....................' | logline
 wget -nv --no-check-certificate https://busy4.me/var/www/html/index.html -O /var/www/html/index.html | logline
