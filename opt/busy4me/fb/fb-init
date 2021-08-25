@@ -48,14 +48,7 @@ if [ -f /opt/busy4me/fb/fb-config ];then
 	exit 1
 fi
 
-kd=600 # key delay [miliseconds]
-to=2 # zenity messages time out [seconds]
-BR01="google-chrome" # Browser 01
-PROC01="chrome" # process 01
-SPOT01="facebook" # spot 01
-SPOT01url="http://facebook.com" # url 01
-BR01x=825 #BROWSER_01 size x
-BR01y=982 #BROWSER_01 size y
+# variables moved to /opt/busy4me/fb/fb-config
 
 # Clean google-chrome busyman data... just in case...
 echo -e "\e[91m *F:_clean_data, clean google-chrome busyman data...\e[0m" | logline

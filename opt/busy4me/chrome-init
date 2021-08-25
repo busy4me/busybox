@@ -15,7 +15,8 @@ SPOT02="xterm"
 SPOT03="terminal"
 
 BR01x=825 #BROWSER_01 size x
-BR01y=1280 #BROWSER_01 size y
+#BR01y=1280 #BROWSER_01 size y
+BR01y=682 #BROWSER_01 size y
 
 xdotool search --sync --onlyvisible --class chrome windowunmap windowmap
 xdotool search --sync --onlyvisible --class "$PROC01" windowsize $BR01x $BR01y windowmove 0 600
