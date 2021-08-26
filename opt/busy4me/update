@@ -440,7 +440,7 @@ case $1 in
 				rm -rf /opt/busy4me/$UPDATE_FILE.new
 			else
 				echo -e '\e[32m backup copy ...\e[0m'
-				cp /opt/busy4me/$UPDATE_FILE $BACKUP/$UPDATE_FILE.bak
+				cp /opt/busy4me/$UPDATE_FILE $BACKUP/$UPDATE_FILE.bak 2>/dev/null
 				echo -e '\e[32m remove oryginal...\e[0m'
 				rm -rf /opt/busy4me/$UPDATE_FILE
 				echo -e '\e[32m copy new file...\e[0m'

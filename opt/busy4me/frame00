@@ -34,11 +34,11 @@ echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
 # set directories for big files
 mkdir /opt/busy/{files,images,sounds,videos} 2>/dev/null
 
-set_crontab fb-post
+# set_crontab fb-post
 
 # disable crontab job
-crontab -l | sed "/^[^#].*export DISPLAY=:98 && \/opt\/busy4me\/fb\/fb-post -c all/s/^/#/" | crontab -
-crontab -l | sed "/^[^#].*export DISPLAY=:98 && \/opt\/busy4me\/busy/s/^/#/" | crontab -
+#crontab -l | sed "/^[^#].*export DISPLAY=:98 && \/opt\/busy4me\/fb\/fb-post -c all/s/^/#/" | crontab -
+#crontab -l | sed "/^[^#].*export DISPLAY=:98 && \/opt\/busy4me\/busy/s/^/#/" | crontab -
 
 # kill all screen sessions
 #screen -S fb-walking-around -X kill
@@ -93,8 +93,8 @@ screen -dmS fb-walking-around$DISPLAY '/opt/busy4me/fb/fb-walking-around'
 
 # sleep 180
 # enable crontab job
-crontab -l | sed "/^#.*export DISPLAY=:98 && \/opt\/busy4me\/fb\/fb-post -c all/s/^#//" | crontab -
-crontab -l | sed "/^#.*export DISPLAY=:98 && \/opt\/busy4me\/busy/s/^#//" | crontab -
+#crontab -l | sed "/^#.*export DISPLAY=:98 && \/opt\/busy4me\/fb\/fb-post -c all/s/^#//" | crontab -
+#crontab -l | sed "/^#.*export DISPLAY=:98 && \/opt\/busy4me\/busy/s/^#//" | crontab -
 
 echo "Stop $SCRIPT..." | logline
 

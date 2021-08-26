@@ -8,6 +8,15 @@ script_dir = os.path.dirname(__file__)
 rel_path = "img/"
 img_path = os.path.join(script_dir, rel_path)
 
+def check_file():
+    try:
+        f = open(img)
+        print "file exists..."
+    except IOError:
+        print ("File not exists...")
+    finally:
+        f.close()
+
 def options(argv):
   img = '' # image to find
   action = '' # action to do

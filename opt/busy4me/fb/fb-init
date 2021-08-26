@@ -56,7 +56,10 @@ echo -e "\e[91m *F:_clean_data, clean google-chrome busyman data...\e[0m" | logl
 	rm -rf /home/$BUSYUSER/.cache/google-chrome
 	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*
 
-
+__TRANSSET=1
+function transset_blank() {
+  transset -a $__TRANSSET
+}
 
 # open transparent xtrminal
 #echo "pkill xterm... cancelled temporary..." | logline
@@ -69,7 +72,7 @@ echo -e "\e[91m *F:_clean_data, clean google-chrome busyman data...\e[0m" | logl
 # xdotool key Alt_L+space l t
 #wmctrl -i -r $(wmctrl -l | grep -i busyman@ | awk '{print $1}') -b add,above
 #echo "set transparent xterm...." | logline
-#transset -a 0 | logline
+#transset_blank | logline
 
 xdotool mousemove 800 600
 echo "... * kill existing windows: BR01=$BR01 SPOT01=$SPOT01 PROC01=$PROC01..." | logline
@@ -81,9 +84,9 @@ spot01_position_size () {
 _WINDOW=$(xdotool search --onlyvisible --name "$SPOT01")
 echo -e "\e[96m *F:spot01_position_size, move and resize window... _WINDOW=\e[0m$_WINDOW" | logline
 xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap| logline
-transset -a 0
+transset_blank
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-transset -a 0
+transset_blank
 for i in {1..10} ; do
   __wallpaper_change
   sleep 0.1
@@ -95,14 +98,14 @@ for i in {1..10} ; do
   __wallpaper_change
   sleep 0.1
 done
-transset -a 0
+transset_blank
 #zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
 __wallpaper_change
 echo "set zoom to 75%...."
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
 xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove 0 -81 | logline
-transset -a 0
+transset_blank
 #zenity --info --title="zoom" --text="move window...." --timeout $to
 __wallpaper_change
 echo "move window...."
@@ -208,7 +211,7 @@ feh --bg-scale /opt/busy/images/wall00.png
 BR01_run
 for i in {1..20} ; do
   xdotool search --sync --onlyvisible --class chrome windowactivate | logline
-  transset -a 0
+  transset_blank
 #  __wallpaper_change
   sleep 0.25 | logline
 done
@@ -216,7 +219,7 @@ for i in {1..50} ; do
   __wallpaper_change
   sleep 0.1
 done
-transset -a 0
+transset_blank
 SPOT01_probe
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.9
