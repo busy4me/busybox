@@ -39,14 +39,14 @@ profile_url="$SPOT01url/$profile_name"
 allactivity_url="$SPOT01url/$profile_name/allactivity"
 requests_url="$SPOT01url/friends/requests"
 
-kds=50 # Key Delay Short [miliseconds]
-kd=200 # Key Delay [miliseconds]
-kdl=500 # Key Delay Long [miliseconds]
+kds=250 # Key Delay Short [miliseconds]
+kd=500 # Key Delay [miliseconds]
+kdl=900 # Key Delay Long [miliseconds]
 tos=1 # Time Out Short zenity messages time out [seconds]
 to=2 # Time Out zenity messages time out [seconds]
 tol=5 # Time Out Long zenity messages time out [seconds]
 
-kd=600 # key delay [miliseconds]
+kd=800 # key delay [miliseconds]
 to=2 # zenity messages time out [seconds]
 BR01="google-chrome" # Browser 01
 PROC01="chrome" # process 01
