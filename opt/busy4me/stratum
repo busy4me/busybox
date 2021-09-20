@@ -7,7 +7,7 @@ LOGFILE=/var/log/stratum.log
 
 logline() {
     while IFS= read -r line; do
-        echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT - $line \e[0m" | tee -a $LOGFILE 
+        echo -e "\e[95m $(date +%F' '%T) $USER $SCRIPT - $line \e[0m" | tee -a $LOGFILE
     done
 }
 
@@ -65,7 +65,7 @@ restartx() {
 echo -e "\e[31m Soft restart X server in: $CONSOLE \e[0m" >&2
 echo -e "\$CONSOLE: $CONSOLE"
 (sleep 10 && systemctl restart getty@$CONSOLE) & systemctl restart getty@$CONSOLE
-} 
+}
 
 # soft restart, close all windows and scripts in DISPLAY:X
 restart() {
@@ -84,6 +84,9 @@ echo -e "\e[42m   \e[0m\e[32m start:\e[33m FRAME=\e[0m$FRAME"
 export DISPLAY=$DSP && /opt/busy4me/$FRAME
 }
 
+restart_vncserver() {
+  $HOME/.vncserver restart
+}
 help() {
 echo -e "\e[44mUsage:\n\
 stratum [-e|-m|-c|-x|-r] place [-h]\n\
@@ -97,12 +100,12 @@ places: ttyX or DISPLAY number eg. :0\n\
 -r DISPLAY #Restart all windows in DISPLAY eg. -r 0\n\
 -h #Help\n\
 \e[0m"
-} 
+}
 
 # arguments parsed by 'getopts' command
 # ":" colon before option disables "verbose error handling"
 # ":" colon after option means that argument needs argument
-while getopts ":s m: :c x: r: :h" option 
+while getopts ":s m: :c x: r: :h" option
 	do
 		case "${option}" in
 		s)
@@ -137,8 +140,8 @@ while getopts ":s m: :c x: r: :h" option
 			echo "Option -$OPTARG requires an argument." >&2
 			exit 1
 		;;
-	esac 
-done 
+	esac
+done
 
 if [ -z $1 ]; then
 	help

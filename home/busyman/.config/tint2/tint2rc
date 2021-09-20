@@ -193,7 +193,7 @@ execp_tooltip = IP address and ID name
 button = update
 #button_text = update
 button_text = STOP
-button_font = sans 9
+button_font = sans 8
 button_font_color = #ffff00 100
 button_background_id = 3
 button_padding = 1 1
@@ -205,25 +205,26 @@ button_tooltip = Click to update busy4 software in background
 
 button = start
 button_text = START
-button_font = Droid Sans 9
+button_font = Droid Sans 8
 button_font_color = #ff5050 100
 button_background_id = 3
 button_padding = 1 1
 button_centered = 0
 button_max_icon_size = 30
-button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum restart :0 & (sleep 3 & /usr/bin/initiv -u no reset)
+button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = Click to reset and login again
 
 button = reset
 button_text = reset
-button_font = Droid Sans 9
+button_font = Droid Sans 8
 button_font_color = #ff5050 100
 button_background_id = 3
 button_padding = 1 1
 button_centered = 0
 button_max_icon_size = 30
-button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum restart :0 & (sleep 3 & /usr/bin/initiv -u no reset)
+#button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
+button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 && $HOME/.vncserver restart && (sleep 5 && export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &)
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = Click to reset and login again
 

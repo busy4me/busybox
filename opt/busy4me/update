@@ -127,6 +127,7 @@ download_binaries () {
 }
 
 tint2rc () {
+	DISPLAY=$DSP
 	mkdir /home/busyman/.config/tint2
 	chown busyman:busyman /home/busyman/.config/tint2
 	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
@@ -136,7 +137,7 @@ if [[ "$_EXCLUDE" == "tint2" ]]; then
 	echo "exlude run tint2"
 	return
 fi
-	export DISPLAY=:0
+#	export DISPLAY=:0
 	t_proc=$(ps -e | grep tint2)
 	if [[ t_proc == *"tint2"* ]]; then
 		killall -SIGUSR1 tint2 # reload tint2
@@ -144,7 +145,7 @@ fi
 		pkill tint2
 		if [ "$USER" = "root" ]; then
 			export XAUTHORITY=/home/busyman/.Xauthority
-			runuser -l busyman -c 'export DISPLAY=:0 && tint2 -c /home/busyman/.config/tint2/tint2rc &' &
+			runuser -l busyman -c 'export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/tint2rc &' &
 		else
 			tint2 -c /home/busyman/.config/tint2/tint2rc &
 		fi
@@ -211,6 +212,9 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv -O /opt/$PROJECT/fb/img/cross_chat.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat.png
 	wget -nv -O /opt/$PROJECT/fb/img/cross_chat2.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat2.png
 	wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat3.png
+	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-button-EnglishUS-bg=grey.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-button-EnglishUS-bg=grey.png
+	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-button-three-dots.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-button-three-dots.png
+	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-fb_logo_01.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-fb_logo_01.png
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-close-windows.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-detect-activity.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-collect-info

@@ -145,10 +145,10 @@ login_start () {
 	echo "1" ; sleep 1
 	echo "20" ; sleep 1
 	echo "40" ; sleep 1
-	echo "60" ; sleep 2
-	echo "70" ; sleep 2
-	echo "80" ; sleep 2
-	echo "90" ; sleep 2
+	echo "60" ; sleep 1
+	echo "70" ; sleep 1
+	echo "80" ; sleep 1
+	echo "90" ; sleep 1
 	echo "100" ; sleep 1
 	) | OUTPUT=$(zenity --progress \
 	  --title="Login" \
@@ -204,6 +204,12 @@ fi
 }
 
 create_database
+
+change_language () {
+  locate -i 800x600-ch75%-button-three-dots.png -a click
+  sleep 2
+  locate -i 800x600-ch75%-button-EnglishUS-bg=grey.png -a click
+}
 
 # check if mobile facebook page is open
 #===================================================================================================
@@ -342,6 +348,7 @@ for i in {1..1000} ; do
 		*)
 			echo -e "\e[44m   \e[0m \e[34m probe again... \e[0m" | logline
 			zenity --info --title="page_probe" --text="probe again..." --timeout $tos
+      change_language
 		;;
 		esac
 done
@@ -427,9 +434,10 @@ entry_detect
 
 echo -e "\e[42m\e[30m OK --> \e[0m Entry field OK, login in progress ..."
 zenity --info --title="End" --text="This is 2nd entry field... pass" --timeout $to
-# there are two different loging pages,
-# 1. one with login field: "Mobile number or email address" and pass field: "Password"+"Show" button
-# 2. second with login field: "Email address"+"USE MOBILE" button and pass field "Password"+"SHOW" button
+# there are more different loging pages,
+# 1. with login field: "Mobile number or email address" and pass field: "Password"+"Show" button
+# 2. with login field: "Email address"+"USE MOBILE" button and pass field "Password"+"SHOW" button
+# 3. with login field: "Mobile number or email address" and pass field: "Password" with no button
 # so the second one needs additional Shift+Tab key and when go back to pass, additional Tab key
 
 while [[ ! "$clip" == "$login" ]]; do
