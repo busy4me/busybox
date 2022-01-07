@@ -10,11 +10,9 @@ if [[ "$1" == "--debug" ]]; then
   exec 2>&1
 fi
 
-echo "fb-login start" > /opt/busy/fb/fb-status
-
 # move mouse away...
 echo -e "\e[33m move mouse away....\e[0m" | logline
-xdotool mousemove 90 45
+xdotool mousemove 0 0
 # update date before login....
 echo "update date before login...." | logline
 ntpdate -s time.nist.gov | logline &&
@@ -56,44 +54,21 @@ case "$clip" in
   ;;
 esac
 
-report_fb_login_done () {
-  while  [ 1 ]; do
-    echo -e "\e[33m[OK] ... report: 'fb-login done' and sleep 1 day \e[0m"
-    echo "fb-login done" > /opt/busy/fb/fb-status
-    sleep 86400 # sleep 1 day
-  done
-}
-
-accept_cookies () {
-  echo "accept cookies... "
-  locate -i button_blue_allow_all_cookies.png -a click
-}
-
-change_language () {
-  echo "change language...."
-#  sleep 2
-#  locate -i 800x600-ch75%-button-EnglishUS-bg=grey.png -a click
-}
-
 # open mobile page...
 open_mobile_page () {
-  echo -e "\e[33m      ...open mobile page...\e[0m"
-  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-  xdotool key --delay 200 Ctrl+l | logline
-  xdotool type $login_url
-  xdotool key --delay 200 Return
-  sleep 5
+echo -e "\e[33m      ...open mobile page...\e[0m"
+xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+xdotool key --delay 200 Ctrl+l | logline
+xdotool type $login_url
+xdotool key --delay 200 Return
+sleep 5
 }
-
 open_mobile_page
-accept_cookies
-change_language
 
 echo -e "\e[33m      ...         ...set variables ...\e[0m"
 empty01=""
 mark02='Forgotten'
 mark022='Forgot Password'
-mark023='Forgot password'
 mark03='Help Centre'
 mark04='Facebook'
 mark05='https://m.facebook.com'
@@ -105,9 +80,7 @@ mark10="Enter email address or phone number"
 mark11="Enter password"
 mark12="temporarily locked"
 mark13="Tap to log in"
-mark14="I want to update Chrome"
-mark15="Allow the use of cookies from Facebook"
-mark16="You can allow the use of all cookies"
+
 # empty file for blank clipboard
 touch /opt/busy/files/blank
 
@@ -119,7 +92,7 @@ login_insert () {
 while [[ ! $_valid == "OK" ]]; do
 	rm -rf /opt/busy/fb/* # remove old files
 
-    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,430,470,240,250 & zenity --forms --title="Login" --text="Social Media Automation Studio\n\\n\...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login (email)" --add-entry="Password" --width 450 --height 180)
+    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,130,70,540,250 & zenity --forms --title="Login" --text="Social Media Automation Studio:\n\...Virtual Assistant: \n\   ...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login (email)" --add-entry="Password" --width 450 --height 200)
 	accepted=$?
 	if ((accepted != 0)); then
 		echo -e "\e[32m Start again...\e[0m" | logline
@@ -232,6 +205,12 @@ fi
 
 create_database
 
+change_language () {
+  locate -i 800x600-ch75%-button-three-dots.png -a click
+  sleep 2
+  locate -i 800x600-ch75%-button-EnglishUS-bg=grey.png -a click
+}
+
 # check if mobile facebook page is open
 #===================================================================================================
 #== Function =======================================================================================
@@ -300,7 +279,6 @@ for i in {1..1000} ; do
       xdotool key Return
 			sleep 2
 #			/bin/bash /opt/busy4me/fb/fb-scroll &
-      report_fb_login_done
 			exit 0
 		;;
 		*"$mark08"*)
@@ -312,8 +290,7 @@ for i in {1..1000} ; do
       xdotool key Return
 			sleep 2
 #			/bin/bash /opt/busy4me/fb/fb-scroll &
-			report_fb_login_done
-#      exit 0
+			exit 0
 		;;
 		*"$mark07"*)
 			echo -e "\e[42m   \e[0m \e[32m Logged successfuly... mark07=$mark07 \e[0m" | logline
@@ -324,8 +301,7 @@ for i in {1..1000} ; do
       xdotool key Return
 			sleep 2
 #			/bin/bash /opt/busy4me/fb/fb-scroll &
-      report_fb_login_done
-#			exit 0
+			exit 0
 		;;
 		*"$mark02"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark02 ... go to login..." | logline
@@ -336,12 +312,6 @@ for i in {1..1000} ; do
     *"$mark022"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark022 ... go to login..." | logline
 			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark022\"... go to login..." --timeout $tos
-			login_start
-      break
-		;;
-    *"$mark023"*)
-			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark023 ... go to login..." | logline
-			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark023\"... go to login..." --timeout $tos
 			login_start
       break
 		;;
@@ -375,15 +345,9 @@ for i in {1..1000} ; do
 			zenity --info --title="Tap to login" --text="Login in cache... Tap to login... Switch to fb_login_url" --timeout $tol
 			break
 		;;
-    *"$mark15"*|*"$mark16"*)
-      echo -e "\e[44m   \e[0m \e[34m accept cookies... \e[0m" | logline
-      zenity --info --title="accept cookies message" --text="accept cookies and check again..." --timeout $tos
-      accept_cookies
-    ;;
 		*)
 			echo -e "\e[44m   \e[0m \e[34m probe again... \e[0m" | logline
 			zenity --info --title="page_probe" --text="probe again..." --timeout $tos
-      accept_cookies
       change_language
 		;;
 		esac
@@ -440,8 +404,7 @@ while [ $entry01 -lt 2 ]; do
 			xdotool type $SPOT01url
 			xdotool key --delay $kd Return
 #			/bin/bash /opt/busy4me/fb/fb-scroll &
-			report_fb_login_done
-#      exit 0
+			exit 0
 		;;
 		*"$mark04"*)
 			echo "The content with $mark04 .."

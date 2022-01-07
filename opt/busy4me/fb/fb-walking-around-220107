@@ -238,17 +238,8 @@ echo -e '\e[0m'
 		*$mark01*)
 			for i in {1..20}
 			do
-        zenity --info --title="temporarily restricted" --text="I see: $mark01 \n \n OK, slow down..." --timeout 5
-				echo -e '\e[95m \e[5m $mark01 ...PAUSE... \e[0m' | logline
-        sleep 5
-			done
-		;;
-    *$mark011*|*$mark012*)
-			for i in {1..20}
-			do
-        zenity --info --title="temporarily restricted" --text="I see: $mark011 \n \n OK, slow down..." --timeout 5
-				echo -e '\e[95m \e[5m $mark011 ...PAUSE... \e[0m' | logline
-        sleep 5
+				echo -e '\e[95m \e[5m temporarily restricted from liking posts ...PAUSE... \e[0m' | logline
+
 			done
 		;;
 		*$mark02*)

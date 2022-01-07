@@ -42,7 +42,14 @@ echo ""
 }
 
 start () {
+	screen -ls
 	_TASK=$1
+	if [ -z "$_TASK" ]; then
+		screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' # default task to run: frame00
+		sleep 2
+		screen -ls
+		return
+  fi
 #	screen -dmS $_TASK$DISPLAY '/opt/busy4me/fb/$_TASK'
 	screen_start=$(screen -dmS $_TASK$DISPLAY '/opt/busy4me/fb/fb-walking-around')
 #	echo $screen_start
@@ -50,8 +57,13 @@ start () {
 }
 
 stop () {
-	_TASK=$1
 	screen -ls
+	_TASK=$1
+	if [ -z "$_TASK" ]; then
+		screen -S frame00$DISPLAY -X kill # kill frame00
+		screen -ls
+		return
+	fi
 	echo -e "\e[95m stop $_TASK in screen $DISPLAY...\e[0m"
 	screen_stop=$(screen -S $_TASK$DISPLAY -X kill)
 	if [[ $screen_stop == *"There are several suitable screens"* ]]; then

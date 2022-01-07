@@ -61,13 +61,13 @@ sleep 2 | logline
 
 BR01_position_size () {
 xdotool search --sync --onlyvisible --class chrome windowunmap windowmap | logline
-xdotool search --sync --onlyvisible --class chrome windowsize 825 600 windowmove 0 -1200 | logline
+xdotool search --sync --onlyvisible --class chrome windowsize 825 600 windowmove 0 0 | logline
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 sleep 1 | logline
 xdotool key --delay 600 Ctrl+0 | logline
 sleep 1 | logline
 xdotool key --delay 600 Ctrl+minus Ctrl+minus Ctrl+minus | logline
-xdotool search --sync --onlyvisible --class chrome windowsize $BR01x $BR01y windowmove 0 -81 | logline
+xdotool search --sync --onlyvisible --class chrome windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
 xdotool key Alt_L+space m | logline
 xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
 xdotool key --delay 100 Return | logline
@@ -90,8 +90,21 @@ done
 # open browser 01...
 echo "open $BR01..." | logline
 
-$BR01 --window-size="800,600" --window-position="0,0" --incognito --mute-audio --disable-notifications --disable-device-discovery-notifications --no-first-run --no-default-browser-check --disable-translate $SPOT02url & 2>/dev/null | logline
+BR01_run () {
+  $BR01 --window-size="1140,768" \
+  --window-position="0,0" \
+  --incognito \
+  --mute-audio \
+  --disable-notifications \
+  --disable-device-discovery-notifications \
+  --no-first-run \
+  --no-default-browser-check \
+  --disable-translate \
+  $SPOT02url & 2>/dev/null | logline
+}
+
+BR01_run
 BR01_probe
 
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
-transset -a 0.7
+transset -a 0.5

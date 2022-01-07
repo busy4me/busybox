@@ -1,5 +1,5 @@
-xrandr --output default --mode 800x600 &
-xrandr --output Virtual1 --mode 800x600 &
+xrandr --output default --mode 1024x768 &
+xrandr --output Virtual1 --mode 1024x768 &
 feh --bg-scale /opt/busy/images/wall03.png &
 xset -dpms &
 xset s off &

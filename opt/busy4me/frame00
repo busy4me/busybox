@@ -54,7 +54,7 @@ screen -S mouse-move-02$DISPLAY -X kill
 
 # move mouse away...
 echo "move mouse away...." | logline
-xdotool mousemove 800 600
+xdotool mousemove 8 45
 # update date before login....
 echo "update date before login...." | logline
 ntpdate -s time.nist.gov | logline
@@ -64,10 +64,22 @@ ntpdate -s time.nist.gov | logline
 #/bin/bash /opt/busy4me/windows-init
 
 echo "Start /opt/busy4me/fb/fb-init..." | logline
-/bin/bash /opt/busy4me/fb/fb-init
+# /bin/bash /opt/busy4me/fb/fb-init
+screen -S fb-init$DISPLAY -X kill
+screen -dmS fb-init$DISPLAY '/opt/busy4me/fb/fb-init'
+while [[ ! $fb_init_status == *"fb-init done"* ]]; do
+	fb_init_status=$(cat /opt/busy/fb/fb-status)
+	sleep 1
+done
 
 echo "Start /opt/busy4me/fb/fb-login..." | logline
-/bin/bash /opt/busy4me/fb/fb-login --debug
+# /bin/bash /opt/busy4me/fb/fb-login --debug
+screen -S fb-login$DISPLAY -X kill
+screen -dmS fb-login$DISPLAY '/opt/busy4me/fb/fb-login'
+while [[ ! $fb_login_status == *"fb-login done"* ]]; do
+	fb_login_status=$(cat /opt/busy/fb/fb-status)
+	sleep 1
+done
 
 echo "Start /opt/busy4me/fb/fb-scroll..." | logline
 /bin/bash /opt/busy4me/fb/fb-scroll --debug

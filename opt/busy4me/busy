@@ -21,8 +21,11 @@ screen -dmS $screen_name $screen_task
 JOB=$((RANDOM%8999+1000))
 
 if [ $USER = "root" ]; then
-	echo -e "don't run as root ... \n color codes: \e[90m text \e\[90m \e[0m \e[41m 41 \e[42m 42 \e[43m\e[30m 43+30 \e[0m\e[44m 44 \e[45m 45 \e[46m\e[30m 46+30 \e[0m\e[100m 100 \e[0m\e[101m\e[30m 101+30 \e[0m\e[102m\e[30m 102+30 \e[0m\e[103m\e[30m 103 \e[0m\e[104m 104 \e[105m\e[30m 105+30 \e[0m\e[36m \n login as busyman ...\e[0m ... \n usage: busy --help"
-	su busyman
+ echo -e "\e[92m[info]\e[0m don't run as root ... \n\
+ test color codes:\
+ \e[90m text \e\[90m \e[0m \e[41m 41 \e[42m 42 \e[43m\e[30m 43+30 \e[0m\e[44m 44 \e[45m 45 \e[46m\e[30m 46+30 \e[0m\e[100m 100 \e[0m\e[101m\e[30m 101+30 \e[0m\e[102m\e[30m 102+30 \e[0m\e[103m\e[30m 103 \e[0m\e[104m 104 \e[105m\e[30m 105+30 \e[0m\e[36m \n\
+ \e[92m[info]\e[0m login as busyman ...\e[0m ... \n usage: busy --help"
+ su busyman
 fi
 
 Arg_2 () {

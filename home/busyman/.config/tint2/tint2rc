@@ -46,8 +46,8 @@ border_color = #FFFFFF 68
 # Panel
 panel_items = PPPEE:EFEC
 panel_monitor = all
-panel_position = bottom center horizontal
-panel_size = 98% 50
+panel_position = bottom right horizontal
+panel_size = 80% 50
 panel_margin = 0 10
 panel_padding = 3 3 3
 panel_dock = 0

@@ -7,6 +7,9 @@ LOGFILE=/var/log/busy4me.log
 SAVE_DIR=/opt/busy/fb # with user permision 777
 PROJECT_DIR=/opt/busy4me/fb # with root permision 755, read only for users
 
+echo "fb-init start" > /opt/busy/fb/fb-status
+
+# export DISPLAY=:98
 mkdir -p $SAVE_DIR 2>/dev/null
 
 __wallpaper_change () {
@@ -57,7 +60,7 @@ echo -e "\e[91m *F:_clean_data, clean google-chrome busyman data...\e[0m" | logl
 	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*
 
 __TRANSSET=1
-function transset_blank() {
+transset_blank () {
   transset -a $__TRANSSET
 }
 
@@ -74,7 +77,7 @@ function transset_blank() {
 #echo "set transparent xterm...." | logline
 #transset_blank | logline
 
-xdotool mousemove 800 600
+xdotool mousemove 45 45
 echo "... * kill existing windows: BR01=$BR01 SPOT01=$SPOT01 PROC01=$PROC01..." | logline
 xdotool search --onlyvisible --class "$BR01" windowkill | logline
 xdotool search --onlyvisible --class "$SPOT01" windowkill | logline
@@ -104,14 +107,14 @@ __wallpaper_change
 echo "set zoom to 75%...."
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
-xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove 0 -81 | logline
+xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
 transset_blank
 #zenity --info --title="zoom" --text="move window...." --timeout $to
 __wallpaper_change
-echo "move window...."
-xdotool key Alt_L+space m | logline
-xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
-xdotool key --delay 500 Return | logline
+#echo "move window 5 steps below x=0...."
+#xdotool key Alt_L+space m | logline
+#xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
+#xdotool key --delay 500 Return | logline
 #xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 # unhide browser window
@@ -172,10 +175,9 @@ while  [ 1 ]; do
 done
 }
 
-
 BR01_run () {
-  $BR01 --window-size="800,600" \
-  --window-position="800,600" \
+  $BR01 --window-size="600,768" \
+  --window-position="140,0" \
   --incognito \
   --disable-notifications \
   --mute-audio \
@@ -224,3 +226,7 @@ SPOT01_probe
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.9
 feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg
+while  [ 1 ]; do
+  echo "fb-init done" > /opt/busy/fb/fb-status
+  sleep 86400 # sleep 1 day
+done

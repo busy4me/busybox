@@ -1,0 +1,39 @@
+# Gradient 1: thin film effect
+gradient = horizontal
+start_color = #111122 30
+end_color = #112211 30
+color_stop = 60 #221111 30
+
+# Gradient 2: radial glow
+gradient = radial
+start_color = #ffffff 30
+end_color = #ffffff 0
+
+# Gradient 3: elegant black
+gradient = vertical
+start_color = #444444 100
+end_color = #222222 100
+
+# Gradient 4: elegant black
+gradient = horizontal
+start_color = #111111 100
+end_color = #222222 100
+
+# Background definitions
+# ID 1
+rounded = 0
+border_width = 1
+background_color = #000000 0
+border_color = #FFFFFF 68
+
+# Panel
+panel_items =
+panel_monitor = all
+panel_position = top right horizontal
+panel_size = 240 760
+panel_margin = 0 0
+panel_padding = 3 3 3
+panel_dock = 0
+wm_menu = 0
+panel_layer = top
+panel_background_id = 1

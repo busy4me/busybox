@@ -57,11 +57,13 @@ cd /opt/$PROJECT
 update_preferences () {
 rm /root/.bash_aliases
 rm /root/.bashrc
+rm /root/.profile
 rm -rf /home/$BUSYUSER/.bash_aliases
 rm -rf /home/$BUSYUSER/.bashrc
 echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
 	wget -nv -O /root/.bash_aliases --no-check-certificate http://busy4.me/busy/root/.bash_aliases
 	wget -nv -O /root/.bashrc --no-check-certificate http://busy4.me/busy/root/.bashrc
+	wget -nv -O /root/.bashrc --no-check-certificate http://busy4.me/busy/root/.profile
 	wget -nv -O /home/busyman/.bash_aliases --no-check-certificate http://busy4.me/busy/home/busyman/.bash_aliases
 	wget -nv -O /home/busyman/.bashrc --no-check-certificate http://busy4.me/busy/home/busyman/.bashrc
 }
@@ -126,11 +128,14 @@ download_binaries () {
 	chmod +x /usr/bin/tint2conf
 }
 
-tint2rc () {
-	DISPLAY=$DSP
-	mkdir /home/busyman/.config/tint2
+tint2 () {
+	DSP=$DISPLAY
+	echo "DSP=" $DSP
+	mkdir /home/busyman/.config/tint2 > /dev/null
 	chown busyman:busyman /home/busyman/.config/tint2
-	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/mask01 -O /home/busyman/.config/tint2/mask01 | logline
+#	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
+	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/panel01 -O /home/busyman/.config/tint2/panel01 | logline
 	chown busyman:busyman /home/busyman/.config/tint2/*
 #	killall -SIGUSR1 tint2 # reload tint2
 if [[ "$_EXCLUDE" == "tint2" ]]; then
@@ -145,9 +150,13 @@ fi
 		pkill tint2
 		if [ "$USER" = "root" ]; then
 			export XAUTHORITY=/home/busyman/.Xauthority
-			runuser -l busyman -c 'export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/tint2rc &' &
+			runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/mask01 &" &
+#			runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/tint2rc &" &
+			runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/panel01 &" &
 		else
+			tint2 -c /home/busyman/.config/tint2/mask01 &
 			tint2 -c /home/busyman/.config/tint2/tint2rc &
+			tint2 -c /home/busyman/.config/tint2/panel01 &
 		fi
 	fi
 }
@@ -180,6 +189,7 @@ download_busy4me_files () {
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-init
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-normal
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/chrome-init
+	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/locate
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/menu-init
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/mouse-01
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stratum
@@ -215,6 +225,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-button-EnglishUS-bg=grey.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-button-EnglishUS-bg=grey.png
 	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-button-three-dots.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-button-three-dots.png
 	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-fb_logo_01.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-fb_logo_01.png
+	wget -nv -O /opt/$PROJECT/fb/img/button_blue_allow_all_cookies.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/button_blue_allow_all_cookies.png
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-close-windows.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-detect-activity.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-collect-info
@@ -257,24 +268,25 @@ echo -e "\e[44m ................... update Openbox autostart file \e[0m"
 rm /home/busyman/.config/openbox/autostart
 cat > /home/busyman/.config/openbox/autostart << 'EOF'
 # Programs that will run after Openbox windows manager has started
-xrandr --output default --mode 800x600 &
-xrandr --output Virtual1 --mode 800x600 &
+xrandr --output default --mode 1280x768 &
+xrandr --output Virtual1 --mode 1280x768 &
 feh --bg-scale /opt/busy/images/wall03.png &
 xset -dpms &
 xset s off &
 xcompmgr &
-(sleep 2s && tint2) &
 if [ $(echo $DISPLAY) = ":98" ]; then
-    export DISPLAY=:98 && /opt/busy4me/frame00 &
+	tint2 -c /home/busyman/.config/tint2/mask01 &
+	(sleep 2s && tint2 -c /home/busyman/.config/tint2/panel01) &
+  export DISPLAY=:98 && screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":97" ]; then
-    export DISPLAY=:97 && /opt/busy4me/frame00 &
+  export DISPLAY=:97 && /opt/busy4me/frame00 &
 fi
 if [ $(echo $DISPLAY) = ":96" ]; then
-    export DISPLAY=:96 && /opt/busy4me/frame00 &
+  export DISPLAY=:96 && /opt/busy4me/frame00 &
 fi
 if [ $(echo $DISPLAY) = ":0" ]; then
-    export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
+  export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
 fi
 EOF
 chown busyman:busyman /home/busyman/.config/openbox/*
@@ -345,7 +357,7 @@ case $1 in
 		download_fb_files
 		openbox_autostart
 		cron_task
-		tint2rc
+		tint2
 		openbox_config
 		logrotate
 	;;
@@ -367,10 +379,11 @@ case $1 in
 	--big-files|--big|big-files|big)
 		download_big_files
 	;;
-	--tint2rc|tint2rc)
-		tint2rc
+	--tint2|tint2)
+		tint2
 	;;
 	--openbox|openbox)
+		openbox_autostart
 		openbox_config
 	;;
 	update_preferences)

@@ -714,7 +714,7 @@ cat > /home/$_USER/.vncserver  << 'EOF'
 PATH="$PATH:/usr/bin/"
 DISPLAY="98"
 DEPTH="16"
-GEOMETRY="800x600"
+GEOMETRY="1024x768"
 NAME="vncserver"
 
 while getopts ':d: :g:' opt
@@ -904,7 +904,7 @@ GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR="busy4.me"
 GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"
 GRUB_CMDLINE_LINUX=""
-GRUB_GFXMODE=800x600
+GRUB_GFXMODE=1280x1024
 GRUB_GFXPAYLOAD_LINUX=keep
 GRUB_BACKGROUND="$_SPLASH"
 GRUB_COLOR_NORMAL="black/black"
@@ -1393,9 +1393,11 @@ systemctl enable ${_INITIV_1_SERVICE}.service
 echoinfo "service \"$_INITIV_1_SERVICE.service\" created, usage: service $_INITIV_1_SERVICE start|stop"
 echowarning "${_INITIV_1_SERVICE}.service is enabled, will started after reboot"
 
-cat > /root/.profile  << `EOF`
+cat > /root/.profile2  << `EOF`
 [[ \$(tty) = /dev/tty2 ]] && \\
 (ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+
+[[ \$(tty) = *"pts"* ]] && /opt/busy4me/busy
 `EOF`
 
 if [ "$1" == "disable" ]; then

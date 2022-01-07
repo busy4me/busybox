@@ -67,12 +67,12 @@ def circle_03 ():
 
 circle_01()
 
-pyautogui.moveTo(200+(ra01*20), 200, 0.3, pyautogui.easeOutQuad)
-pyautogui.moveTo(550+(ra01*20), 350, 0.3, pyautogui.easeOutQuad)
 pyautogui.moveTo(300+(ra01*20), 200, 0.3, pyautogui.easeOutQuad)
 pyautogui.moveTo(650+(ra01*20), 350, 0.3, pyautogui.easeOutQuad)
+pyautogui.moveTo(400+(ra01*20), 200, 0.3, pyautogui.easeOutQuad)
+pyautogui.moveTo(850+(ra01*20), 350, 0.3, pyautogui.easeOutQuad)
 
-pyautogui.moveTo(20+ra01, 17, 0.3, pyautogui.easeOutQuad)
+pyautogui.moveTo(190+ra01, 17, 0.3, pyautogui.easeOutQuad)
 circle_02()
-pyautogui.moveTo(70+ra01, 400, 1, pyautogui.easeOutQuad)
+pyautogui.moveTo(210+ra01, 400, 1, pyautogui.easeOutQuad)
 circle_03()

@@ -65,9 +65,9 @@ def circle_03 ():
 		print "     %r" % y
 		pyautogui.moveTo(x, y, 0.1, pyautogui.easeOutQuad)
 
-pyautogui.moveTo(20+(ra01*20), 17, 0.4, pyautogui.easeOutQuad)
+pyautogui.moveTo(160+(ra01*20), 17, 0.4, pyautogui.easeOutQuad)
 circle_02()
-pyautogui.moveTo(70+(ra01*20), 400, 1, pyautogui.easeOutQuad)
+pyautogui.moveTo(210+(ra01*20), 400, 1, pyautogui.easeOutQuad)
 circle_03()
 circle_01()
 
@@ -77,7 +77,7 @@ circle_01()
 circle_02()
 circle_03()
 
-pyautogui.moveTo(600+(ra01*20), 250, 0.2, pyautogui.easeOutQuad)
-pyautogui.moveTo(350+(ra01*20), 250, 0.2, pyautogui.easeOutQuad)
-pyautogui.moveTo(600+(ra01*20), 200, 0.2, pyautogui.easeOutQuad)
-pyautogui.moveTo(450+(ra01*20), 300, 0.2, pyautogui.easeOutQuad)
+pyautogui.moveTo(700+(ra01*20), 250, 0.2, pyautogui.easeOutQuad)
+pyautogui.moveTo(450+(ra01*20), 250, 0.2, pyautogui.easeOutQuad)
+pyautogui.moveTo(700+(ra01*20), 200, 0.2, pyautogui.easeOutQuad)
+pyautogui.moveTo(550+(ra01*20), 300, 0.2, pyautogui.easeOutQuad)
