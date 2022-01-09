@@ -757,8 +757,8 @@
       <height>190</height>
     </size>
     <position force="no">
-      <x>390</x>
-      <y>340</y>
+      <x>0</x>
+      <y>0</y>
       <monitor>1</monitor>
     </position>
 	<decor>no</decor>
@@ -773,8 +773,8 @@
       <height>190</height>
     </size>
     <position force="no">
-      <x>390</x>
-      <y>340</y>
+      <x>0</x>
+      <y>0</y>
       <monitor>1</monitor>
     </position>
 	<decor>no</decor>

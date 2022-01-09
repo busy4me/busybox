@@ -170,7 +170,7 @@ execp_font = sans 16
 execp_markup = 2
 execp_font_color = #000000 100
 execp_padding = 0 0
-execp_tooltip = Assistant ID (click to see details)
+execp_tooltip =
 execp_centered = 0
 
 execp = tail_log_title
@@ -210,7 +210,6 @@ execp_font = sans 10
 execp_markup = 1
 execp_font_color = #454545 100
 execp_padding = 1 0
-execp_tooltip = hostname, Assistant ID, local IP
 execp_lclick_command = zenity --info "--text=$(uname -sr)" --width 550 --height 150 --timeout 3
 execp_centered = 0
 
@@ -245,13 +244,13 @@ execp_padding = 2 0
 execp_centered = 0
 
 execp = copyrights
-execp_command = echo "© busy4.me"
+execp_command = echo "© busy4.me SMAS"
 execp_interval = 0
 execp_font = DejaVuSansMono 10
 execp_markup = 1
 execp_font_color = #ff5900 100
 execp_padding = 0 0
-execp_tooltip = Copyrights © busy4.me
+execp_tooltip = Copyrights © busy4.me - Social Media Assistant Studio
 execp_centered = 0
 
 # push buttons ===============================================

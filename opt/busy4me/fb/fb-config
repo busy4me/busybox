@@ -9,12 +9,16 @@ user_name=$(cat "/opt/busy/fb/fb-name" 2>/dev/null)
 user_first_name=$(cat "/opt/busy/fb/fb-first-name" 2>/dev/null)
 user_last_name=$(cat "/opt/busy/fb/fb-last-name" 2>/dev/null)
 login=$(cat "$login_source" 2>/dev/null)
+login_string=$login
+login_string=$(echo $login_string | tr '@.' '-')
 password=$(cat "$password_source" 2>/dev/null)
 #login_string=$login
 login_string=$(echo $login | tr [:punct:] '-')
 #login_string=$(echo $login_string | tr '@.' '_')
-user_db=/opt/busy/fb/db/fb_$login_string.db
+user_db="/opt/busy/fb/db/fb_$login_string.db"
 fb_db=/opt/busy/fb/db/fb.db
+profile_id=""
+profile_name="me"
 
 LOGFILE=/var/log/busy4me.log
 BR01="google-chrome" # Browser 01
@@ -39,24 +43,32 @@ profile_url="$SPOT01url/$profile_name"
 allactivity_url="$SPOT01url/$profile_name/allactivity"
 requests_url="$SPOT01url/friends/requests"
 
-kds=200 # Key Delay Short [miliseconds]
-kd=500 # key delay [miliseconds]
-kdl=800 # Key Delay Long [miliseconds]
+kds=50 # Key Delay Short [miliseconds]
+kd=200
+kd_1=$((600 + RANDOM % 8 * 200)) # Key Delay between 600 and 2000[ms]
+kd_2=$((900 + RANDOM % 8 * 200)) # Key Delay between 900 and 2000[ms]
+kdl=$((1500 + RANDOM % 15 * 200)) # Key Delay Long between 1500 and 4000[ms]
+random=$((6 + RANDOM % 10)) # random number between 6 and 16
+
 tos=1 # Time Out Short zenity messages time out [seconds]
 to=2 # Time Out zenity messages time out [seconds]
 tol=5 # Time Out Long zenity messages time out [seconds]
 
-to=2 # zenity messages time out [seconds]
 BR01="google-chrome" # Browser 01
 PROC01="chrome" # process 01
 SPOT01="facebook" # spot 01
-SPOT01url="http://facebook.com" # url 01
+SPOT01url="https://facebook.com" # url 01
 # BR01x=825 #BROWSER_01 size x
 # BR01y=682 #BROWSER_01 size y
 BR01x=1160 #BROWSER_01 size x, changed for 1280x768
 BR01y=852 #BROWSER_01 size y,  changed for 1280x768
 POSITION_x="137" # position x
 POSITION_y="-81" # position y
+
+my_groups_url="$SPOT01url/$profile_name/groups"
+about_url="$SPOT01url/$profile_name/about"
+profile_url="$SPOT01url/$profile_name"
+profile_allactivity="$SPOT01url/$profile_name/allactivity"
 
 logline() {
     while IFS= read -r line; do

@@ -1,6 +1,5 @@
 #!/bin/bash
 set -x
-
 SCRIPT=fb-walking-around
 LOGFILE=/var/log/busy4me.log
 source /opt/busy4me/busy-functions # global functions
@@ -12,222 +11,89 @@ if [[ "$1" == "--debug" ]]; then
 fi
 echo "DISPLAY=$DISPLAY"
 # export DISPLAY=:0
-screen_name="xterm-"$DISPLAY
-screen_task="/opt/busy4me/xterm.sh --screen fb-walking-around"$DISPLAY
-screen -S $screen_name -X kill # kill screen on this display
-screen -dmS $screen_name $screen_task
+#screen_name="xterm-"$DISPLAY
+#screen_task="/opt/busy4me/xterm.sh --screen fb-walking-around"$DISPLAY
+#screen -S $screen_name -X kill # kill screen on this display
+#screen -dmS $screen_name $screen_task
 
 logline() {
     while IFS= read -r line; do
         echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
     done
 }
+echoinfo 'login =' $login | logline
+echoinfo 'login_string =' $login_string | logline
+echoinfo 'Use database:' $user_db | logline
+move_mouse
 
-login=$(cat "$login_source")
-echo 'login =' $login | logline
-login_string=$login
-login_string=$(echo $login_string | tr '@.' '-')
-echo 'login_string =' $login_string | logline
-user_db="/opt/busy/fb/db/fb_$login_string.db"
-echo 'Use database:' $user_db | logline
+fb_chat_detect_activity () {
+  screen -S fb-chat-detect-activity -X kill
+  screen -S fb-chat-detect-activity$DISPLAY -X kill
+}
 
+windows_uneeded_close () {
+  echofunc "${FUNCNAME[0]}"
+  echo -e '.. ... ... ... .... .... ... ..\e[104m\e[7m Start screen windows-uneeded-close  \e[0m ...'
+  screen -S windows-uneeded-close -X kill
+  screen -S windows-uneeded-close$DISPLAY -X kill
+  sleep 1
+  screen -dmS windows-uneeded-close$DISPLAY '/opt/busy4me/windows-uneeded-close.sh'
+}
 
-BR01="google-chrome" # Browser 01
-PROC01="chrome"
-SPOT01="facebook"
-SPOT01url="https://facebook.com"
+windows_check () {
+  echofunc "${FUNCNAME[0]}"
+  /bin/bash /opt/busy4me/windows-check.sh
+}
 
-profile_id=""
-profile_name="me"
+move_mouse_01 () {
+  echofunc "${FUNCNAME[0]}"
+  echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
+  chose=$((1 + RANDOM % 2))
+  case "$chose" in
+    1)
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
+      screen -S mouse-move-01 -X kill
+      screen -dmS mouse-move-01$DISPLAY '/opt/busy4me/fb/mouse-move-01.py'
+    ;;
+    2)
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-02...\e[0m" | logline
+      screen -S mouse-move-02 -X kill
+      screen -S mouse-move-02$DISPLAY -X kill
+      screen -dmS mouse-move-02$DISPLAY '/opt/busy4me/fb/mouse-move-02.py'
+    ;;
+    *)
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
+      screen -S mouse-move-01 -X kill
+      screen -S mouse-move-01$DISPLAY -X kill
+    ;;
+  esac
+}
 
-my_groups_url="$SPOT01url/$profile_name/groups"
-about_url="$SPOT01url/$profile_name/about"
-profile_url="$SPOT01url/$profile_name"
-profile_allactivity="$SPOT01url/$profile_name/allactivity"
-
-# mouse walking around... with visual efect
-# from A to B
-
-A_x=27
-A_y=53
-xdotool mousemove --sync --clearmodifiers $A_x $A_y
-sleep 0.3
-
-B_x=573
-B_y=17
-xdotool mousemove --sync --clearmodifiers $B_x $B_y
-sleep 0.3
-
-
-xdotool mousemove --sync --clearmodifiers 754 22
-sleep 0.3
-xdotool mousemove --sync --clearmodifiers 759 27
-sleep 0.3
-xdotool mousemove --sync --clearmodifiers 764 32
-sleep 0.3
-
-#xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
-#xdotool key --delay 200 Ctrl+l
-#xdotool type $profile_url
-#xdotool key --delay 200 Return
-#sleep 1
-#
-#xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
-#xdotool key --delay 500 Ctrl+l
-#xdotool type $profile_allactivity
-#xdotool key --delay 200 Return
-#sleep 1
-
-
-#(sleep 2 && wmctrl -F -a "test" -b add,above) & zenity --info --title="test" --text="Walking around..." --timeout 10
-#xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
-
-walking_around_wall () {
-echo ${FUNCNAME[0]}
-echo "DISPLAY=$DISPLAY"
-kds=50 # Key Delay Short [ms]
-kd=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
-kd_2=$((300 + RANDOM % 8 * 100)) # Key Delay between 300 and 1000[ms]
-kdl=$((500 + RANDOM % 15 * 100)) # Key Delay Long between 500 and 2000[ms]
-random=$((6 + RANDOM % 10)) # random number between 6 and 16
-
-# enter URL in browser and execute
-xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
-transset -a 0.8 # set lighter window
-xdotool key --delay 500 Ctrl+l
-xdotool key --delay 100 Ctrl+a
-xdotool type --delay 100 $SPOT01url
-xdotool key --delay 100 Return
-
-transset -a 0.9 # set darker window
-echo -e '\e[33m'
-# zenity --info --title="Testing" --text="Testing in progress. \n\ Open Facebook wall... \n\ Script: fb-walking-around" --timeout 3
-echo -e '\e[0m'
-sleep 3
-
-# screenshot
-scrot_local
-
-set +x
-detect_input_field
-xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up
-key_repeat=40
-echo -e '\e[92mkey_repeat = ' $key_repeat | logline
-echo -e "\e[0m"
-for (( key_step=1; key_step<$key_repeat; key_step++ )); do
-        xdotool key --delay $kds Tab Escape;
-        shift 1
-done
-set -x
-
-xdotool key --delay $kd_2 Down Escape Down Escape Down Escape Page_Down Escape Page_Up
-xdotool key --delay $kds Down Escape Down Page_Down Escape Down Escape Down Escape Down Escape Page_Down Down Escape
-xdotool key --delay $kds Down Escape Down Escape Page_Down Up Down Escape Down Escape Down Up Up Escape Down Escape
-xdotool key --delay $kd Up Escape Up Escape Up Escape Up Escape Page_Up Escape
-xdotool key --delay 300 Ctrl+f
-# switch to english language
-switch_to_english
-xdotool key --delay $kd Escape keydown Shift Tab keyup Shift Tab Escape
-xdotool key --delay $kds Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
-xdotool key --delay $kd Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
-xdotool key --delay $kdl Down Escape Down Escape Down Escape Down Escape Down Escape Down Escape Down
-xdotool key --delay $kds Down Escape Down Escape Down Down Up Down Down Down Up Up Down Up Down Down Down Down Down Down
-xdotool key --delay $kdl Up Escape Up Escape Up Escape Up Up Down
-xdotool key --delay $kds Up Up Up Down Up Up Up Up Down Down
-xdotool key --delay $kd_2 Up Escape Up Escape Up Escape Up Up Down
-xdotool key --delay $kdl Tab Escape Tab Escape Tab Tab Tab Tab Tab Tab Escape
-
-for (( i=1; i<$random; i++ )); do
-        echo -e '... \e[44m Tab \e[0m ... key'
-        xdotool key --delay $kd_2 Escape Tab;
-        shift 1
-done
-# Press Enter only between 8am and 11pm
-H=$(date +%k)
-if (( 8 <= $H && $H < 13 )); then
-    echo "between 8AM and 1PM, hit enter..."
-	xdotool key --delay 500 Return
-elif (( 13 <= $H && $H < 23 )); then
-    echo "between 1PM and 11PM, hit enter..."
-	xdotool key --delay 500 Return
-  else
-	echo -e "go to bed"
-fi
-
-echo -e '... ... ... ... ... \e[44m ENTER only between 8am and 11pm \e[0m ... key'
-echo -e '\e[33m'
-#(sleep 2 && wmctrl -F -a "Active click" -b add,above) & zenity --info --title="Active click" --text="Active click after $random Tabs...\n\ Active profile is effective :\)..." --timeout 3
-echo -e '\e[0m'
-xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
-sleep 3
-
-mark00="Leave This Page"
-mark01="temporarily restricted"
-mark011="been temporarily blocked"
-mark012="You're Tmporarily Blocked"
-mark02="follow"
-mark03="o"
-mark04="Accept All" # fb question: Accept cookies from Facebook...
-		cd /tmp
-		# close uneeded window
-		echo -e '.. ... ... ... .... .... ... ..\e[104m\e[7m Start screen windows-uneeded-close  \e[0m ...'
-		screen -S windows-uneeded-close -X kill
-		screen -S windows-uneeded-close$DISPLAY -X kill
-		sleep 1
-		screen -dmS windows-uneeded-close$DISPLAY '/opt/busy4me/windows-uneeded-close.sh'
-#		echo -e '.. ... ... ... .... .... ... ..\e[35m\e[7m python start \e[0m ...'
-
-		echo -e "\e[32m ...... \e[92m \e[5m Start screen fb-chat-detect-activity...\e[0m" | logline
-		screen -S fb-chat-detect-activity -X kill
-		screen -S fb-chat-detect-activity$DISPLAY -X kill
-#		screen -dmS fb-chat-detect-activity '/opt/busy4me/fb/fb-chat-detect-activity.py'
-#		python /opt/busy4me/fb/fb-chat-detect-activity.py
-#		echo -e '.. ... ... ... .... .... ... ..\e[5m python stop \e[0m ...'
-		/bin/bash /opt/busy4me/windows-check.sh
-		sleep 1
-		# start move mouse with python
-		echo -e '.. ... ... ... .... .... ... ..\e[35m\e[7m python start \e[0m ...'
-		echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
-#		killall -s KILL python
-		chose=$((1 + RANDOM % 2))
-		case "$chose" in
-			1)
-			echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
-			screen -S mouse-move-01 -X kill
-			screen -dmS mouse-move-01$DISPLAY '/opt/busy4me/fb/mouse-move-01.py'
-#			python /opt/busy4me/fb/mouse-move-01.py &
-			;;
-			2)
-			echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-02...\e[0m" | logline
-			screen -S mouse-move-02 -X kill
-			screen -S mouse-move-02$DISPLAY -X kill
-			screen -dmS mouse-move-02$DISPLAY '/opt/busy4me/fb/mouse-move-02.py'
-#			python /opt/busy4me/fb/mouse-move-02.py &
-			;;
-			*)
-			echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
-			screen -S mouse-move-01 -X kill
-			screen -S mouse-move-01$DISPLAY -X kill
-#			screen -dmS mouse-move-01 '/opt/busy4me/fb/mouse-move-01.py'
-#			python /opt/busy4me/fb/mouse-move-01.py &
-			;;
-		esac
-echo -e '\e[35m\e[7m'
-screen -ls
-echo -e '\e[0m'
-#	echo -e '.. ... ... ... .... .... ... ..\e[5m python start \e[0m ...'
-	echo -e "\e[35m page probe after Active click..............................\e[0m" | logline
-#	zenity --info --title="page probe" --text="page probe after Active click..." --timeout 3
-	xclip -selection clipboard /opt/busy/files/blank
-  transset -a 0 # hide window
-	xdotool key --delay 100 Ctrl+a Ctrl+c Ctrl+Shift+a
+hide_window () {
+  echofunc "${FUNCNAME[0]}"
+  echoinfo "hide window..."
+  scrot /tmp/scrot.png
+  feh --bg-scale /tmp/scrot.jpg
+  transset -a 0 # hide window for a moment
+  xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
   transset -a 0.9
-	# sleep 3
-	# screenshot
-	scrot_local
+  feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg
+}
 
-	# check what is on the screen
-	clip=$(xclip -out -selection clipboard )
+page_probe () {
+  echofunc "${FUNCNAME[0]}"
+  mark00="Leave This Page"
+  mark01="temporarily restricted"
+  mark011="been temporarily blocked"
+  mark012="You're Tmporarily Blocked"
+  mark02="follow"
+  mark03="o"
+  mark04="Accept All" # fb question: Accept cookies from Facebook...  echo -e "\e[35m page probe after Active click..............................\e[0m" | logline
+	xclip -selection clipboard /opt/busy/files/blank
+  hide_window
+  echoinfo "screenshoot... and check what is on the screen"
+	scrot_local
+	clip=$(xclip -out -selection clipboard ) 	# check what is on the screen
 	# save clipboard to file
 	echo -e '\e[33m' $clip '\e[0m'> /opt/busy/clipboard/$(date +%Y-%m-%d--%H-%M-%S)-clip
 		case "$clip" in
@@ -244,7 +110,7 @@ echo -e '\e[0m'
 			done
 		;;
     *$mark011*|*$mark012*)
-			for i in {1..20}
+			for i in {1..100}
 			do
         zenity --info --title="temporarily restricted" --text="I see: $mark011 \n \n OK, slow down..." --timeout 5
 				echo -e '\e[95m \e[5m $mark011 ...PAUSE... \e[0m' | logline
@@ -271,16 +137,125 @@ echo -e '\e[0m'
 #			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
 		;;
 		esac
-  /bin/bash /opt/busy4me/windows-check.sh
+}
+
+press_keys_01 () {
+#  set +x
+  echofunc "${FUNCNAME[0]}"
+  xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up
+  #key_repeat=40
+  key_repeat=4
+  echo -e '\e[92mkey_repeat = ' $key_repeat | logline
+  echo -e "\e[0m"
+  for (( key_step=1; key_step<$key_repeat; key_step++ )); do
+    echoinfo "key_repeat=$key_repeat kd_1=$kd_1 kd_1_sec=$kd_1_sec Tab Escape"
+    echoinfo "key:Tab"
+    xdotool key --delay $kd_1 Tab
+    echoinfo "key: Escape"
+    xdotool key --delay $kd_1 Escape
+    echoinfo "going to sleep: $kd_1_sec"
+    sleep $kd_1_sec
+    echoinfo "repeat..."
+    shift 1
+  done
+}
+
+press_keys_02 () {
+  echofunc "${FUNCNAME[0]}"
+  xdotool key --delay $kd_2 Down Escape Down Escape Down Escape Page_Down Escape Page_Up
+  xdotool key --delay $kd_1 Down Escape Down Page_Down Escape Down Escape Down Escape Down Escape Page_Down Down Escape
+  xdotool key --delay $kd_1 Down Escape Down Escape Page_Down Up Down Escape Down Escape Down Up Up Escape Down Escape
+  xdotool key --delay $kd_1 Up Escape Up Escape Up Escape Up Escape Page_Up Escape
+  xdotool key --delay 300 Ctrl+f
+}
+
+press_keys_03 () {
+  echofunc "${FUNCNAME[0]}"
+  xdotool key --delay $kd_1 Escape keydown Shift Tab keyup Shift Tab Escape
+  xdotool key --delay $kd_2 Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
+  xdotool key --delay $kd_1 Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
+  xdotool key --delay $kdl Down Escape Down Escape Down Escape Down Escape Down Escape Down Escape Down
+  xdotool key --delay $kd_2 Down Escape Down Escape Down Down Up Down Down Down Up Up Down Up Down Down Down Down Down Down
+  xdotool key --delay $kdl Up Escape Up Escape Up Escape Up Up Down
+  xdotool key --delay $kd_1 Up Up Up Down Up Up Up Up Down Down
+  xdotool key --delay $kd_2 Up Escape Up Escape Up Escape Up Up Down
+  xdotool key --delay $kdl Tab Escape Tab Escape Tab Tab Tab Tab Tab Tab Escape
+}
+
+press_keys_04 () {
+#  set +x
+  echofunc "${FUNCNAME[0]}"
+  for (( key_step=1; key_step<$random; key_step++ )); do
+          echoinfo "random=$random kd_2=$kd_2 kd_2_sec=$kd_2_sec Escape Tab"
+          xdotool key --delay $kd_2 Escape
+          xdotool key --delay $kd_2 Tab
+          sleep $kd_2_sec
+          shift 1
+  done
+}
+
+press_enter_morning_and_afternoon_01 () {
+  # Press Enter only between 8am and 11pm
+  H=$(date +%k)
+  if (( 9 <= $H && $H < 13 )); then
+    echowarning "between 9AM and 1PM, hit enter..."
+  	xdotool key --delay 500 Return
+  elif (( 13 <= $H && $H < 22 )); then
+    echowarning "between 1PM and 10PM, hit enter..."
+  	xdotool key --delay 500 Return
+    else
+  	echoinfo "....go to bed"
+  fi
+  echoinfo '... ... ... ... ... ENTER only between 9am and 10pm'
+}
+
+walking_around_wall () {
+  set +x
+  echofunc "${FUNCNAME[0]}"
+  echo "DISPLAY=$DISPLAY"
+  # enter URL in browser and execute
+  xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
+  transset -a 0.8 # set lighter window
+  xdotool key --delay 500 Ctrl+l
+  xdotool key --delay 100 Ctrl+a
+  xdotool type --delay 100 $SPOT01url
+  xdotool key --delay 100 Return
+  transset -a 0.9 # set darker window
+  sleep 3
+  scrot_local # screenshot
+  detect_input_field
+  press_keys_01
+  set -x
+  # switch to english language
+  switch_to_english
+  press_keys_02
+  press_keys_03
+  press_keys_04
+  press_enter_morning_and_afternoon_01
+
+  xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
+  sleep 3
+  		cd /tmp
+  windows_uneeded_close
+	echo -e "\e[32m ...... \e[92m \e[5m Start screen fb-chat-detect-activity...\e[0m" | logline
+  fb_chat_detect_activity
+  		/bin/bash /opt/busy4me/windows-check.sh
+  		sleep 1
+  		# start move mouse with python
+  		echo -e '.. ... ... ... .... .... ... ..\e[35m\e[7m python start \e[0m ...'
+  move_mouse_01
+  page_probe
+  windows_check
   xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up Down Down Down
-  /bin/bash /opt/busy4me/windows-check.sh
-  xdotool key --delay $kd Up Up Up Up Up Up Up Up
-  /bin/bash /opt/busy4me/windows-check.sh
+  windows_check
+  xdotool key --delay $kd_1 Up Up Up Up Up Up Up Up
+  windows_check
   xdotool key --delay $kd_2 Escape Escape
-  xdotool key --delay $kd Escape Escape
+  xdotool key --delay $kd_1 Escape Escape
 }
 
 detect_input_field () {
+  echofunc "${FUNCNAME[0]}"
   xclip -selection clipboard /opt/busy/files/blank
   xdotool key --delay $kd Home Shift+End
 #	xdotool key --delay $kd Shift+F10
@@ -290,7 +265,7 @@ detect_input_field () {
     "https://")
     echo ".. this is address bar, escape from here"
     zenity --info --title="Address bar" --text=".. this is address bar, escape from here" --timeout 3
-    xdotool key --delay $kds Tab Tab Tab Tab Tab
+    xdotool key --delay $kd Tab Tab Tab Tab Tab
 #    return
     ;;
     *)
@@ -309,6 +284,7 @@ detect_input_field () {
 }
 
 switch_to_english () {
+  echofunc "${FUNCNAME[0]}"
   xclip -selection clipboard /opt/busy/files/blank
   xdotool type --delay $kds 'English ('
   xdotool key --delay $kds Escape
@@ -320,9 +296,7 @@ switch_to_english () {
     xdotool key --delay $kd Return
     sleep 1
     xclip -selection clipboard /opt/busy/files/blank
-    transset -a 0 # hide window
-    xdotool key --delay $kds Ctrl+a Ctrl+c Ctrl+Shift+a
-    transset -a 0.9
+    hide_window
     clip=$(xclip -out -selection clipboard )
     case "$clip" in
       "english (us)?")
@@ -338,41 +312,46 @@ switch_to_english () {
 }
 
 loop () {
-  # how many steps to do
-  iter=100
+  echofunc "${FUNCNAME[0]}"
+  iter=100 #how many steps to do
   for (( step=1; step<$iter; step++ )); do
-  declare -a _SPOTS=(
-#  "https://www.facebook.com/groups/"
-  "https://www.facebook.com/jobs"
-  "https://www.facebook.com/marketplace/"
-  "https://www.facebook.com/watch/"
-  "https://www.facebook.com/watch/shows/"
-  "https://www.facebook.com/watch/live/"
-  "https://www.facebook.com/pages/"
-  "https://www.facebook.com/marketplace/groups/"
-  "https://www.facebook.com/videos"
-  "https://www.facebook.com/jobs"
-  "https://www.facebook.com/offers/v2/wallet"
-  )
-  for SPOT01url in ${_SPOTS[@]}; do
-    echo "# Active profile is effective..."
-    echo "$(( (i * 100) /$iter ))%"
-        echo -e "\e[32m walking_around_wall... step: $step#$iter SPOT: $SPOT01url\e[0m" | logline
-#  start move mouse with python
-                echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
-#               killall -s KILL python
-                        echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-around...\e[0m" | logline
-                        screen -S mouse-move-around -X kill
-                        screen -S mouse-move-around$DISPLAY -X kill
-                        screen -dmS mouse-move-around$DISPLAY '/opt/busy4me/fb/mouse-move-around.py'
-#               python /opt/busy4me/fb/mouse-move-around.py &
-        echo -e '\e[35m\e[7m'
-        screen -ls
-        echo -e '\e[0m'
-        walking_around_wall
-        sleep 0.2
-  shift 1
-  done
+    declare -a _SPOTS=(
+  #  "https://www.facebook.com/groups/"
+    "https://www.facebook.com/games/instantgames/category/?category=400"
+    "https://www.facebook.com/jobs"
+    "https://www.facebook.com/gaming/feed/"
+    "https://www.facebook.com/marketplace/"
+    "https://www.facebook.com/watch/"
+    "https://www.facebook.com/watch/shows/"
+    "https://www.facebook.com/watch/live/"
+    "https://www.facebook.com/pages/"
+    "https://www.facebook.com/marketplace/groups/"
+    "https://www.facebook.com/videos"
+    "https://www.facebook.com/jobs"
+    "https://www.facebook.com/offers/v2/wallet"
+    )
+    for SPOT01url in ${_SPOTS[@]}; do
+      echofunc "${FUNCNAME[0]}"
+      echo "$(( (i * 100) /$iter ))%"
+      echo -e "\e[32m walking_around_wall... step: $step#$iter SPOT: $SPOT01url\e[0m" | logline
+      echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-around...\e[0m" | logline
+      screen -S mouse-move-around -X kill
+      screen -S mouse-move-around$DISPLAY -X kill
+      screen -dmS mouse-move-around$DISPLAY '/opt/busy4me/fb/mouse-move-around.py'
+      echo -e '\e[35m\e[7m'
+      screen -ls
+      echo -e '\e[0m'
+      kd_1=$((600 + RANDOM % 8 * 200)) # Key Delay between 600 and 2000[ms]
+      kd_2=$((900 + RANDOM % 8 * 200)) # Key Delay between 900 and 2000[ms]
+      kdl=$((1500 + RANDOM % 15 * 200)) # Key Delay Long between 1500 and 4000[ms]
+      random=$((6 + RANDOM % 10)) # random number between 6 and 16
+      kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
+      kd_2_sec=`echo "scale=2;${kd_2}/1000" | bc`
+      walking_around_wall
+      sleep 0.2
+      shift 1
+    done
 done
 }
 

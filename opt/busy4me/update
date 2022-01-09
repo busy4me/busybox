@@ -131,11 +131,12 @@ download_binaries () {
 tint2 () {
 	DSP=$DISPLAY
 	echo "DSP=" $DSP
+	sleep 2
 	mkdir /home/busyman/.config/tint2 > /dev/null
 	chown busyman:busyman /home/busyman/.config/tint2
-	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/mask01 -O /home/busyman/.config/tint2/mask01 | logline
-#	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
-	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/panel01 -O /home/busyman/.config/tint2/panel01 | logline
+	wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/mask01 -O /home/busyman/.config/tint2/mask01 | logline
+#	wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
+	wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/panel01 -O /home/busyman/.config/tint2/panel01 | logline
 	chown busyman:busyman /home/busyman/.config/tint2/*
 #	killall -SIGUSR1 tint2 # reload tint2
 if [[ "$_EXCLUDE" == "tint2" ]]; then
@@ -155,7 +156,7 @@ fi
 			runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/panel01 &" &
 		else
 			tint2 -c /home/busyman/.config/tint2/mask01 &
-			tint2 -c /home/busyman/.config/tint2/tint2rc &
+#			tint2 -c /home/busyman/.config/tint2/tint2rc &
 			tint2 -c /home/busyman/.config/tint2/panel01 &
 		fi
 	fi
@@ -226,6 +227,8 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-button-three-dots.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-button-three-dots.png
 	wget -nv -O /opt/$PROJECT/fb/img/800x600-ch75%-fb_logo_01.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/800x600-ch75%-fb_logo_01.png
 	wget -nv -O /opt/$PROJECT/fb/img/button_blue_allow_all_cookies.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/button_blue_allow_all_cookies.png
+	wget -nv -O /opt/$PROJECT/fb/img/fb-icon-home-grey.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-icon-home-grey.png
+	wget -nv -O /opt/$PROJECT/fb/img/fb_logo.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb_logo.png
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-close-windows.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-detect-activity.py
 	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-collect-info
@@ -385,6 +388,9 @@ case $1 in
 	--openbox|openbox)
 		openbox_autostart
 		openbox_config
+	;;
+	fb)
+		download_fb_files
 	;;
 	update_preferences)
 		root_check

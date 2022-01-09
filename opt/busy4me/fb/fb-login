@@ -401,12 +401,12 @@ echo "login_saved_detect start"
 login_saved_detect () {
 	xdotool key --delay $kd Shift+Tab Ctrl+a Ctrl+c
 	clip=$( xclip -out -selection clipboard )
-	if [ $clip = $login ]
-	then
-		xdotool key --delay $kd Tab
-		xdotool type --delay $kd $password
-		xdotool key --delay $kd Return
-		echo -e "\e[30m\e[45m Login as \e[33m $login ... \e[0m"
+	if [[ "$clip" == "$login" ]]; then
+  		xdotool key --delay $kd Tab
+      echo -e "\e[33m[insert]\e[0m ${FUNCNAME[0]}() \e[30m\e[45m Insert password... \e[33m \e[0m"
+  		xdotool type --delay $kd $password
+  		xdotool key --delay $kd Return
+  		echo -e "\e[32m[Enter]\e[0m ${FUNCNAME[0]}() \e[30m\e[45m Login as:\e[33m $login ... \e[0m"
 	fi
 }
 login_saved_detect
@@ -424,8 +424,8 @@ entry01=0
 entry_detect () {
 xdotool key --delay $kd Ctrl+l Ctrl+a Ctrl+c
 clip=$( xclip -out -selection clipboard )
-if [ $clip = mark05 ]; then
-	echo -e "\e[32mThis is mobile login page URL OK...\e[0m  $mark05"
+if [[ "$clip" == "$mark05" ]]; then
+	echo -e "\e[32m[OK]\e[0m ${FUNCNAME[0]}() \e[32m This is mobile login page URL OK...\e[0m  $mark05"
 fi
 while [ $entry01 -lt 2 ]; do
 	xclip -selection clipboard /opt/busy/files/blank
@@ -434,7 +434,7 @@ while [ $entry01 -lt 2 ]; do
 
 	case "$clip" in
 		*"$mark07"*)
-			echo "Logged successfuly... switch to fb.com"
+			echo -e "\e[32m[OK]\e[0m ${FUNCNAME[0]}() \e[32m Logged successfuly... switch to fb.com...\e[0m  $mark05"
 			zenity --info --title="page_probe" --text="Logged successfuly... switch to fb.com ..." --timeout $tol
 			xdotool key --delay $kd Ctrl+l
 			xdotool type $SPOT01url
@@ -476,74 +476,74 @@ zenity --info --title="End" --text="This is 2nd entry field... pass" --timeout $
 # 3. with login field: "Mobile number or email address" and pass field: "Password" with no button
 # so the second one needs additional Shift+Tab key and when go back to pass, additional Tab key
 
-while [[ ! "$clip" == "$login" ]]; do
-  xdotool key --delay $kd Shift+Tab
-  xdotool type --delay $kd $login
-  xclip -selection clipboard /opt/busy/files/blank
-  xdotool key --delay $kd Ctrl+a Ctrl+c
-  clip=$( xclip -out -selection clipboard )
-  count01=$((count01+1))
-done
-if [ $count01 -gt 1 ]; then
+insert_login_and_password () {
+  while [[ ! "$clip" == "$login" ]]; do
+    xdotool key --delay $kd Shift+Tab
+    echo -e "\e[33m[insert]\e[30m\e[45m Insert login: \e[33m $login\e[0m"
+    xdotool type --delay $kd $login
+    xclip -selection clipboard /opt/busy/files/blank
+    echo -e "\e[32m[Enter]\e[0m ${FUNCNAME[0]}() \e[30m\e[45m Check if login inserted... \e[0m"
+    xdotool key --delay $kd Ctrl+a Ctrl+c
+    clip=$( xclip -out -selection clipboard )
+    count01=$((count01+1))
+  done
+  if [ $count01 -gt 1 ]; then
+    echo -e "\e[30m\e[45m Switch to the next field... key:Tab\e[33m\e[0m"
+    xdotool key --delay $kd Tab
+  fi
   xdotool key --delay $kd Tab
-fi
+  xdotool type --delay $kd $password
+  xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a Shift+Tab
+  clip=$( xclip -out -selection clipboard )
+  case "$clip" in
+  	*SHOW*)
+  	echo -e "\e[36m[info]\e[0m ${FUNCNAME[0]}() \e[42m\e[30m OK -> \e[0m\e[32m Looks good? Enter?... \e[0m\e[44mEnter\e[0m"
+  	zenity --info --title="Ok" --text="Looks good? Enter?..." --timeout $tos
+    sleep 2
+  	xdotool key --delay $kd Return
+  	echo -e "\e[33m[Enter]\e[0m ${FUNCNAME[0]}() \e[32m\e[42m   \e[0m \e[32m ... yes, Enter. \e[0m"
+  	zenity --info --title="Ok" --text="Yes, Enter." --timeout $tol
+  		# check page if login ok, maybe blocked locked account
+  			sleep 5
+  			xclip -selection clipboard /opt/busy/files/blank
+  			xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
+  			clip2=$( xclip -out -selection clipboard )
+  		case "$clip2" in
+  		*"$mark12"*)
+  			repeat=250 # cron check log every 5min - 300sec, so this loop 290 sec
+  			while true
+  				do
+  				echo -e 'repeat = ' $repeat | logline
+  				echo -e ""
+  					for (( message=1; message<$repeat; message++ ))
+  					do
+  						echo -e "\e[41m   \e[0m \e[31m Account $mark12... STOP \e[0m"
+  						date_now=$(date)
+  						zenity --info --title="page_probe" --text="Account $mark12... STOP \n\
+  						step $message of $repeat... \n\
+  						$date_now \n\
+  						Infinite Loop" --timeout $tos
+  						shift 1
+  					done
+  			done
+  		;;
+  		*)
+  			zenity --info --title="page_probe" --text="Looks OK... next step..." --timeout	$tos
+  			sleep 2
+  		;;
+  		esac
+  	;;
+  	*)
+  	echo -e "\e[31m[Error]\e[0m ${FUNCNAME[0]}()\e[31m Something wrong? Can not see indicator: SHOW...\e[0m Try login again ..."
+  	zenity --info --title="Ok" --text="Something wrong? Can not see SHOW... Try login again ..." --timeout $tol
+  	# again
+  	login_start
+  	# exit 0
+  	;;
+  esac
+}
 
-xdotool key --delay $kd Tab
-xdotool type --delay $kd $password
-xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a Shift+Tab
-clip=$( xclip -out -selection clipboard )
-
-case "$clip" in
-	*SHOW*)
-	echo -e "\e[42m\e[30m OK -> \e[0m\e[32m Looks good? Enter?... \e[0m\e[44mEnter\e[0m"
-	zenity --info --title="Ok" --text="Looks good? Enter?..." --timeout $tos
-  sleep 2
-	xdotool key --delay $kd Return
-	echo -e "\e[42m   \e[0m \e[32m ... yes, Enter. \e[0m"
-	zenity --info --title="Ok" --text="Yes, Enter." --timeout $tol
-		# check page if login ok, maybe blocked locked account
-			sleep 5
-			xclip -selection clipboard /opt/busy/files/blank
-			xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
-			clip2=$( xclip -out -selection clipboard )
-		case "$clip2" in
-		*"$mark12"*)
-			repeat=250 # cron check log every 5min - 300sec, so this loop 290 sec
-			while true
-				do
-				echo -e 'repeat = ' $repeat | logline
-				echo -e ""
-					for (( message=1; message<$repeat; message++ ))
-					do
-						echo -e "\e[41m   \e[0m \e[31m Account $mark12... STOP \e[0m"
-						date_now=$(date)
-						zenity --info --title="page_probe" --text="Account $mark12... STOP \n\
-						step $message of $repeat... \n\
-						$date_now \n\
-						Infinite Loop" --timeout $tos
-#						sleep 1
-						shift 1
-					done
-			done
-
-		;;
-		*)
-			zenity --info --title="page_probe" --text="Looks OK \n\
-						next step..." --timeout	$tos
-						sleep 2
-
-		;;
-		esac
-
-	;;
-	*)
-	echo -e "\e[31m Something wrong? Can not see indicator: SHOW...\e[0m Try login again ..."
-	zenity --info --title="Ok" --text="Something wrong? Can not see SHOW... Try login again ..." --timeout $tol
-	# again
-	login_start
-	# exit 0
-	;;
-esac
+insert_login_and_password
 
 xdotool key --delay $kd Ctrl+l Ctrl+a
 xdotool type --delay $kd $login_url
@@ -551,6 +551,5 @@ xdotool key --delay $kd Return
 echo "Select URL bar and enter $login_url..."
 zenity --info --title="Select URL bar" --text="Select URL bar and enter $login_url..." --timeout $tol
 page_probe
-
 echo -e "\e[33m This is End of $SCRIPT script\e[0m"
 zenity --info --title="End" --text="This is End of $SCRIPT script" --timeout $to

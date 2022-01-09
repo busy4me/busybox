@@ -781,6 +781,34 @@ chmod 600 /home/$_USER/.vnc/passwd
 sed -i 's/vncconfig/#vncconfig/g' /etc/X11/Xvnc-session
 }
 
+## -- Function -- __install_stuff1 --------------------------------------------------------------------
+## |    Description: install pyautogui for python3                                                    |
+## ----------------------------------------------------------------------------------------------------
+__install_stuff5 () {
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
+	echofunc ${FUNCNAME[0]}
+	echoinfo " ... install stuff from official repositories ..."
+	if [ -z $1 ]; then
+		echo "en_US.UTF-8 UTF-8" > /etc/locale.gen
+		declare -a stuff5=(
+		"python3-pip"
+		"python3-tk"
+		"python3-dev"
+		)
+		for _PACKAGE in ${stuff5[@]}; do
+			echoinfo "install package: $_PACKAGE ............................. wait ..."
+			apt-get install -y -qq --no-install-recommends $_PACKAGE
+		done
+	fi
+	python3 -m pip install --upgrade pip
+  python3 -m pip install --upgrade Pillow
+	python3 -m pip install --upgrade pyautogui
+	python3 -m pip install --upgrade numpy
+	python3 -m pip install --upgrade imutils
+	python3 -m pip install --upgrade opencv-python
+	echoconfirm "${FUNCNAME[0]} done"
+}
+
 ## -- Function -- __install_init-1 --------------------------------------------------------------------
 ## |    Description: download and install busy4me in /opt                                             |
 ## |         Option:                                                                                  |
@@ -2181,6 +2209,7 @@ case $1 in
 		__install_stuff2
 		__install_stuff3
 		__install_stuff4
+		__install_stuff5
 		__install_init-1
 		systemctl disable $_BUSY_SERVICE
 		(sleep 2; systemctl disable $_INITIV_1_SERVICE)

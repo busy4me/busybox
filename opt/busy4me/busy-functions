@@ -21,6 +21,39 @@ if ! [ -f /var/log/busy4me.log ];then
 fi
 }
 
+# set echo types
+echotest() {
+    	echo "test"
+}
+
+echoerror() {
+    printf "${lred}[ ERROR ]${lred} %s${nocolor}\\n" "$@" 1>&2;
+}
+
+echowarning() {
+    printf "${lyel}[ WARNING ] %s ${nocolor}\\n" "$@" 1>&2;
+}
+
+echoinfo() {
+    printf "${lblu}[ INFO ]${lcya} %s ${nocolor}\\n" "$@" 1>&2;
+}
+
+echoconfirm() {
+    printf "${mag}[ CONFIRMATION ]${lmag} %s ${nocolor}\\n" "$@" 1>&2;
+}
+
+echosuccess() {
+    printf "${mag}[ SUCCESS ]${lmag} %s ${nocolor}\\n" "$@" 1>&2;
+}
+
+echofunc() {
+    printf "${lwhi}${lbckbla}[ FUNCTION ]${nocolor}${lwhi} %s${nocolor}\\n" "$@" 1>&2;
+}
+
+echook() {
+    printf "${lgre}[ OK ]${gre} %s${nocolor}\\n" "$@" 1>&2;
+}
+
 # screenshot to local catalog
 scrot_local () {
 code="-"$1
@@ -28,6 +61,24 @@ mkdir /opt/busy/scrot/$SCRIPT 2>/dev/null
 scrot1="/opt/busy/scrot/$SCRIPT/$(date +%Y%m%d-%H%M%S)-$JOB-scrot$DISPLAY$code.jpg"
 scrot -q 50 $scrot1
 echo -e "\e[33m code: \e[35m" $1 "\e[33m scrot file: \e[35m" $scrot1 "\e[0m" | logline
+}
+
+move_mouse () {
+  # mouse walking around... with visual efect from A to B
+  A_x=167
+  A_y=193
+  xdotool mousemove --sync --clearmodifiers $A_x $A_y
+  sleep 0.3
+  B_x=573
+  B_y=157
+  xdotool mousemove --sync --clearmodifiers $B_x $B_y
+  sleep 0.3
+  xdotool mousemove --sync --clearmodifiers 754 22
+  sleep 0.3
+  xdotool mousemove --sync --clearmodifiers 759 27
+  sleep 0.3
+  xdotool mousemove --sync --clearmodifiers 764 32
+  sleep 0.3
 }
 
 # mark machine for root to reboot in next cronjob
@@ -60,8 +111,10 @@ stop () {
 	screen -ls
 	_TASK=$1
 	if [ -z "$_TASK" ]; then
-		screen -S frame00$DISPLAY -X kill # kill frame00
-		screen -ls
+		for scr in $(screen -ls | awk '{print $1}'); do screen -S $scr -X kill; done
+		screen -wipe
+#		screen -S frame00$DISPLAY -X kill # kill frame00
+#		screen -ls
 		return
 	fi
 	echo -e "\e[95m stop $_TASK in screen $DISPLAY...\e[0m"
@@ -677,6 +730,7 @@ function SYSTEM () {
 case $1 in
 	--clip-clear|-cc)
 	xclip -selection clipboard /opt/busy/files/blank
+	[[ $? -eq 0 ]] && echoconfirm "xclip cleared..."
 	;;
 	*)
 		echo -e "\e[41m # bad argument \e[95m $1 \e[33m"

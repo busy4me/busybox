@@ -9,10 +9,10 @@ source /opt/busy4me/fb/fb-config # fb variables from there
 
 SCRIPT=busy
 
-screen_name="xterm-"$DISPLAY
-screen_task="/opt/busy4me/xterm.sh --screen busy"$DISPLAY
-screen -S $screen_name -X kill # kill screen on this display
-screen -dmS $screen_name $screen_task
+#screen_name="xterm-"$DISPLAY
+#screen_task="/opt/busy4me/xterm.sh --screen busy"$DISPLAY
+#screen -S $screen_name -X kill # kill screen on this display
+#screen -dmS $screen_name $screen_task
 
 #echo -e "login="$login "| user_first_name="$user_first_name "| user_last_name="$user_last_name | logline
 #echo -e "login_string = "$login_string | logline
@@ -48,9 +48,9 @@ Arg_2 () {
 }
 
 # without echo message
-if ! [[ $2 == "--clip-clear" ]]; then
-	echo -e "\e[44m\e[90m SCRIPT=$SCRIPT \e[0m\e[33m Action: $1 ...  \e[0m $0 $1 $2 $3 $4 $5 $6 $7"
-fi
+#if ! [[ $2 == "--clip-clear" ]]; then
+#	echo -e "\e[44m\e[90m SCRIPT=$SCRIPT \e[0m\e[33m Action: $1 ...  \e[0m $0 $1 $2 $3 $4 $5 $6 $7"
+#fi
 
 case $1 in
 	USER|fb-user)
@@ -104,6 +104,12 @@ case $1 in
 	SYSTEM)
 	SYSTEM $2
 	;;
+  "$1")
+  $1 $2 2>/dev/null
+  if [ ! $? == "0" ]; then
+    echoerror "$1 - command not found, try $0 --help"
+  fi
+  ;;
 	'')
 	echo -e "\e[44m\e[90m SCRIPT=$SCRIPT \e[0m\e[33m no arguments: \e[0m $1 ... $0 $1 $2 $3"
 	;;
