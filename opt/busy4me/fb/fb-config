@@ -45,10 +45,11 @@ requests_url="$SPOT01url/friends/requests"
 
 kds=50 # Key Delay Short [miliseconds]
 kd=200
-kd_1=$((600 + RANDOM % 8 * 200)) # Key Delay between 600 and 2000[ms]
-kd_2=$((900 + RANDOM % 8 * 200)) # Key Delay between 900 and 2000[ms]
-kdl=$((1500 + RANDOM % 15 * 200)) # Key Delay Long between 1500 and 4000[ms]
-random=$((6 + RANDOM % 10)) # random number between 6 and 16
+kd_1=400
+kd_2=600
+kdl=1000
+random=5 # random generated in active scripts
+pause_time=5
 
 tos=1 # Time Out Short zenity messages time out [seconds]
 to=2 # Time Out zenity messages time out [seconds]
@@ -62,7 +63,7 @@ SPOT01url="https://facebook.com" # url 01
 # BR01y=682 #BROWSER_01 size y
 BR01x=1160 #BROWSER_01 size x, changed for 1280x768
 BR01y=852 #BROWSER_01 size y,  changed for 1280x768
-POSITION_x="137" # position x
+POSITION_x="136" # position x
 POSITION_y="-81" # position y
 
 my_groups_url="$SPOT01url/$profile_name/groups"
@@ -75,7 +76,3 @@ logline() {
         echo "$(date +%F' '%T) $USER $SCRIPT $JOB - $line" | tee -a $LOGFILE
     done
 }
-
-#echo -e "login="$login "| user_first_name="$user_first_name "| user_last_name="$user_last_name | logline
-#echo -e "login_string = "$login_string | logline
-#echo -e "\e[42m\e[30m user_db = \e[0m\e[32m" $user_db "\e[0m" | logline

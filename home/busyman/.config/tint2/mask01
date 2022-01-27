@@ -23,14 +23,14 @@ end_color = #222222 100
 # ID 1
 rounded = 0
 border_width = 1
-background_color = #000000 0
+background_color = #000000 5
 border_color = #FFFFFF 68
 
 # Panel
 panel_items =
 panel_monitor = all
 panel_position = top right horizontal
-panel_size = 240 760
+panel_size = 275 768
 panel_margin = 0 0
 panel_padding = 3 3 3
 panel_dock = 0

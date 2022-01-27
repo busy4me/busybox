@@ -7,7 +7,7 @@ LOGFILE=/var/log/busy4me.log
 SAVE_DIR=/opt/busy/fb # with user permision 777
 PROJECT_DIR=/opt/busy4me/fb # with root permision 755, read only for users
 
-echo "fb-init start" > /opt/busy/fb/fb-status
+echo "start" > /opt/busy/fb/fb-init$DISPLAY-status
 
 # export DISPLAY=:98
 mkdir -p $SAVE_DIR 2>/dev/null
@@ -106,7 +106,7 @@ transset_blank
 __wallpaper_change
 echo "set zoom to 75%...."
 xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
+# xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
 xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
 transset_blank
 #zenity --info --title="zoom" --text="move window...." --timeout $to
@@ -121,10 +121,15 @@ xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,below
 pkill xli
 feh --bg-scale /opt/busy/images/wall-blue.png
-transset -a 0.2; sleep 0.5
-transset -a 0.4; sleep 0.5
-transset -a 0.6; sleep 0.5
-transset -a 0.8; sleep 0.5
+transset -a 0.1; sleep 0.1
+transset -a 0.2; sleep 0.1
+transset -a 0.3; sleep 0.1
+transset -a 0.4; sleep 0.1
+transset -a 0.5; sleep 0.1
+transset -a 0.6; sleep 0.1
+transset -a 0.7; sleep 0.1
+transset -a 0.8; sleep 0.1
+transset -a 0.1; sleep 0.1
 transset -a 1
 # set fullscreen image below and kill it
 echo "shake...."
@@ -146,7 +151,7 @@ if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
 		xdotool type $SPOT01url | logline
 		xdotool key Return | logline
 		xdotool key --delay $kd Ctrl+0 | logline # reset zoom
-		xdotool key --delay $kd Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
+		# xdotool key --delay $kd Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
     for i in {1..50} ; do
       __wallpaper_change
       sleep 0.1
@@ -176,7 +181,7 @@ done
 }
 
 BR01_run () {
-  $BR01 --window-size="600,768" \
+  $BR01 --window-size="900,768" \
   --window-position="140,0" \
   --incognito \
   --disable-notifications \
@@ -227,6 +232,6 @@ xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.9
 feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg
 while  [ 1 ]; do
-  echo "fb-init done" > /opt/busy/fb/fb-status
+  echo "done" > /opt/busy/fb/fb-init$DISPLAY-status
   sleep 86400 # sleep 1 day
 done

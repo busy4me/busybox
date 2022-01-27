@@ -10,7 +10,7 @@ if [[ "$1" == "--debug" ]]; then
   exec 2>&1
 fi
 
-echo "fb-login start" > /opt/busy/fb/fb-status
+echo "start" > /opt/busy/fb/fb-login$DISPLAY-status
 
 # move mouse away...
 echo -e "\e[33m move mouse away....\e[0m" | logline
@@ -31,10 +31,10 @@ echo -e "\e[33m...refresh current page\e[0m"
 xdotool key --delay 200 Ctrl+l Ctrl+a | logline
 xdotool key --delay 200 Return
 sleep 5; echo "...sleep 5s"
-echo -e "\e[33m ... select and copy ... \e[0m"
-xdotool key --delay 200 Ctrl+a Ctrl+c | logline
-echo "...all selected and unselect ...."
-xdotool key --delay 200 Ctrl+Shift+a | logline
+echoinfo "select and copy ..."
+hide_window
+#xdotool key --delay 200 Ctrl+a Ctrl+c | logline
+#xdotool key --delay 200 Ctrl+Shift+a | logline
 clip=$( xclip -out -selection clipboard )
 echo "zenity message ..."
 zenity --info --title="clipboard" --text="$clip" --timeout $to
@@ -58,9 +58,9 @@ esac
 
 report_fb_login_done () {
   while  [ 1 ]; do
-    echo -e "\e[33m[OK] ... report: 'fb-login done' and sleep 1 day \e[0m"
-    echo "fb-login done" > /opt/busy/fb/fb-status
-    sleep 86400 # sleep 1 day
+    echo -e "\e[33m[OK] ... report: '$0 done' and sleep this screen for 1 hour for inspect...\e[0m"
+    echo "done" > /opt/busy/fb/fb-login$DISPLAY-status
+    sleep 3600 # sleep 1 hour
   done
 }
 
@@ -119,7 +119,11 @@ login_insert () {
 while [[ ! $_valid == "OK" ]]; do
 	rm -rf /opt/busy/fb/* # remove old files
 
-    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,430,470,240,250 & zenity --forms --title="Login" --text="Social Media Automation Studio\n\\n\...to continue, enter Facebook login and password below\n\n" --separator="," --add-entry="Login (email)" --add-entry="Password" --width 450 --height 180)
+    OUTPUT=$(sleep 1 && wmctrl -r "Login" -b add,above -e 1,430,470,240,250 & zenity --forms --title="Login" --text="\
+    Social Media Automation Studio\n\
+    ...to continue, enter Facebook login and password below\n\
+    (no one can access to this data safely stored only on this computer)\n"\
+    --separator="," --add-entry="Login (email)" --add-entry="Password" --width 450 --height 180)
 	accepted=$?
 	if ((accepted != 0)); then
 		echo -e "\e[32m Start again...\e[0m" | logline
@@ -247,23 +251,25 @@ for i in {1..1000} ; do
     probe_count=0
   fi
   echo "... page_probe $probe_count"
-	zenity --info --title="page_probe" --text="... page_probe $probe_count" --timeout 1
+#	zenity --info --title="page_probe" --text="... page_probe $probe_count" --timeout 1
 	xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate
 	xclip -selection clipboard /opt/busy/files/blank
-	xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
+  hide_window
+  # xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
 	clip=$( xclip -out -selection clipboard )
 		case "$clip" in
 		*$mark10*)
 			echo -e "\e[44m   \e[0m \e[34m Login page without password... mark10=$mark10 \e[0m"
-			zenity --info --title="page_probe" --text="Login page without password...''$mark10''" --timeout $tol
+#			zenity --info --title="page_probe" --text="Login page without password...''$mark10''" --timeout $tol
 			xdotool key --delay $kd Ctrl+f && xdotool type $mark10 && xdotool key --delay $kd Escape
 			sleep 2
-			xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
+			hide_window
+      # xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
 			clip=$( xclip -out -selection clipboard )
 			if [ $clip = $empty01 ]
 				then
 				echo "This is empty clipboard, is it entry field? ..."
-				zenity --info --title="Webpage content" --text="This is empty clipboard, is it entry field? ..." --timeout $to
+				#zenity --info --title="Webpage content" --text="This is empty clipboard, is it entry field? ..." --timeout $to
 				xdotool type --delay $kd $login
 				xdotool key --delay $kd Ctrl+a Ctrl+c End
 					clip=$( xclip -out -selection clipboard )
@@ -271,13 +277,13 @@ for i in {1..1000} ; do
 					then
 					xdotool key --delay $kd Return
 					echo "Enter $login ..."
-					zenity --info --title="Webpage content" --text="Enter $login ..." --timeout $to
+					#zenity --info --title="Webpage content" --text="Enter $login ..." --timeout $to
 					xdotool key --delay $kd Shift+Tab Ctrl+a Ctrl+c
 					clip2=$( xclip -out -selection clipboard )
 						case "$clip2" in
 							*mark11*)
 								xdotool key --delay $kd Tab && xdotool type $password && xdotool key Return
-								zenity --info --title="Enter..." --text="Password, Enter." --timeout $tol
+								#zenity --info --title="Enter..." --text="Password, Enter." --timeout $tol
 							;;
 							*)
 								echo "Error, can not put password?..."
@@ -329,25 +335,25 @@ for i in {1..1000} ; do
 		;;
 		*"$mark02"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark02 ... go to login..." | logline
-			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark02\"... go to login..." --timeout $tos
+			#zenity --info --title="page_probe" --text="Login page OK I see text \"$mark02\"... go to login..." --timeout $tos
 			login_start
       break
 		;;
     *"$mark022"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark022 ... go to login..." | logline
-			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark022\"... go to login..." --timeout $tos
+			#zenity --info --title="page_probe" --text="Login page OK I see text \"$mark022\"... go to login..." --timeout $tos
 			login_start
       break
 		;;
     *"$mark023"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark02=$mark023 ... go to login..." | logline
-			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark023\"... go to login..." --timeout $tos
+			#zenity --info --title="page_probe" --text="Login page OK I see text \"$mark023\"... go to login..." --timeout $tos
 			login_start
       break
 		;;
 		*"$mark03"*)
 			echo -e "\e[43m   \e[0m \e[33m Login page OK... \e[0m mark03=$mark03" | logline
-			zenity --info --title="page_probe" --text="Login page OK I see text \"$mark03\"... go to login..." --timeout $tos
+			#zenity --info --title="page_probe" --text="Login page OK I see text \"$mark03\"... go to login..." --timeout $tos
 			login_start
 		;;
 		*"$mark12"*)
@@ -382,7 +388,7 @@ for i in {1..1000} ; do
     ;;
 		*)
 			echo -e "\e[44m   \e[0m \e[34m probe again... \e[0m" | logline
-			zenity --info --title="page_probe" --text="probe again..." --timeout $tos
+			#zenity --info --title="page_probe" --text="probe again..." --timeout $tos
       accept_cookies
       change_language
 		;;
@@ -429,13 +435,15 @@ if [[ "$clip" == "$mark05" ]]; then
 fi
 while [ $entry01 -lt 2 ]; do
 	xclip -selection clipboard /opt/busy/files/blank
-	xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a
+  xdotool key --delay $kd Tab
+  hide_window
+	# xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a
 	clip=$( xclip -out -selection clipboard )
 
 	case "$clip" in
 		*"$mark07"*)
 			echo -e "\e[32m[OK]\e[0m ${FUNCNAME[0]}() \e[32m Logged successfuly... switch to fb.com...\e[0m  $mark05"
-			zenity --info --title="page_probe" --text="Logged successfuly... switch to fb.com ..." --timeout $tol
+			#zenity --info --title="page_probe" --text="Logged successfuly... switch to fb.com ..." --timeout $tol
 			xdotool key --delay $kd Ctrl+l
 			xdotool type $SPOT01url
 			xdotool key --delay $kd Return
@@ -445,15 +453,15 @@ while [ $entry01 -lt 2 ]; do
 		;;
 		*"$mark04"*)
 			echo "The content with $mark04 .."
-			zenity --info --title="Webpage content" --text="The content with word: $mark04 .. ..." --timeout $to
+			#zenity --info --title="Webpage content" --text="The content with word: $mark04 .. ..." --timeout $to
 		;;
 		*"$mark05"*)
 			echo "This is URL entry bar with $mark05 address."
-			zenity --info --title="Url entry bar" --text="This is URL entry bar with $mark05 address." --timeout $to
+			#zenity --info --title="Url entry bar" --text="This is URL entry bar with $mark05 address." --timeout $to
 		;;
 		$empty01)
 			echo "This is empty clipboard, is it entry field? ..."
-			zenity --info --title="Webpage content" --text="This is empty clipboard, is it entry field? ..." --timeout $to
+			#zenity --info --title="Webpage content" --text="This is empty clipboard, is it entry field? ..." --timeout $to
 			entry01=$((entry01+1))
 			echo "entry01 = $entry01"
 			#zenity --info --title="entry" --text="entry01 = $entry01" --timeout $to
@@ -469,7 +477,7 @@ done
 entry_detect
 
 echo -e "\e[42m\e[30m OK --> \e[0m Entry field OK, login in progress ..."
-zenity --info --title="End" --text="This is 2nd entry field... pass" --timeout $to
+#zenity --info --title="End" --text="This is 2nd entry field... pass" --timeout $to
 # there are more different loging pages,
 # 1. with login field: "Mobile number or email address" and pass field: "Password"+"Show" button
 # 2. with login field: "Email address"+"USE MOBILE" button and pass field "Password"+"SHOW" button
@@ -493,20 +501,24 @@ insert_login_and_password () {
   fi
   xdotool key --delay $kd Tab
   xdotool type --delay $kd $password
-  xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a Shift+Tab
+  xdotool key --delay $kd Tab
+  hide_window
+  xdotool key --delay $kd Shift+Tab
+#  xdotool key --delay $kd Tab Ctrl+a Ctrl+c Ctrl+Shift+a Shift+Tab
   clip=$( xclip -out -selection clipboard )
   case "$clip" in
   	*SHOW*)
   	echo -e "\e[36m[info]\e[0m ${FUNCNAME[0]}() \e[42m\e[30m OK -> \e[0m\e[32m Looks good? Enter?... \e[0m\e[44mEnter\e[0m"
-  	zenity --info --title="Ok" --text="Looks good? Enter?..." --timeout $tos
-    sleep 2
+#  	zenity --info --title="Ok" --text="Looks good? Enter?..." --timeout $tos
+    sleep 1
   	xdotool key --delay $kd Return
   	echo -e "\e[33m[Enter]\e[0m ${FUNCNAME[0]}() \e[32m\e[42m   \e[0m \e[32m ... yes, Enter. \e[0m"
-  	zenity --info --title="Ok" --text="Yes, Enter." --timeout $tol
+#  	zenity --info --title="Ok" --text="Yes, Enter." --timeout $tol
   		# check page if login ok, maybe blocked locked account
-  			sleep 5
+  			sleep 3
   			xclip -selection clipboard /opt/busy/files/blank
-  			xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
+        hide_window
+#  			xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+Shift+a
   			clip2=$( xclip -out -selection clipboard )
   		case "$clip2" in
   		*"$mark12"*)
@@ -529,7 +541,7 @@ insert_login_and_password () {
   		;;
   		*)
   			zenity --info --title="page_probe" --text="Looks OK... next step..." --timeout	$tos
-  			sleep 2
+  			sleep 1
   		;;
   		esac
   	;;
@@ -544,12 +556,12 @@ insert_login_and_password () {
 }
 
 insert_login_and_password
-
-xdotool key --delay $kd Ctrl+l Ctrl+a
+hide_window
+#xdotool key --delay $kd Ctrl+l Ctrl+a
 xdotool type --delay $kd $login_url
 xdotool key --delay $kd Return
 echo "Select URL bar and enter $login_url..."
-zenity --info --title="Select URL bar" --text="Select URL bar and enter $login_url..." --timeout $tol
+#zenity --info --title="Select URL bar" --text="Select URL bar and enter $login_url..." --timeout $tol
 page_probe
 echo -e "\e[33m This is End of $SCRIPT script\e[0m"
-zenity --info --title="End" --text="This is End of $SCRIPT script" --timeout $to
+#zenity --info --title="End" --text="This is End of $SCRIPT script" --timeout $to

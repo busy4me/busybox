@@ -35,12 +35,17 @@ _SALT_MINION=$(cat /sys/class/dmi/id/product_uuid) # temporary Salt Minion ID, l
 # change hostname to present IP
 exec &> >(tee -ia $_LOGFILE)
 exec 2>&1
-echo "_EXECUTOR_PATH=$_EXECUTOR_PATH"
+echo -e "_EXECUTOR_PATH=$_EXECUTOR_PATH \r\t"
 
+# bashcolors test + UTF-8 characters, get from: unicodes.jessetane.com :)
 . /usr/bin/bashcolors
-echo -e "${lblu}o${gre}o${cya}o${red}o${mag}o${yel}o${gre}o${lbla}o${lblu}o${gre}o${cya}o${red}\
-o${mag}o${yel}o${whi}o${lbla}o${whi}o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lbla}o${gre}\
-o${yel}o${mag}o${red}o${cya}o${gre}o${lblu}o${lblu}
+#CH="\xC2\xA9" # character COPYRIGHT SIGN
+#CH="\xE2\x98\xBB" # character BLACK SMILING EMOJI
+#CH="\xE2\x9A\xAA" # character MEDIUM WHITE CIRCLE
+CH="\xE2\x9A\xAB" # character MEDIUM BLACK CIRCLE
+echo -e "bashcolor test: ${bla}$CH${blu}$CH${gre}$CH${cya}$CH${red}$CH${mag}$CH${yel}$CH${whi}$CH\
+${lbla}$CH${lblu}$CH${lgre}$CH${lcya}$CH${lred}$CH${lmag}$CH${lyel}$CH${lwhi}$CH\
+${dbla}$CH${dblu}$CH${dgre}$CH${dcya}$CH${dred}$CH${dmag}$CH${dyel}$CH${dwhi}$CH
 _SCRIPT_ARGUMENTS=$_SCRIPT_ARGUMENTS ${coloroff}" 2>/dev/null
 
 __net_status () {
@@ -216,7 +221,7 @@ dpkg-reconfigure -u dictionaries-common
 ## |       Examples: /usr/bin/initiv -U kate # create user "kate" and allow use crontab                      |
 ##----------------------------------------------------------------------------------------------------
 __useradd () { #help: add user
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 	echoinfo "_USER=$_USER"
 	/usr/sbin/groupadd $_USER 2>/dev/null
 	/usr/sbin/useradd -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null
@@ -244,7 +249,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## ----------------------------------------------------------------------------------------------------
 ##
 __autologin () { #help: set autologin, who will be automaticaly logged in
-echofunc "${FUNCNAME[0]}"
+echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 if [ ! "$1" == "root" ]; then
 	# autologin as user in tty1
 	echoinfo "_AUTOUSER=$_USER"
@@ -288,7 +293,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## ----------------------------------------------------------------------------------------------------
 ## |
 __autostart () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 	if [ ! "$1" == "root" ]; then
 		echoinfo "_AUTOUSER=$_USER set startx after autologing and applications after X starts..."
 		cp /home/$_USER/.profile /home/$_USER/.profile.bak 2>/dev/null
@@ -381,7 +386,7 @@ fi
 ## ----------------------------------------------------------------------------------------------------
 ##
 __create_recovery () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 # create recovery script 'initiv-recovery', to be using in emergency case, eg.when update went wrong
 echoinfo "_SCRIPT_PATH: $_SCRIPT_PATH/initivRecovery"
 cat > $_SCRIPT_PATH/initivRecovery  << EOF
@@ -397,7 +402,7 @@ chmod +x /usr/bin/initivRecovery
 ## |    Description: reset xinit and Xserver in default tty1                                          |
 ## ----------------------------------------------------------------------------------------------------
 __reset () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 	echoinfo "tty1 stop"
 	if [ -x "$(command -v sudo)" ]; then
 		sudo /sbin/service getty@tty1 stop
@@ -457,7 +462,7 @@ case $1 in
 		esac
 	;;
 esac
-echofunc "${FUNCNAME[0]}"
+echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 # rm /usr/bin/initivData
 echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom' | grep /dev/ | awk '{ print $1 " " $3 }') >> /usr/bin/initivData
 _DISK=$(echo $_DATE_STAMP " - disk usage:" $(df -H | grep -vE 'Filesystem|tmpfs|cdom'| grep /dev/ | awk '{ print $1 " " $3 }'))
@@ -470,7 +475,7 @@ echo $_DISK
 ## |    Description: remove packages                                                                  |
 ## ----------------------------------------------------------------------------------------------------
 __remove_packages () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 # I did try remove: "ispell", but sometimes :/ needs interactive answer, hmmm
 # "keyboard-configuration"
 	declare -a _PACKAGES=(
@@ -695,7 +700,7 @@ __install_stuff3 () {
 # loks like tigervnc is best
 __install_stuff4 () {
 	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 	echoinfo " ... install vncserver and viewer ..."
 declare -a stuff4=(
 	"vnc4server"
@@ -714,7 +719,7 @@ cat > /home/$_USER/.vncserver  << 'EOF'
 PATH="$PATH:/usr/bin/"
 DISPLAY="98"
 DEPTH="16"
-GEOMETRY="1024x768"
+GEOMETRY="1280x768"
 NAME="vncserver"
 
 while getopts ':d: :g:' opt
@@ -800,12 +805,12 @@ __install_stuff5 () {
 			apt-get install -y -qq --no-install-recommends $_PACKAGE
 		done
 	fi
-	python3 -m pip install --upgrade pip
-  python3 -m pip install --upgrade Pillow
-	python3 -m pip install --upgrade pyautogui
-	python3 -m pip install --upgrade numpy
-	python3 -m pip install --upgrade imutils
-	python3 -m pip install --upgrade opencv-python
+	runuser -l busyman -c "python3 -m pip install --upgrade pip"
+  runuser -l busyman -c "python3 -m pip install --upgrade Pillow"
+	runuser -l busyman -c "python3 -m pip install --upgrade numpy"
+	runuser -l busyman -c "python3 -m pip install --upgrade imutils"
+	runuser -l busyman -c "python3 -m pip install --upgrade opencv-python"
+	runuser -l busyman -c "python3 -m pip install --upgrade pyautogui"
 	echoconfirm "${FUNCNAME[0]} done"
 }
 
@@ -815,7 +820,7 @@ __install_stuff5 () {
 ## |       Examples:                                                                                  |
 ## ----------------------------------------------------------------------------------------------------
 __install_init-1 () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 	echoinfo " ... download and install busy4me in /opt ..."
 	_FILE="init-1"
 	__net_status $_SERVER
@@ -1042,7 +1047,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## |    Description: remove directories                                                               |
 ## ----------------------------------------------------------------------------------------------------
 __remove_dirs () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 	echoinfo "remove directories ..."
 	if [ $_DIR == "NULL" ]; then
 		echoerror "nothing to remove ... add argument please"
@@ -1166,7 +1171,7 @@ __download_files () {
 }
 
 __service () { #help: create service
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 # default services:
 # "busy-splash-redblack"
 # "busy"
@@ -1193,8 +1198,11 @@ cat > /usr/bin/${_BUSY_SERVICE} << EOF
 #!/usr/bin/env bash
 # generated by $_SCRIPT_FULL_NAME
 LOGFILE=/var/log/busy4me.log
+STATFILE=/var/log/busy4me-nocolor.log
 touch \$LOGFILE 2>/dev/null # create logfile
 chmod 666 /var/log/busy4me.log
+touch \$STATFILE 2>/dev/null # create statfile
+chmod 666 /var/log/busy4me-nocolor.log
 exec &> >(tee -ia \$LOGFILE) # everything to logfile
 exec 2>&1
 logline() {
@@ -1449,7 +1457,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## |                 /usr/bin/initiv -n dark # create black background color animation, three red dots       |
 ## -----------------------------------------------------------------------------------------------------------
 __anime () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 if [ -z "$_ANIMEDIR" ]; then
 	_ANIMEDIR="/usr/share/pixmaps/busy4me-black"
 #else
@@ -1544,7 +1552,7 @@ echoconfirm "${FUNCNAME[0]} done"
 }
 
 __anime_fb () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 
 	INT=0 # start from file splash00.jpg
 while true; do
@@ -1588,7 +1596,7 @@ done
 ## |    Description: create script to display text during installation                                |
 ## ----------------------------------------------------------------------------------------------------
 __osd () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 _FC=orange # font color
 
 if [[ "$_THEME" = "light" ]]; then
@@ -1627,7 +1635,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## |    Description: dots                                                                             |
 ## ----------------------------------------------------------------------------------------------------
 __dots () {
-	echofunc "${FUNCNAME[0]}"
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 _TERM=$(tty)
 _PROC=$(ps -e | grep "initiv" | grep -v grep)
 echoinfo "$_PROC"
@@ -1648,7 +1656,7 @@ echoconfirm "${FUNCNAME[0]} done"
 ## |    Description: create xterminal winodows diplayed durring installation                       |
 ## -------------------------------------------------------------------------------------------------
 __xt () {
-echofunc "${FUNCNAME[0]}"
+echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 # default theme: dark
 case $_THEME in
 	"light")
@@ -1969,17 +1977,111 @@ echo -e "\e[32m  =================== help file end ==============\e[0m"
 
 __func_help () { #help: show short functions descriptions
 echoinfo "=== $_SCRIPT_NAME === Ver.$_SCRIPT_VERSION ======== help =============="
-echofunc "${FUNCNAME[0]}"
+echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
   LANG=en_US.UTF_8
 echoinfo "=== Functions list ==="
   grep -E '^_.+ #help' "$0" | sed -e 's|() { #help: |.|g' | column -s"..." -t | sort
 }
 
 __stuff_help () { #help: show short functions descriptions
-echofunc "${FUNCNAME[0]}"
+echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
   LANG=en_US.UTF_8
 echoinfo "=== Stuff list ==="
 echoinfo "   *TODO"
+}
+
+__time_set () { #help: set time to UTC or other timezone
+	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
+	if [ -z "$1" ]; then
+		real_timezone=$(curl https://ipapi.co/timezone)
+	fi
+	TIMEZONE=$1
+	rm /etc/systemd/timesyncd.conf
+	echoinfo "create timesyncd.conf file"
+cat > /etc/systemd/timesyncd.conf << EOF
+[Time]
+NTP=time.cloudflare.com time.google.com time.apple.com time.facebook.com
+FallbackNTP=pool.ntp.org asia.pool.ntp.org time-a-g.nist.gov ntp.ru ntp.ntsc.ac.cn
+RootDistanceMaxSec=10
+PollIntervalMinSec=32
+PollIntervalMaxSec=2048
+EOF
+	sudo systemctl disable ntp --now >/dev/null 2>&1
+	sudo apt -y purge ntp >/dev/null 2>&1
+	sudo timedatectl set-timezone $real_timezone
+	sudo timedatectl set-timezone $TIMEZONE
+	sudo timedatectl set-ntp true
+	sudo systemctl restart systemd-timesyncd.service
+	timedatectl show
+}
+
+__statistics_set () { #help: install influxdb and ustat
+	sudo apt install -y gnupg2
+	wget -qO- https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+	echo "deb https://repos.influxdata.com/debian $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+	sudo apt update
+	sudo apt -y install influxdb
+	sudo apt -y install unzip
+	github_archive="https://github.com/visaroy/ustat/archive/refs/heads/master.zip"
+	rm -R /tmp/ustat* > /dev/null 2>&1
+	if ! wget -nv -O /tmp/ustat.zip --no-check-certificate $github_archive; then
+		echo '[NOK] ERROR: there is no file $github_archive on the server...'
+	else
+		unzip -o -d /tmp /tmp/ustat.zip
+		cd /tmp/ustat-master
+		sh /tmp/ustat-master/ustat install
+#		cd /etc/init.d/
+#    update-rc.d -f ustat defaults 99 >/dev/null
+    cd /
+#		systemctl daemon-reload
+#		systemctl enable ustat.service
+#		(sleep 2; /etc/init.d/ustat stop; sleep 2; /etc/init.d/ustat start)
+	fi
+	sudo apt -y install telegraf
+host_name=$(cat /etc/hostname | tr '.:-' '_')
+# create telegraf.conf
+cat > /etc/telegraf/telegraf.conf << EOF
+[agent]
+  interval = "30s"
+  round_interval = true
+  metric_batch_size = 1000
+  metric_buffer_limit = 10000
+  collection_jitter = "0s"
+  flush_interval = "120s"
+  flush_jitter = "0s"
+  precision = ""
+  debug = false
+  quiet = true
+  logfile = "/var/log/telegraf/telegraf.log"
+  hostname = "$host_name"
+  omit_hostname = false
+
+[[outputs.influxdb]]
+  urls = ["http://localhost:8086"]
+  database = "$host_name"
+  retention_policy = ""
+  timeout = "7s"
+
+[[inputs.net]]
+  interfaces = ["en*", "tun*", "lo"]
+
+[[inputs.system]]
+
+[[inputs.mem]]
+  # no configuration
+
+[[inputs.filestat]]
+  files = ["/var/log/busy4me.log"]
+
+EOF
+
+	    systemctl daemon-reload
+			systemctl enable influxdb
+			systemctl enable telegraf
+	    systemctl restart influxdb
+			systemctl restart telegraf
+			systemctl status influxdb
+			systemctl status telegraf
 }
 
 ##
@@ -2206,11 +2308,13 @@ case $1 in
 ## 1	execute installation process just after download and first X run by user
 		__fix
 		__change_hostname
+		__time_set UTC
 		__install_stuff2
 		__install_stuff3
 		__install_stuff4
 		__install_stuff5
 		__install_init-1
+		__statistics_set
 		systemctl disable $_BUSY_SERVICE
 		(sleep 2; systemctl disable $_INITIV_1_SERVICE)
 		(sleep 4; systemctl stop $_INITIV_1_SERVICE)
@@ -2223,9 +2327,12 @@ case $1 in
 		__install_init-1
 		;;
 	"$1")
-	$1 $2 2>/dev/null
+	$1 $2
+#	$1 $2 2>/dev/null
 	if [ ! $? == "0" ]; then
-		echoerror "$1 - command not found, try $0 --help"
+		echoerror "$1 - function not found, try $0 --help"
+	else
+		echoinfo "$1 $2 $3 done"
 	fi
 	;;
 	*)
@@ -2257,6 +2364,6 @@ esac
 
 echo -e $coloroff
 echook "END of script"
-secs_to_human "$(($(date +%s) - ${_START}))"
+secs_to_human -e "$(($(date +%s) - ${_START})) \n"
 exit 0
 #

@@ -14,8 +14,7 @@ logline() {
 unresponsive () {
 window1="unresponsive"
 check1=$(xdotool search --onlyvisible --name $window1)
-if (($check1 > 0))
-then
+if [ $check1 > 0 ]; then
 	echo -e "window \e[33m $window1 \e[0m exists! ... \e[31m going to reboot in few minutes ..." | logline
 	echo "mark it for root to reboot ..." | logline
 	echo "1" > /tmp/busy4me-reboot

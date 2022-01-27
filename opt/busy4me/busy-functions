@@ -1,7 +1,7 @@
 #!/bin/bash
 # global functions used in every sripts
 # edit wit ftp-remote-edit Atom
-
+#
 source /opt/busy4me/busy-config # busy variables from there
 
 if [[ $SCRIPT == "" ]]; then
@@ -13,6 +13,10 @@ if [[ $JOB == "" ]]; then
 	JOB="----"
 fi
 #echo "JOB=$JOB"
+
+__help () {
+	grep -E '^*#help#' "$0" | sed -e 's|#help#|\||g' | column -s"|" -t
+}
 
 busy4me_log () {
 if ! [ -f /var/log/busy4me.log ];then
@@ -27,15 +31,27 @@ echotest() {
 }
 
 echoerror() {
-    printf "${lred}[ ERROR ]${lred} %s${nocolor}\\n" "$@" 1>&2;
+    printf "${lred}[ ERROR ]${red} %s${nocolor}\\n" "$@" 1>&2;
+}
+
+echostop() {
+    printf "${lred}[ STOP ]${lred} %s${nocolor}\\n" "$@" 1>&2;
+}
+
+echopause() {
+    printf "${lyel}[ PAUSE ]${yel} %s${nocolor}\\n" "$@" 1>&2;
 }
 
 echowarning() {
-    printf "${lyel}[ WARNING ] %s ${nocolor}\\n" "$@" 1>&2;
+    printf "${lyel}[ WARNING ]${lmag} %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echoinfo() {
     printf "${lblu}[ INFO ]${lcya} %s ${nocolor}\\n" "$@" 1>&2;
+}
+
+echoresult() {
+    printf "${lmag}[ RESULT ]${mag} %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echoconfirm() {
@@ -43,15 +59,28 @@ echoconfirm() {
 }
 
 echosuccess() {
-    printf "${mag}[ SUCCESS ]${lmag} %s ${nocolor}\\n" "$@" 1>&2;
+    printf "${gre}[ SUCCESS ]${lgre} %s ${nocolor}\\n" "$@" 1>&2;
 }
 
 echofunc() {
-    printf "${lwhi}${lbckbla}[ FUNCTION ]${nocolor}${lwhi} %s${nocolor}\\n" "$@" 1>&2;
+    printf "${lwhi}[ FUNCTION ]${nocolor}${lwhi} %s${nocolor}\\n" "$@" 1>&2;
 }
 
 echook() {
     printf "${lgre}[ OK ]${gre} %s${nocolor}\\n" "$@" 1>&2;
+}
+
+gen_random() { # generate random number between two values, usage: generate_random [min] [max]
+  min=$1
+  max=$(( $2 + 1 ))
+#  diff=$((max-min+1))
+  diff=$((max-min))
+#  random=$(($(($RANDOM%$diff))+min))
+  random=$(( ( RANDOM % $diff ) + $min ))
+  echo $random
+  if [ -n "$3" ]; then
+    echo "debug=$3 :: min=$min max=$max diff=$diff random=$random"
+  fi
 }
 
 # screenshot to local catalog
@@ -63,22 +92,27 @@ scrot -q 50 $scrot1
 echo -e "\e[33m code: \e[35m" $1 "\e[33m scrot file: \e[35m" $scrot1 "\e[0m" | logline
 }
 
-move_mouse () {
-  # mouse walking around... with visual efect from A to B
-  A_x=167
-  A_y=193
-  xdotool mousemove --sync --clearmodifiers $A_x $A_y
-  sleep 0.3
-  B_x=573
-  B_y=157
-  xdotool mousemove --sync --clearmodifiers $B_x $B_y
-  sleep 0.3
-  xdotool mousemove --sync --clearmodifiers 754 22
-  sleep 0.3
-  xdotool mousemove --sync --clearmodifiers 759 27
-  sleep 0.3
-  xdotool mousemove --sync --clearmodifiers 764 32
-  sleep 0.3
+move_mouse () { # move mouse to position x:y or move to x=0:y=0, usage: move_mouse [x] [y]
+	echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+	sleep 0.5
+	if [[ -n "$1" ]]; then
+		echoinfo "move mouse: x=$1 y=$2"
+		xdotool mousemove --sync --clearmodifiers $1 $2
+		return
+	else
+		xdotool mousemove --sync --clearmodifiers 0 0
+	fi
+}
+
+hide_window () {
+  echofunc "${FUNCNAME[0]}"
+  echoinfo "hide window..."
+  scrot /tmp/scrot.png
+  feh --bg-scale /tmp/scrot.png
+  transset -a 0 # hide window for a moment
+  xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
+  transset -a 0.9
+  feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg
 }
 
 # mark machine for root to reboot in next cronjob
@@ -92,23 +126,39 @@ cron-enable () {
 echo ""
 }
 
+reset () {
+	stop
+	start
+}
+
 start () {
-	screen -ls
+	echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}" | logline
 	_TASK=$1
+	_OPT_1=$2
+	_OPT_2=$3
+	_OPT_3=$4
+	_OPT_4=$5
+	_OPT_5=$6
 	if [ -z "$_TASK" ]; then
 		screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' # default task to run: frame00
 		sleep 2
 		screen -ls
 		return
   fi
-#	screen -dmS $_TASK$DISPLAY '/opt/busy4me/fb/$_TASK'
-	screen_start=$(screen -dmS $_TASK$DISPLAY '/opt/busy4me/fb/fb-walking-around')
-#	echo $screen_start
-	screen -ls
+	task_to_do="$_TASK $_OPT_1 $_OPT_2 $_OPT_3 $_OPT_4 $_OPT_5"
+	echoinfo "task_to_do=$task_to_do"
+	screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$_OPT_4$_OPT_5$DISPLAY $task_to_do
+	_PROCESS=$(screen -ls | tee /dev/tty)
+	if echo "$_PROCESS" | grep -q "$_TASK$_OPT_1$_OPT_2$_OPT_3$_OPT_4$_OPT_5$DISPLAY"; then
+		echosuccess "$task_to_do running succesfully"
+	else
+		echoerror "something wrong, cant see $task_to_do"
+	fi
 }
 
 stop () {
-	screen -ls
+	echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}" | logline
+	_PROCESS=$(screen -ls)
 	_TASK=$1
 	if [ -z "$_TASK" ]; then
 		for scr in $(screen -ls | awk '{print $1}'); do screen -S $scr -X kill; done
@@ -117,13 +167,24 @@ stop () {
 #		screen -ls
 		return
 	fi
-	echo -e "\e[95m stop $_TASK in screen $DISPLAY...\e[0m"
+	if echo "$_PROCESS" | grep -q "$_TASK$DISPLAY"; then
+		echoinfo "going to stop $_TASK on DISPLAY=$DISPLAY"
+	else
+		echoerror "can't see $_TASK on DISPLAY=$DISPLAY, are you sure is it running?"
+		_PROCESS=$(screen -ls | tee /dev/tty)
+		return 1
+	fi
 	screen_stop=$(screen -S $_TASK$DISPLAY -X kill)
 	if [[ $screen_stop == *"There are several suitable screens"* ]]; then
 		echo -e "\e[41m Error... There are several suitable screens... kill them... \e[0m"
 		pkill screen
 	fi
-	screen -ls
+	_PROCESS=$(screen -ls | tee /dev/tty)
+	if echo "$_PROCESS" | grep -q "$_TASK$DISPLAY"; then
+		echoerror "cant stop it"
+	else
+		echoconfirm "$_TASK stopped on DISPLAY=$DISPLAY"
+	fi
 }
 
 start-walking () {
@@ -721,7 +782,7 @@ case $1 in
 		esac
 	;;
 	*)
-	echo -e "\e[41m # ... ... ... ... bad argument ... \e[0m\e[95m $1 \e[33m\e[0m"
+	echo -e "\e[41m # ... ... ... ... bad argument ... try: busy --help \e[0m\e[95m $1 \e[33m\e[0m"
 	;;
 esac
 }

@@ -1,116 +1,151 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # copyrights Visaroy
-# usage: locate -i <img> -a <action>
+# usage: locate -i <img> [-a action] [-option value] [--option=value]
 # <img>     image file name (eg. smash_logo.png)
 # <action>  circle, move, click
-#   circle  - draw random circle around the located element
-#   move    - just move mouse to the middle of element
-#   click   - left click on the located element
+# options:
+#   -V  -verbose
+#   --offx=value       - offset x
+#   --offy=value       - offset y
+# actions:
+#   circle              - draw random circle around the located element
+#   move                - just move mouse to the middle of element
+#   click               - left click on the middle of located element
+#   right_bottom_corner - move mouse to the right bottom corner of element [todo]
+#   [TODO]  calculate right bottom corner
+#   left_bottom_corner    -
+#   right_bottom_corner -1-1  - (xy)1px offset
 
-import pyautogui, time, sys, math, random, os, getopt, numpy, imutils, cv2, inspect
+from __future__ import print_function
+import pyautogui, time, sys, math, random, os, getopt, numpy, imutils, cv2, inspect, yaml
 from time import sleep
+from config import *
 pyautogui.FAILSAFE = False # disables the fail-safe
-script_dir = os.path.dirname(__file__)
-#rel_path = "img/"
-rel_path = "fb/img/"
-img_path = os.path.join(script_dir, rel_path)
-success = "\033[1;32m\033[1;100m [ SUCCESS ]"
-ok = "\033[1;32m [ OK ]"
-info = "\033[1;94m [ INFO ]"
-nok = "\033[1;91m [ NOK ]"
-warning = "\033[1;95m [ WARNING ]"
-error = "\033[1;91m [ ERROR ]"
-func_name = "\033[1;97m [ FUNC ]"
-nocolor = "\033[1;0m"
+global verbose
+#offx = 0
+#offy = 0
 
-def check_file ():
-    print func_name, (inspect.currentframe().f_code.co_name)
-    try:
-        f = open(img_path+img)
-        print ok, "file exists:", img_path+img
-    except IOError:
-        print nok, "file not exists:", img_path+img
-        sys.exit(2)
-#    finally:
-#        f.close()
+#old_stdout = sys.stdout
+#sys.stderr = open(os.devnull, 'w')
 
 def options(argv):
-    print func_name, (inspect.currentframe().f_code.co_name)
     img = '' # image to find
     action = '' # action to do
-    check_img = '' # check if image exists
+    mouse_start = '' # action to do
+    offx = 0 # offset x
+    offy = 0 # offset y
+    verbose = ''
     try:
-        opts, args = getopt.getopt(argv,"hi:a:c:",["img=","action=","check_img="])
+        opts, args = getopt.getopt(argv,"hVi:a:m:X:Y:",["help","verbose","img=","action=","mouse-start=","offx=","offy="])
     except getopt.GetoptError:
-        print 'usage: locate -i <img> -a <action>'
+        print ('usage: locate -i <img> -a <action> [-offx=+x] [-offy=+y]')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print '\033[1;32m usage: locate -i <img> -a <action>\033[1;0m'
+#        if opt in ("-h", "--help")
+            print ('\033[1;32m usage: locate -i <img> -a <action> [-option]\n -hV\033[1;0m')
             sys.exit()
+        elif opt in ("-V", "--verbose"):
+            verbose = "true"
         elif opt in ("-i", "--img"):
             img = arg
         elif opt in ("-a", "--action"):
             action = arg
-        elif opt in ("-c", "--check_img"):
-            check_img = arg
-    print info, "action to do:", action
-    return img, action, check_img
+        elif opt in ("-m", "--mouse-start"):
+            mouse_start = arg
+        elif opt in ("-X", "--offx"):
+            offx = int(arg)
+        elif opt in ("-Y", "--offy"):
+            offy = int(arg)
+    if verbose == "true":
+        print (info, "action to do:", yellow, action, "..mouse starts from:", mouse_start)
+    return verbose, img, action, mouse_start, offx, offy
 
 # options(sys.argv[1:])
 # list of images to find on the screen
 # list = [img_path+'fb_logo_01.png', img_path+'fb_logo_02.png', img_path+'800x600-ch75%-button-English(US).png']
 # read values from options and set as globals
-img, action, check_img = options(sys.argv[1:])
+verbose, img, action, mouse_start, offx, offy = options(sys.argv[1:])
+if verbose != None:
+    verbose = "false"
 alfa = 6
 beta = 12
 theta = 24
+r = random.randint(10,30)
+
+def move_mouse (x,y):
+    if verbose == "true":
+        print (func_name, (inspect.currentframe().f_code.co_name))
+    pyautogui.moveTo(x, y, 0.5, pyautogui.easeOutQuad)
+
+def mouse_circle (element_x, element_y):
+    for i in range(0, 18):
+        x = round(element_x+r*math.cos(float(i)*beta))
+        y = round(element_y+r*math.sin(float(i)*beta))
+        ixy = i+x+y
+        if sys.version_info[0] < 3:
+            print (x,"\b",y),
+#            sys.stdout.flush()
+        else:
+            positionStr = ' move to x: ' + str(x).rjust(4) + ' y: ' + str(y).rjust(4)
+            print(positionStr, end='')
+            print('\b' * len(positionStr), end='', flush=True)
+#            print (x,"\b",y,end=" ")
+#            print('\b' * len(positionStr), end='', flush=True)
+#            sys.stdout.flush()
+        pyautogui.moveTo(x, y, 0.1)
+
+def move_random (x, y):
+    if verbose == "true":
+        print (func_name, (inspect.currentframe().f_code.co_name))
+    for i in range(0, 4):
+        r = random.randint(5,33)
+        pyautogui.moveTo(r^2, r*10, 1, pyautogui.easeOutQuad)
+        mouse_circle(100+r, 100+r)
+
+def check_file ():
+    if verbose == "true":
+        print (func_name, (inspect.currentframe().f_code.co_name))
+    try:
+        f = open(img_path+img)
+        if verbose == "true":
+            print (ok, "file exists:", img_path+img)
+    except IOError:
+        if verbose == "true":
+            print (nok, "file not exists:", img_path+img)
+        sys.exit(2)
+#    finally:
+#        f.close()
 
 def find_element ():
-    print func_name, (inspect.currentframe().f_code.co_name)
+    if verbose == "true":
+        print (func_name, (inspect.currentframe().f_code.co_name))
     try:
-        print info, "try to locate element on the screen:",img_path+img
+        if verbose == "true":
+            print (info, "try to locate element on the screen:",img_path+img)
         element = pyautogui.locateOnScreen(img_path+img, confidence=0.9)
+#        sys.stdout = open(os.devnull, 'w') # avoid print messages from this bellow..
         element
+#        sys.stdout = old_stdout
         element_x, element_y = pyautogui.center(element)
-        print success, "found element... center coordinates:", element_x, element_y
-
+        if offx != 0:
+            print ("offset offx=",offx)
+            element_x = element_x + offx
+            print ("element_x=",element_x)
+        if offy != 0:
+            print ("offset offy=",offy)
+            element_y = element_y + offy
+        print (success,"found element:",img,element,"center:","x=",element_x,"y=",element_y)
+        print (yellow, "[", action, "] ", "\b", end='')
     except:
-        print warning, "cannot locate element:", img_path+img
-        sys.exit(2)
+        if verbose == "true":
+            print (result, "cannot locate element:", img_path+img)
+        sys.exit(1)
 
     if action == "circle":
-        print 'find_element: Image to find:\033[1;32m', img, '\033[1;0m'
-        print 'find_element: Action to do:\033[1;33m', action, '\033[1;0m'
-        print(element)
         if element != None:
-    #            pyautogui.moveTo(element_x, element_y, 0.5, pyautogui.easeOutQuad)
-            r = random.randint(10,30)
-            pyautogui.moveTo(element_x+r, element_y+r, 0.5, pyautogui.easeInQuad)
-            for i in range(0, 18):
-                x = round(element_x+r*math.cos(float(i)*beta))
-                y = round(element_y+r*math.sin(float(i)*beta))
-                ixy = i+x+y
-#                sys.stdout.write("\r%d" % i),
-#                sys.stdout.flush(),
-#                sys.stdout.write("\n"),
-#                print "step i:%r" %i, "radius r:",r, "x:",x, "y:",y
-#                print "step i:%r" %i, "radius r:",r, "x:",x, "y:",y,
-                print x,"\b",y,
-                sys.stdout.flush()
-                pyautogui.moveTo(x, y, 0.1)
-
-        else:
-            sys.stdout.write("\033[1;31m") # red print
-            print "element %r not found ... move random" % img
-            sys.stdout.write("\033[1;0m")
-            pyautogui.moveTo(679, 14, 1, pyautogui.easeOutQuad)
-            pyautogui.moveTo(579, 34, 0.3, pyautogui.easeOutQuad)
-            pyautogui.moveTo(425, 77, 1, pyautogui.easeOutQuad)
-            pyautogui.moveTo(491, 167, 1, pyautogui.easeOutQuad)
-    #            pyautogui.click(458, 77) # mouse click
-            pyautogui.moveTo(679, 14, 0.3, pyautogui.easeOutQuad)
-            sys.stdout.write("\033[1;32m") # green print
+            pyautogui.moveTo(element_x+r, element_y+r, 0.2, pyautogui.easeInQuad)
+            mouse_circle(element_x, element_y)
 
     elif action == "move":
         pyautogui.moveTo(element_x, element_y, 0.5, pyautogui.easeOutQuad)
@@ -119,5 +154,17 @@ def find_element ():
         pyautogui.moveTo(element_x, element_y, 0.5, pyautogui.easeOutQuad)
         pyautogui.click(element_x, element_y) # mouse click
 
-check_file()
-find_element()
+def mouse_start_position():
+    if mouse_start == 100:
+        move_mouse(100,100)
+
+try:
+    mouse_start_position()
+    check_file()
+    find_element()
+    if verbose != "true":
+        print (ok, "done:", img_path+img)
+#    sys.stdout.write("\n")
+    sys.exit(0)
+except KeyboardInterrupt:
+    print('\n')

@@ -67,7 +67,7 @@ border_color = #065800 100
 gradient_id = 6
 
 # Panel ==================================================================
-panel_items = EEFEEEEEEE:PPPPC:E
+panel_items = EEFEEEEEEE:PPPPC:EE
 panel_monitor = all
 panel_position = top left vertical
 panel_size = 100% 140
@@ -185,7 +185,7 @@ execp_centered = 0
 
 execp = tail_log
 execp_command = tail -n 1 /var/log/busy4me.log
-execp_interval = 1
+execp_interval = 2
 execp_font = sans 8
 execp_markup = 2
 execp_font_color = #000000 60
@@ -204,24 +204,23 @@ execp_tooltip =
 execp_centered = 0
 
 execp = mac
-execp_command = cat /sys/class/net/$(ip route show default | awk '/default/ {print $5}')/address | tr '\n' ' ' | sed 's/[[:space:]]//g'
-execp_interval = 0
-execp_font = sans 10
+execp_command = echo "MAC:" | tr '\n' ' ' | sed 's/[[:space:]]//g'; (sleep 5; cat /sys/class/net/$(ip route show default | awk '/default/ {print $5}')/address | tr '\n' ' ' | sed 's/[[:space:]]//g')
+execp_interval = 10
+execp_font = sans 8
 execp_markup = 1
 execp_font_color = #454545 100
 execp_padding = 1 0
-execp_lclick_command = zenity --info "--text=$(uname -sr)" --width 550 --height 150 --timeout 3
+execp_tooltip =
 execp_centered = 0
 
-execp = hostname_ip
-execp_command = echo "ID: 123 456 789"; cat /etc/hostname; (sleep 5; ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
-execp_interval = 0
-execp_font = sans 10
+execp = hostname
+execp_command = echo "hostname:" | tr '\n' ' ' | sed 's/[[:space:]]//g'; cat /etc/hostname | tr '\n' ' ' | sed 's/[[:space:]]//g'
+execp_interval = 10
+execp_font = sans 8
 execp_markup = 1
 execp_font_color = #454545 100
 execp_padding = 1 0
-execp_tooltip = hostname, Assistant ID, local IP
-execp_lclick_command = zenity --info "--text=$(uname -sr)" --width 550 --height 150 --timeout 3
+execp_tooltip = hostname
 execp_centered = 0
 
 execp = memory
@@ -243,6 +242,16 @@ execp_font_color = #aab600 100
 execp_padding = 2 0
 execp_centered = 0
 
+execp = ip
+execp_command = echo "IP:" | tr '\n' ' ' | sed 's/[[:space:]]//g'; (sleep 5; ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+execp_interval = 0
+execp_font = sans 8
+execp_markup = 1
+execp_font_color = #454545 100
+execp_padding = 1 0
+execp_tooltip = local IP
+execp_centered = 0
+
 execp = copyrights
 execp_command = echo "© busy4.me SMAS"
 execp_interval = 0
@@ -256,50 +265,52 @@ execp_centered = 0
 # push buttons ===============================================
 # P            ===============================================
 button = button_1
-button_text = button 1
+button_text = Update
 button_font = DejaVuSansMono 8
 button_font_color = #ffffff 100
 button_background_id = 5
 button_padding = 5 0
 button_centered = 1
 button_max_icon_size = 20
-# button_lclick_command = /opt/busy4me/update --all
+# button_lclick_command = /opt/busy4me/update --all; zenity --update "--text=update in background..." --width 550 --height 150 --timeout 10
 button_lclick_command = zenity --info "--text=test button... left clicked..." --width 550 --height 150 --timeout 3
 button_rclick_command = zenity --info "--text=test button... right clicked..." --width 550 --height 150 --timeout 3
 button_tooltip = ...left click to execute ...right click for help
 
 button = button_2
-button_text = button 2 reset
+button_text = Reset
 button_font = DejaVuSansMono 8
 button_font_color = #ffffff 90
 button_background_id = 5
 button_padding = 5 0
 button_centered = 1
 button_max_icon_size = 30
-button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
+button_lclick_command = /opt/busy4me/busy stop; (sleep 2; /opt/busy4me/busy start); zenity --reset "--text=reset in progress..." --width 550 --height 150 --timeout 4
+# button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = left click to reset and login again
 
 button = button_3
-button_text = button 3
+button_text = Reboot
 button_font = DejaVuSansMono 8
 button_font_color = #ffffff 90
 button_background_id = 1
 button_padding = 5 0
 button_centered = 1
-button_lclick_command = zenity --info "--text=button 3 left clicked..." --width 550 --height 150 --timeout 3
+button_lclick_command = zenity --reboot "--text=reboot in 1s..." --width 350 --height 150 --timeout 2; (sleep 2; sudo reboot)
 button_rclick_command = zenity --info "--text=button 3 right clicked..." --width 550 --height 150 --timeout 3
 button_tooltip = Click to update busy4 software in background
 
 button = button_4
-button_text = button 4
+button_text = Stop
 button_font = DejaVuSansMono 8
 button_font_color = #ffffff 90
 button_background_id = 1
 button_padding = 5 0
 button_centered = 1
 button_max_icon_size = 30
-button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 && $HOME/.vncserver restart && (sleep 5 && export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &)
+button_lclick_command = /opt/busy4me/busy stop fb-walking-around; zenity --info "--text=stop..." --width 450 --height 150 --timeout 4
+#button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 && $HOME/.vncserver restart && (sleep 5 && export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &)
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = Click to reset and login again
 

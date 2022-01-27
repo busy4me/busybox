@@ -52,6 +52,16 @@ screen -S mouse-move-01$DISPLAY -X kill
 #screen -S mouse-move-02 -X kill
 screen -S mouse-move-02$DISPLAY -X kill
 
+# reset status, delete all *-status files or particular -status file
+reset_status() {
+	if [[ -z ${1} ]]; then
+		rm /opt/busy/fb/*-status
+		return
+	fi
+	rm /opt/busy/fb/$1-status
+}
+reset_status
+
 # move mouse away...
 echo "move mouse away...." | logline
 xdotool mousemove 8 45
@@ -65,24 +75,36 @@ ntpdate -s time.nist.gov | logline
 
 echo "Start /opt/busy4me/fb/fb-init..." | logline
 # /bin/bash /opt/busy4me/fb/fb-init
-screen -S fb-init$DISPLAY -X kill
+screen -S fb-init$DISPLAY -X kill 2>/dev/null
 screen -dmS fb-init$DISPLAY '/opt/busy4me/fb/fb-init'
-while [[ ! $fb_init_status == *"fb-init done"* ]]; do
-	fb_init_status=$(cat /opt/busy/fb/fb-status)
+#fb_init=$(echo "fb-init"$DISPLAY"_status" | tr '-' '_' | tr ':' '_')
+#eval $fb_init="done"
+#echo $fb_init$DISPLAY_status
+while [[ ! $fb_init_status == *"done"* ]]; do
+	fb_init_status=$(cat /opt/busy/fb/fb-init$DISPLAY-status)
 	sleep 1
 done
+reset_status fb-init$DISPLAY
 
 echo "Start /opt/busy4me/fb/fb-login..." | logline
 # /bin/bash /opt/busy4me/fb/fb-login --debug
-screen -S fb-login$DISPLAY -X kill
+screen -S fb-login$DISPLAY -X kill 2>/dev/null
 screen -dmS fb-login$DISPLAY '/opt/busy4me/fb/fb-login'
-while [[ ! $fb_login_status == *"fb-login done"* ]]; do
-	fb_login_status=$(cat /opt/busy/fb/fb-status)
+while [[ ! $fb_login_status == *"done"* ]]; do
+	fb_login_status=$(cat /opt/busy/fb/fb-login$DISPLAY-status)
 	sleep 1
 done
+reset_status fb-login$DISPLAY
 
 echo "Start /opt/busy4me/fb/fb-scroll..." | logline
-/bin/bash /opt/busy4me/fb/fb-scroll --debug
+# /bin/bash /opt/busy4me/fb/fb-scroll --debug
+screen -S fb-scroll$DISPLAY -X kill 2>/dev/null
+screen -dmS fb-scroll$DISPLAY '/opt/busy4me/fb/fb-scroll'
+while [[ ! $fb_scroll_status == *"done"* ]]; do
+	fb_scroll_status=$(cat /opt/busy/fb/fb-scroll$DISPLAY-status)
+	sleep 1
+done
+reset_status fb-scroll$DISPLAY
 
 #echo "Start /opt/busy4me/fb/fb-save-my-groups..." | logline
 #/bin/bash /opt/busy4me/fb/fb-save-my-groups
@@ -92,7 +114,16 @@ echo "Start /opt/busy4me/fb/fb-walking-around..." | logline
 
 echo "Continue /opt/busy4me/fb/fb-walking-around at the screen shell session..." | logline
 echo -e "...script run in DISPLAY $DISPLAY" | logline
-screen -dmS fb-walking-around$DISPLAY '/opt/busy4me/fb/fb-walking-around'
+#task_to_do="/opt/busy4me/fb/fb-walking-around --debug"
+#screen -dmS fb-walking-around$DISPLAY $task_to_do
+_TASK='fb-walking-around'
+_OPT_1='-V'
+#_OPT_2='-s'
+#_OPT_3='3'
+task_to_do="/opt/busy4me/fb/$_TASK $_OPT_1 $_OPT_2 $_OPT_3 $_OPT_4 $_OPT_5"
+echoinfo "=========================== task_to_do=$task_to_do"
+screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$DISPLAY $task_to_do
+screen -ls
 
 # fb-init-99 runs Xvfb in display :99, ffmpeg on port 9000 and chrome with facebook
 # echo "Run fb-init-99 at the screen shell session..." | logline

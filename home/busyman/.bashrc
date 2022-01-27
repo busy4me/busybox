@@ -65,3 +65,4 @@ eval "`dircolors`"
 alias ls='ls $LS_OPTIONS'
 force_color_prompt=yes
 cd $HOME
+export DISPLAY=:98

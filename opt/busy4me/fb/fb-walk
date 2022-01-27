@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+# copyrights Visaroy
+# usage: fb-walk
+
+from __future__ import print_function
+import pyautogui, time, sys, math, random, os, getopt, numpy, imutils, cv2, inspect, yaml, datetime, subprocess
+from time import sleep
+from datetime import datetime
+from fbconfig import *
+pyautogui.FAILSAFE = False # disables the fail-safe
+logfile = '/var/log/busy4me.log'
+element = 'fb-left-edge-of-post-frame.png'
+# returncode = 1
+
+def logline(type):
+    timestamp = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+    if type == "start":
+        log_line = timestamp + ok + " - fb-walk start: "
+    elif type == "end":
+        log_line = timestamp + " END\n"
+    else:
+        log_line = str(type) + " "
+    with open (logfile, 'a') as f: f.write (log_line)
+
+def detect(element):
+    child = subprocess.Popen(["locate", "-i", element, "-a", "circle"], stdout=subprocess.PIPE)
+    streamdata = child.communicate()[0]
+    returncode = child.returncode
+    print(child.returncode)
+    return returncode
+
+def scroll(direction,steps,delay):
+    if direction == 'down':
+        dir = -1
+    elif direction == 'up':
+        dir = 1
+    for i in range(0, steps):
+        pyautogui.scroll(dir)
+        sleep(delay)
+
+def move_mouse(direction,steps,delay):
+    print ("\n ...move_mouse: ",direction,steps,delay)
+    if direction == 'right-left':
+        for i in range(0, steps):
+            offset = random.randint(50,100)
+            pyautogui.moveRel(200+offset, 10+offset/10, delay, pyautogui.easeOutQuad)
+            pyautogui.moveRel(-200-offset, -10-offset/10, delay, pyautogui.easeOutQuad)
+    elif direction == 'up-down':
+        dir = 1
+
+def walk():
+    logline("start")
+#    pyautogui.moveTo(700, 350, 0.5, pyautogui.easeOutQuad)
+    for i in range(1, 6):
+        returncode = detect(element)
+        steps = random.randint(2,15)
+        if returncode == 0:
+            move_mouse("right-left",6,steps/100)
+        positionStr = ' ...steps:' + str(steps).rjust(2) + ' delay:' + str(steps/10) + ' series:' + str(i).rjust(2) + ' of 5'
+        print(positionStr, end='')
+        print('\b' * len(positionStr), end='', flush=True)
+        pyautogui.moveTo(700+steps*20, 350+steps^3, 0.2+steps/10, pyautogui.easeOutQuad)
+        scroll("down", steps, steps/20)
+        pyautogui.moveTo(700+steps^3, 350+steps*20, 0.2+steps/10, pyautogui.easeOutQuad)
+        scroll("up", steps-2, steps/30)
+        logline(steps)
+        sleep(1)
+    logline("end")
+
+try:
+    walk()
+except KeyboardInterrupt:
+    print("bye")
+print('\n')

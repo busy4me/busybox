@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+
+import pyautogui, sys, math, random, time
+
+pyautogui.FAILSAFE = False # disables the fail-safe
+
+ra01 = random.randint(1,3)
+ra02 = random.randint(4,6)
+if ra01 == 1:
+	alfa = 6
+	beta = 12
+	theta = 24
+	r = 20+ra02
+elif ra01 == 2:
+	alfa = 12
+	beta = 24
+	theta = 6
+	r = 15+ra02
+elif ra01 == 3:
+	alfa = 24
+	beta = 12
+	theta = 6
+	r = 25+ra02
+
+def circle_01 ():
+	print (circle_01.__name__)
+	r = random.randint(3+ra01,10+ra02)
+	for i in range(0, theta):
+		sx, sy = pyautogui.position()
+		x = round(sx+r*math.cos(float(i)*theta))
+		y = round(sy+r*math.sin(float(i)*theta))
+		print ("[step %r]" % i, "\b", end='', flush=True)
+		print (" %r " % x, "\b", end='', flush=True)
+		print (" %r" % y, "\b", end='', flush=True)
+		pyautogui.moveTo(x, y, ra01/100, pyautogui.easeOutQuad)
+
+def circle_02 ():
+	print (circle_02.__name__)
+	r = random.randint(10+ra01,15+ra02)
+	for i in range(0, theta):
+		sx, sy = pyautogui.position()
+		x = round(sx+r*math.sin(float(i)*theta))
+		y = round(sy+r*math.cos(float(i)*theta))
+		print ("[step %r]" % i, "\b", end='', flush=True)
+		print (" %r " % x, "\b", end='', flush=True)
+		print (" %r " % y, "\b", end='', flush=True)
+		pyautogui.moveTo(x, y, ra01/100, pyautogui.easeOutQuad)
+
+def circle_03 ():
+	print (circle_03.__name__)
+	r = random.randint(15+ra01,20+ra02)
+	for i in range(0, beta):
+		sx, sy = pyautogui.position()
+		x = round(sx+r*math.cos(float(i)*theta))
+		y = round(sy+r*math.sin(float(i)*theta))
+		print ("[step %r]" % i, "\b", end='', flush=True)
+		print (" %r " % x, "\b", end='', flush=True)
+		print (" %r " % y, "\b", end='', flush=True)
+		pyautogui.moveTo(x, y, ra01/100, pyautogui.easeOutQuad)
+
+def horizontal (a,b,c):
+	if a == 1:
+		pyautogui.moveRel(ra01*20, ra01, ra01/10, pyautogui.easeOutQuad)
+		pyautogui.moveRel(ra01*-20, -ra01, ra01/10, pyautogui.easeOutQuad)
+	if b == 1:
+		pyautogui.moveRel(ra01*10, ra01, ra01/20, pyautogui.easeOutQuad)
+		pyautogui.moveRel(ra01*-10, -ra01, ra01/20, pyautogui.easeOutQuad)
+
+def random_circle ():
+	if ra01 == 1:
+		horizontal(1,1,0)
+		circle_01()
+	elif ra01 == 2:
+		horizontal(0,1,0)
+		circle_02()
+		horizontal(1,0,0)
+	elif ra01 == 3:
+		circle_03()
+		horizontal(1,1,0)
+
+random_circle()
+print('\n')
+
+#pyautogui.moveTo(160+(ra01*20), 17, 0.2, pyautogui.easeOutQuad)
+#circle_01()
+#pyautogui.moveTo(210+(ra01*20), 400, 0.1, pyautogui.easeOutQuad)
+#circle_02()

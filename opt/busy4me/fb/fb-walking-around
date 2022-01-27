@@ -1,30 +1,47 @@
 #!/bin/bash
-set -x
+# set -x
+_START=$(date +%s) # calculate how long script runs (see on the end)
 SCRIPT=fb-walking-around
 LOGFILE=/var/log/busy4me.log
+STATFILE=/var/log/busy4me-nocolor.log # log file without escape characters, used for time series databases (eg.influxdb-telegraf-grok)
 source /opt/busy4me/busy-functions # global functions
 source /opt/busy4me/fb/fb-config # fb variables from there
 
-if [[ "$1" == "--debug" ]]; then
-  exec &> >(tee -ia $LOGFILE)
-  exec 2>&1
-fi
-echo "DISPLAY=$DISPLAY"
-# export DISPLAY=:0
-#screen_name="xterm-"$DISPLAY
-#screen_task="/opt/busy4me/xterm.sh --screen fb-walking-around"$DISPLAY
-#screen -S $screen_name -X kill # kill screen on this display
-#screen -dmS $screen_name $screen_task
-
-logline() {
+old_logline() {
     while IFS= read -r line; do
         echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
     done
 }
-echoinfo 'login =' $login | logline
-echoinfo 'login_string =' $login_string | logline
-echoinfo 'Use database:' $user_db | logline
-move_mouse
+
+logline() { # get line and send to log file
+    while IFS= read -r line; do
+      echo -e "$(date +%F' '%T)" "$USER $SCRIPT $line${nocolor}" | tee -ia $LOGFILE
+      echo -e "$(date +%F' '%T)" "$USER $SCRIPT $line${nocolor}" | sed 's,\x1B\[[0-9;]*[a-zA-Z],,g' | tee -ia $STATFILE
+#      printf '%s %s\n' "$(date +%F' '%T)" "$line" | tee -ia $LOGFILE
+    done
+}
+
+debug_set () {
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  if [[ "$1" == "--debug" ]] || [[ "$verbose" == "true" ]]; then
+    echoinfo "verbose, FUNCNAME=${FUNCNAME[0]}, comment=set verbose mode by exec | tee =========================="
+#    exec &> >(tee -ia $LOGFILE)
+    exec &> >(logline)
+    exec 2>&1
+  fi
+}
+
+devnull () {
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  exec &> >(tee -ia /dev/null)
+  exec 2>&1
+}
+
+echoinfo  "DISPLAY=$DISPLAY"
+echoinfo 'login =' $login
+echoinfo 'login_string =' $login_string
+echoinfo 'Use database:' $user_db
+# move_mouse
 
 fb_chat_detect_activity () {
   screen -S fb-chat-detect-activity -X kill
@@ -45,39 +62,44 @@ windows_check () {
   /bin/bash /opt/busy4me/windows-check.sh
 }
 
-move_mouse_01 () {
+mouse_move () {
   echofunc "${FUNCNAME[0]}"
-  echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
+  echoinfo "mouse, comment=Start move mouse"
+  screen -S mouse-move -X kill >/dev/null 2>&1
+  screen -S mouse-move$DISPLAY -X kill >/dev/null 2>&1
+  screen -S mouse-move-01 -X kill >/dev/null 2>&1
+  screen -S mouse-move-02 -X kill >/dev/null 2>&1
+  screen -S mouse-move-01$DISPLAY -X kill >/dev/null 2>&1
+  screen -S mouse-move-02$DISPLAY -X kill >/dev/null 2>&1
+  if [[ "$1" == "1" ]]; then
+    screen -dmS mouse-move$DISPLAY '/opt/busy4me/fb/mouse-move'
+    return
+  fi
   chose=$((1 + RANDOM % 2))
   case "$chose" in
     1)
-      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
-      screen -S mouse-move-01 -X kill
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m"
       screen -dmS mouse-move-01$DISPLAY '/opt/busy4me/fb/mouse-move-01.py'
     ;;
     2)
-      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-02...\e[0m" | logline
-      screen -S mouse-move-02 -X kill
-      screen -S mouse-move-02$DISPLAY -X kill
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-02...\e[0m"
       screen -dmS mouse-move-02$DISPLAY '/opt/busy4me/fb/mouse-move-02.py'
     ;;
     *)
-      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
-      screen -S mouse-move-01 -X kill
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m"
       screen -S mouse-move-01$DISPLAY -X kill
     ;;
   esac
 }
 
-hide_window () {
-  echofunc "${FUNCNAME[0]}"
-  echoinfo "hide window..."
-  scrot /tmp/scrot.png
-  feh --bg-scale /tmp/scrot.jpg
-  transset -a 0 # hide window for a moment
-  xdotool key --delay 200 Ctrl+a Ctrl+c Ctrl+Shift+a
-  transset -a 0.9
-  feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg
+send_stats () { # send statistics to time series database
+  timestamp=`date +%s`
+  measurement="$0""$1"
+  tagKey=$2
+  tagValue=$3
+  fieldKey=$4
+  fieldValue=$5
+  ustat $measurement $tagKey $tagValue=$3 $fieldKey=$4 $fieldValue $timestamp
 }
 
 page_probe () {
@@ -85,206 +107,399 @@ page_probe () {
   mark00="Leave This Page"
   mark01="temporarily restricted"
   mark011="been temporarily blocked"
-  mark012="You're Tmporarily Blocked"
+  mark012="You're Temporarily Blocked"
   mark02="follow"
   mark03="o"
-  mark04="Accept All" # fb question: Accept cookies from Facebook...  echo -e "\e[35m page probe after Active click..............................\e[0m" | logline
+  mark04="Accept All" # fb question: Accept cookies from Facebook...  echo -e "\e[35m page probe after Active click..............................\e[0m"
 	xclip -selection clipboard /opt/busy/files/blank
   hide_window
-  echoinfo "screenshoot... and check what is on the screen"
+  echoinfo "screenshoot, comment=check what is on the screen"
 	scrot_local
 	clip=$(xclip -out -selection clipboard ) 	# check what is on the screen
 	# save clipboard to file
 	echo -e '\e[33m' $clip '\e[0m'> /opt/busy/clipboard/$(date +%Y-%m-%d--%H-%M-%S)-clip
 		case "$clip" in
 		*$mark00*)
-			echo -e '\e[95m \e[5m Something unfinished... leave this page... \e[0m' | logline
-			xdotool key --delay 500 Ctrl+f && xdotool type "$mark00" && xdotool key --delay 800 Escape Return
+      mark00_counter=$(( mark00_counter + 1 ))
+      echoerror "error, mark00_counter=$mark00_counter, mark00='$mark00', FUNCNAME=${FUNCNAME[0]}, comment=slow down... PAUSE..."
+			xdotool key --delay 500 Ctrl+f
+      xdotool type "$mark00"
+      xdotool key --delay 800 Escape Return
 		;;
 		*$mark01*)
-			for i in {1..20}
-			do
-        zenity --info --title="temporarily restricted" --text="I see: $mark01 \n \n OK, slow down..." --timeout 5
-				echo -e '\e[95m \e[5m $mark01 ...PAUSE... \e[0m' | logline
-        sleep 5
-			done
+      pause_time=$(( pause_time + 30 ))
+      echopause "pause, pause_time=$pause_time, mark01=$mark01, FUNCNAME=${FUNCNAME[0]}, comment=slow down... PAUSE..."
+      zenity --info --title="temporarily restricted" --text="I see: $mark01 \n \n OK, slow down..." --width 250 --height 120  --timeout $pause_time
 		;;
     *$mark011*|*$mark012*)
-			for i in {1..100}
-			do
-        zenity --info --title="temporarily restricted" --text="I see: $mark011 \n \n OK, slow down..." --timeout 5
-				echo -e '\e[95m \e[5m $mark011 ...PAUSE... \e[0m' | logline
-        sleep 5
-			done
+      pause_time=$(( pause_time + 30 ))
+      echopause "pause, pause_time=$pause_time, mark011=$mark011, FUNCNAME=${FUNCNAME[0]}, comment=slow down... PAUSE... "
+      locate -i fb--message-you-are-temporarily-blocked.png -a circle
+      zenity --info --title="temporarily blocked" --text="I see: $mark011\n pause_time=$pause_time\n OK, slow down..." --width 250 --height 120  --timeout $pause_time
 		;;
 		*$mark02*)
-			echo -e "\e[32m I see $mark02 mark \e[92m \e[5m test OK ...keep going...\e[0m" | logline
+      echoinfo "info, mark02=$mark02, FUNCNAME=${FUNCNAME[0]}, comment=I see word 'follow' test OK keep going..."
 #			zenity --info --title="page_probe keep going" --text="I see $mark02 \n \n OK, keep going..." --timeout 5
 		;;
 		*$mark03*)
-			echo -e "\e[32m Content OK... \e[92m \e[5m test OK ...keep going...\e[0m" | logline
+      echoinfo "info, mark03=$mark03, FUNCNAME=${FUNCNAME[0]}, comment=I see word 'o' test OK keep going..."
 #			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
 		;;
     *$mark04*)
-			echo -e "\e[32m Content... \e[92m \e[5m Accept cookies...\e[0m" | logline
+      echoinfo "info, mark04=$mark04, comment=Accept cookies... keep going..."
 			xdotool key --delay $kd Ctrl+f && xdotool type $mark04 && xdotool key --delay $kd Escape
       sleep 1
       xdotool key Return
 #			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
 		;;
 		*)
-			echo -e "\e[35m Looks good... \e[92m \e[5m test OK ...keep going...\e[0m" | logline
+			echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=Looks good... test OK ...keep going..."
 #			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
 		;;
 		esac
 }
 
 press_keys_01 () {
-#  set +x
-  echofunc "${FUNCNAME[0]}"
-  xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up
-  #key_repeat=40
-  key_repeat=4
-  echo -e '\e[92mkey_repeat = ' $key_repeat | logline
-  echo -e "\e[0m"
-  for (( key_step=1; key_step<$key_repeat; key_step++ )); do
-    echoinfo "key_repeat=$key_repeat kd_1=$kd_1 kd_1_sec=$kd_1_sec Tab Escape"
-    echoinfo "key:Tab"
-    xdotool key --delay $kd_1 Tab
-    echoinfo "key: Escape"
-    xdotool key --delay $kd_1 Escape
-    echoinfo "going to sleep: $kd_1_sec"
-    sleep $kd_1_sec
-    echoinfo "repeat..."
+#  start="${FUNCNAME[0]}_function_start"
+#  eval $start=$(date +%s) # calculate how long script runs (see on the end)
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  detect_input_field
+  local steps=$(gen_random 6 16)
+  echook "steps, steps=$steps, FUNCNAME=${FUNCNAME[0]}, comment=random steps "
+  for (( key_step=1; key_step<$steps; key_step++ )); do
+    local kd_1=$(gen_random 400 900)
+    local kd_2=$(gen_random 600 1100)
+    local kdl=$(gen_random 800 1200)
+    kd_1_sec=$(echo "scale=2;${kd_1}/1000" | bc)
+    kd_2_sec=$(echo "scale=2;${kd_2}/1000" | bc)
+    echoinfo "random, kd_1=$kd_1 kd_2=$kd_2 kd_1_sec=$kd_1_sec kd_2_sec=$kd_2_sec, FUNCNAME=${FUNCNAME[0]}, keys:Tab Escape"
+    xdotool key --delay $kd_1 Tab Escape
+    sleep $kd_1_sec; echoinfo "${FUNCNAME[0]} >> going to sleep: $kd_1_sec and repeat ..."
     shift 1
   done
+  echo "${FUNCNAME[0]}_function_start"
+  echoinfo "${FUNCNAME[0]}>> function_time_elapsed=$(($(date +%s) - ${function_start}))"
+  #set -x
 }
 
 press_keys_02 () {
-  echofunc "${FUNCNAME[0]}"
-  xdotool key --delay $kd_2 Down Escape Down Escape Down Escape Page_Down Escape Page_Up
-  xdotool key --delay $kd_1 Down Escape Down Page_Down Escape Down Escape Down Escape Down Escape Page_Down Down Escape
-  xdotool key --delay $kd_1 Down Escape Down Escape Page_Down Up Down Escape Down Escape Down Up Up Escape Down Escape
-  xdotool key --delay $kd_1 Up Escape Up Escape Up Escape Up Escape Page_Up Escape
-  xdotool key --delay 300 Ctrl+f
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  detect_input_field
+  local kd_1=$(gen_random 400 900)
+  local kd_2=$(gen_random 600 1100)
+  local kdl=$(gen_random 800 1200)
+  kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
+  kd_2_sec=`echo "scale=2;${kd_2}/1000" | bc`
+  echoinfo "random, kd_1=$kd_1 kd_2=$kd_2 kd_1_sec=$kd_1_sec kd_2_sec=$kd_2_sec, FUNCNAME=${FUNCNAME[0]}, keys:various"
+  declare -a sequences=(
+  "Down Escape Down Escape Down Escape Page_Down Escape Page_Up"
+  "Down Escape Down Page_Down Escape Down Escape Down Escape Down Escape Page_Down Down Escape"
+  "Down Escape Down Escape Page_Down Up Down Escape Down Escape Down Up Up Escape Down Escape"
+  "Up Escape Up Escape Up Escape Up Escape Page_Up Escape"
+  )
+  mouse_move 1
+  for sequence in ${sequences[@]}; do
+    local kd_1=$(gen_random 400 900)
+    kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
+    xdotool key --delay $kd_1 "$sequence"
+    sleep $kd_1_sec; echoinfo "${FUNCNAME[0]} >> $sequence >> going to sleep: $kd_1_sec and repeat ..."
+  done
 }
 
 press_keys_03 () {
-  echofunc "${FUNCNAME[0]}"
-  xdotool key --delay $kd_1 Escape keydown Shift Tab keyup Shift Tab Escape
-  xdotool key --delay $kd_2 Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
-  xdotool key --delay $kd_1 Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape
-  xdotool key --delay $kdl Down Escape Down Escape Down Escape Down Escape Down Escape Down Escape Down
-  xdotool key --delay $kd_2 Down Escape Down Escape Down Down Up Down Down Down Up Up Down Up Down Down Down Down Down Down
-  xdotool key --delay $kdl Up Escape Up Escape Up Escape Up Up Down
-  xdotool key --delay $kd_1 Up Up Up Down Up Up Up Up Down Down
-  xdotool key --delay $kd_2 Up Escape Up Escape Up Escape Up Up Down
-  xdotool key --delay $kdl Tab Escape Tab Escape Tab Tab Tab Tab Tab Tab Escape
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  detect_input_field
+  local kd_1=$(gen_random 400 900)
+  local kd_2=$(gen_random 600 1100)
+  local kdl=$(gen_random 800 1200)
+  kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
+  kd_2_sec=`echo "scale=2;${kd_2}/1000" | bc`
+  echoinfo "random, kd_1=$kd_1 kd_2=$kd_2 kd_1_sec=$kd_1_sec kd_2_sec=$kd_2_sec, FUNCNAME=${FUNCNAME[0]}, keys:various"
+  declare -a sequences=(
+  "Escape keydown Shift Tab keyup Shift Tab Escape"
+  "Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape Tab Escape"
+  "Tab Escape keydown Shift Tab keyup Shift Escape Tab Escape keydown Shift Tab keyup Shift Escape"
+  "Down Escape Down Escape Down Down Up Down Down Down Up Up Down Up Down Down Down Down Down Down"
+  "Up Escape Up Escape Up Escape Up Up Down"
+  "Up Up Up Down Up Up Up Up Down Down"
+  "Up Escape Up Escape Up Escape Up Up Down"
+  "Tab Escape Tab Escape Tab Tab Tab Tab Tab Tab Escape"
+  )
+  mouse_move 1
+  for sequence in ${sequences[@]}; do
+    local kd_1=$(gen_random 400 900)
+    kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
+    xdotool key --delay $kd_1 "$sequence"
+    sleep $kd_1_sec; echoinfo "${FUNCNAME[0]} >> $sequence >> going to sleep: $kd_1_sec and repeat ..."
+  done
 }
 
 press_keys_04 () {
-#  set +x
-  echofunc "${FUNCNAME[0]}"
-  for (( key_step=1; key_step<$random; key_step++ )); do
-          echoinfo "random=$random kd_2=$kd_2 kd_2_sec=$kd_2_sec Escape Tab"
-          xdotool key --delay $kd_2 Escape
-          xdotool key --delay $kd_2 Tab
-          sleep $kd_2_sec
-          shift 1
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  detect_input_field
+  local kd_1=$(gen_random 200 1200)
+  kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
+  declare -a down_keys=("Down" "Page_Down Down Down" "Page_Down Down Down Down" "Down Down Down Down" "Page_Down" "Page_Down Page_Down" )
+  down_key=${down_keys[$RANDOM % ${#down_keys[@]} ]}
+  declare -a up_keys=("Up" "Up Up" "Up Up Up" "Up Up Up Up" "Up Up Up Up Up" "Up Up Up Up Up Up" "Page_Up" "Page_Up Up Up" )
+  up_key=${up_keys[$RANDOM % ${#up_keys[@]} ]}
+  declare -a tab_keys=("Tab" "Tab Tab" "Tab Tab Tab")
+  tab_key=${tab_keys[$RANDOM % ${#tab_keys[@]} ]}
+  declare -a sequences=(
+  "$down_key"
+  "$down_key"
+  "$up_key"
+  "$up_key"
+  "$tab_keys"
+  )
+  echoinfo "sequence, $down_key $down_key $up_key $up_key $tab_keys kd_1=$kd_1 kd_1_sec=$kd_1_sec, FUNCNAME=${FUNCNAME[0]}"
+  mouse_move 1
+  for sequence in ${sequences[@]}; do
+    local kd_1=$(gen_random 200 1000)
+    kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
+    sleep $kd_1_sec
+    xdotool key --delay $kd_1 "$sequence"
   done
 }
 
 press_enter_morning_and_afternoon_01 () {
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
   # Press Enter only between 8am and 11pm
   H=$(date +%k)
-  if (( 9 <= $H && $H < 13 )); then
-    echowarning "between 9AM and 1PM, hit enter..."
+  if (( 9 <= $H && $H < 12 )); then
+    echowarning "warning, FUNCNAME=${FUNCNAME[0]}, comment=between 9AM and 1PM, hit enter..."
   	xdotool key --delay 500 Return
-  elif (( 13 <= $H && $H < 22 )); then
-    echowarning "between 1PM and 10PM, hit enter..."
+  elif (( 15 <= $H && $H < 18 )); then
+    echowarning "warning, FUNCNAME=${FUNCNAME[0]}, comment=between 3PM and 6PM, hit enter..."
   	xdotool key --delay 500 Return
-    else
-  	echoinfo "....go to bed"
+  else
+  	echoinfo "bed, FUNCNAME=${FUNCNAME[0]}, comment=go to bed..."
   fi
-  echoinfo '... ... ... ... ... ENTER only between 9am and 10pm'
+  echoinfo "enter, FUNCNAME=${FUNCNAME[0]},... ... ... ... ... ENTER only between 9am and 10pm"
+}
+
+check_alerts() {
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  locate -i fb-alert--icon-red-triangle--connection-is-not-private.jpg -a circle
+  locate -i fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg -a click
+  if [ $(echo "$?") = "0" ]; then
+    echook "ok, FUNCNAME=${FUNCNAME[0]}, comment=found fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg, back to safety... "
+  else
+    echowarning "warning, , FUNCNAME=${FUNCNAME[0]}, comment=can't find fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg"
+  fi
+  locate -i fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg -a click
+  if [ $(echo "$?") = "0" ]; then
+    echook "ok, FUNCNAME=${FUNCNAME[0]}, comment=found fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved "
+  fi
+}
+
+video() {
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]} << SPOT01url=$SPOT01url"
+  if [ "$1" = "watch" ]; then
+    if [[ $SPOT01url == *"com/watch"* ]] || [[ $SPOT01url == *"com/videos"* ]] || [[ $SPOT01url == *"com/watch/live/"* ]]; then
+      locate -i fb-watch--push-button-red--live.jpg -a circle
+      if [ $(echo "$?") = "0" ]; then
+        xdotool key --delay $kd_2 Escape
+        locate -i fb-watch--push-button-red--live.jpg -a click --offx=100 --offy=100
+        step_pause=$(gen_random 360 720)
+        echopause "steppause, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 360-720s... PAUSE..."
+        echoinfo "watch, FUNCNAME=${FUNCNAME[0]}, comment=fb-watch--push-button-red--live"
+        zenity --info --title="step pause" --text="Watch Live... step_pause=$step_pause sec\n\n Press OK to stop pause and continue..." --width 410 --height 120  --timeout $step_pause
+        return
+      fi
+#      locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a circle
+#      if [ $(echo "$?") = "0" ]; then
+      if [[ $(locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a circle) ]]\
+      || [[ $(locate -i fb-post--push-button-grey-icon-and-inscription--share-2.jpg -a circle) ]]
+      then
+        xdotool key --delay $kd_2 Escape
+        locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a click
+        locate -i fb-post--push-button-grey-icon-and-inscription--share-2.jpg -a click
+        sleep 3
+        locate -i fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg -a click
+        if [ $(echo "$?") = "0" ]; then
+          clip=$(xclip -out -selection clipboard )
+          case "$clip" in
+            "$watched_video")
+              echoinfo "skip, watched_video=$clip, FUNCNAME=${FUNCNAME[0]}, watched_video=$clip, comment=skip this video"
+              return
+            ;;
+            *)
+              xdotool key --delay $kd Ctrl+l; sleep 1; xdotool key --delay $kd Home Shift+End; sleep 1
+              xdotool key --delay $kd Ctrl+v; sleep 1; xdotool key --delay $kd Return; sleep 5
+            ;;
+          esac
+        else
+          echoerror "can't find menu element..."
+        fi
+        # check if video running
+        scrot -a 300,150,700,400 /opt/busy4me/fb/img/video.jpg
+        sleep 15
+        locate -i video.jpg
+        if [ $(echo "$?") = "0" ]; then
+          echowarning "video, comment=video not running... click on the screen..."
+          locate -i video.jpg -a click
+#          xdotool key --delay $kd space
+        else
+          echoconfirm "video, comment=video running..."
+        fi
+        step_pause=$(gen_random 360 720)
+        echopause "steppause, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 360-720s... PAUSE..."
+        echoinfo "watch, FUNCNAME=${FUNCNAME[0]}, comment=fb-post--push-button-grey-icon-and-inscription--share"
+        zenity --info --title="step pause" --text="Watch video... step_pause=$step_pause sec\n\n Press OK to stop pause and continue..." --width 410 --height 120  --timeout $step_pause
+        watched_video="$clip"
+        echoinfo "watched, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, watched_video=$clip"
+      else
+        echowarning "can't find share button..."
+      fi
+    else
+      echook "there is nothing to watch, skip to the next step..."
+    fi
+  fi
+}
+
+locate_elements() {
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+#  SPOT01url="$1"
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]} << SPOT01url=$SPOT01url"
+  xdotool key --delay $kd_2 Escape
+  detect_input_field
+  # available stuffs: 1,2,3.. etc. - 1 - additional locate more elements
+  action="move" # available actions in 'locate' program: move, circle, click, squere, x-corner, x-edge
+  if [ "$stuff" = "1" ] || [ "$stuff" = "2" ] || [ "$stuff" = "3" ]; then
+    echowarning "warning, FUNCNAME=${FUNCNAME[0]}, stuff=$stuff, comment=additional stuff to do: locate more elements..."
+    action="circle"
+    locate -i fb--icon--home-grey.png -a $action
+    locate -i fb--logo.png -a $action
+  fi
+  locate -i fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg -a click
+  if [ $(echo "$?") = "0" ]; then
+    echoinfo "content, FUNCNAME=${FUNCNAME[0]}, comment=go-to-news-feed--this-content-isn-t-available-right-now"
+  fi
+  locate -i fb--message-you-are-temporarily-blocked.png -a circle
+  if [ $(echo "$?") = "0" ]; then
+    pause_time=$(( pause_time + 30 ))
+    echopause "pause, pause_time=$pause_time, FUNCNAME=${FUNCNAME[0]}, comment=temporarily blocked"
+    zenity --info --title="temporarily blocked" --text="I see the message: ''temporarily blocked''\n\
+    pause_time=$pause_time\n\
+    OK, slow down a little bit. Let's do something different for w while." --width 290 --height 120  --timeout $pause_time
+  else
+    [[ $pause_time -gt 30 ]] && pause_time=$(( pause_time - 30 ))
+    echopause "unpause, pause_time=$pause_time, FUNCNAME=${FUNCNAME[0]}, comment=minus 30 from last value"
+  fi
+  xdotool key --delay $kd_2 Escape
+  locate -i fb--post-frame--left-bottom-edge.png -a $action
+  locate -i fb-jobs--job-post-frame--right-top-edge.png -a $action
+  locate -i fb-jobs--job-post-frame--left-top-edge.png -a $action
+  locate -i fb-jobs--job-post-frame--right-bottom-edge.png -a $action
+  locate -i fb-jobs--job-post-frame--left-bottom-edge.png -a $action
+  xdotool key --delay $kd_2 Down Down Down Down
+  xdotool key --delay $kd_2 Escape
 }
 
 walking_around_wall () {
-  set +x
-  echofunc "${FUNCNAME[0]}"
-  echo "DISPLAY=$DISPLAY"
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  SPOT01url="$1"
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]} DISPLAY=$DISPLAY"
   # enter URL in browser and execute
   xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
-  transset -a 0.8 # set lighter window
+  transset -a 1 # set lighter window
   xdotool key --delay 500 Ctrl+l
   xdotool key --delay 100 Ctrl+a
   xdotool type --delay 100 $SPOT01url
   xdotool key --delay 100 Return
-  transset -a 0.9 # set darker window
+  transset -a 1 # set darker window
   sleep 3
   scrot_local # screenshot
-  detect_input_field
-  press_keys_01
-  set -x
-  # switch to english language
+  check_alerts
+  video watch
+  locate_elements
+  if [ "$stuff" = "1" ] || [ "$stuff" = "2" ] || [ "$stuff" = "3" ]; then
+    press_keys_01
+  fi
+  check_alerts
+  if [ "$stuff" = "2" ] || [ "$stuff" = "3" ]; then
+    press_keys_02
+  fi
+  if [ "$stuff" = "3" ]; then
+    press_keys_03
+  fi
+  check_alerts
   switch_to_english
-  press_keys_02
-  press_keys_03
+  press_keys_04
+  locate_elements
+  check_alerts
+  press_keys_04
+  locate_elements
   press_keys_04
   press_enter_morning_and_afternoon_01
-
   xdotool search --sync --onlyvisible --class "$PROC01" windowactivate
   sleep 3
-  		cd /tmp
+  cd /tmp
   windows_uneeded_close
-	echo -e "\e[32m ...... \e[92m \e[5m Start screen fb-chat-detect-activity...\e[0m" | logline
+	echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=Start screen fb-chat-detect-activity...\e[0m"
   fb_chat_detect_activity
-  		/bin/bash /opt/busy4me/windows-check.sh
-  		sleep 1
-  		# start move mouse with python
-  		echo -e '.. ... ... ... .... .... ... ..\e[35m\e[7m python start \e[0m ...'
-  move_mouse_01
+	/bin/bash /opt/busy4me/windows-check.sh
+	sleep 1
+	echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=external script start windows-check.sh"
+  locate -i fb-left-edge-of-post-frame.png -a move
   page_probe
   windows_check
   xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up Down Down Down
+  locate_elements
   windows_check
   xdotool key --delay $kd_1 Up Up Up Up Up Up Up Up
+  xdotool key --delay $kd_2 Escape
+  locate_elements
   windows_check
   xdotool key --delay $kd_2 Escape Escape
   xdotool key --delay $kd_1 Escape Escape
 }
 
 detect_input_field () {
-  echofunc "${FUNCNAME[0]}"
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
   xclip -selection clipboard /opt/busy/files/blank
+#  random_letter=$(shuf -zer -n1  {A..Z} {a..z})
   xdotool key --delay $kd Home Shift+End
 #	xdotool key --delay $kd Shift+F10
   xdotool key --delay $kd Ctrl+c
   clip=$(xclip -out -selection clipboard )
   case "$clip" in
-    "https://")
-    echo ".. this is address bar, escape from here"
+    *"https://"*)
+    echowarning "address_bar, clip=$clip, FUNCNAME=${FUNCNAME[0]}, comment=this is address bar, escape from here"
     zenity --info --title="Address bar" --text=".. this is address bar, escape from here" --timeout 3
     xdotool key --delay $kd Tab Tab Tab Tab Tab
-#    return
     ;;
     *)
-    xdotool type --delay $kdl 'abc'
-    xdotool key --delay $kdl Home Shift+End
-    xdotool key --delay $kdl Ctrl+c
+    xclip -selection clipboard /opt/busy/files/blank
+    random_letter=$(tr -dc A-Za-z </dev/urandom | head -c 1 ; echo '')
+    echook "random_letter, random_letter=$random_letter, clip=$clip, clip2=$clip2, kd=$kd, kdl=$kdl, FUNCNAME=${FUNCNAME[0]}"
+    #random_letter=$(shuf -zer -n1  {A..Z} {a..z}) >/dev/null
+    xdotool key --delay $kd End Home Shift+End
+    xdotool type --delay $kd $random_letter
+    xdotool key --delay $kd Home Shift+End Ctrl+c
     clip2=$(xclip -out -selection clipboard )
-      if [[ "$clip2" == "abc" ]]; then
-        echo ".. this is input field, escape from here"
-        zenity --info --title="Input field" --text=".. this input field, escape from here" --timeout 3
-        xdotool key --delay $kds Tab Tab Tab
-#        return
+    echoinfo "input_field, clip2=$clip2, kd=$kd, kdl=$kdl, FUNCNAME=${FUNCNAME[0]}"
+      if [[ "$clip2" == "$random_letter" ]]; then
+        echowarning "input_field, clip2=$clip2, FUNCNAME=${FUNCNAME[0]}, comment=this is input field, escape from here"
+#        zenity --info --title="Input field" --text=".. this input field, escape from here" --timeout 1
+        xdotool key --delay $kd Escape Tab
+      else
+        echoresult "input_field, clip2=$clip2, FUNCNAME=${FUNCNAME[0]}, comment=this is input field, escape from here"
       fi
     ;;
   esac
 }
 
 switch_to_english () {
-  echofunc "${FUNCNAME[0]}"
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
   xclip -selection clipboard /opt/busy/files/blank
   xdotool type --delay $kds 'English ('
   xdotool key --delay $kds Escape
@@ -292,7 +507,7 @@ switch_to_english () {
   xdotool key --delay 100 Ctrl+c
   clip=$(xclip -out -selection clipboard )
   if [[ "$clip" == "English (US)" ]]; then
-    echo "on position: English (US)"
+    echook "position, FUNCNAME=${FUNCNAME[0]}, comment=on position: English (US)"
     xdotool key --delay $kd Return
     sleep 1
     xclip -selection clipboard /opt/busy/files/blank
@@ -304,61 +519,158 @@ switch_to_english () {
 #      sleep 3
       ;;
       *)
-      echo "already english"
+      echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=already english"
       ;;
     esac
     zenity --info --title="Check language" --text="Check language..." --timeout 3
   fi
 }
 
-loop () {
-  echofunc "${FUNCNAME[0]}"
-  iter=100 #how many steps to do
-  for (( step=1; step<$iter; step++ )); do
-    declare -a _SPOTS=(
-  #  "https://www.facebook.com/groups/"
-    "https://www.facebook.com/games/instantgames/category/?category=400"
-    "https://www.facebook.com/jobs"
-    "https://www.facebook.com/gaming/feed/"
-    "https://www.facebook.com/marketplace/"
-    "https://www.facebook.com/watch/"
-    "https://www.facebook.com/watch/shows/"
-    "https://www.facebook.com/watch/live/"
-    "https://www.facebook.com/pages/"
-    "https://www.facebook.com/marketplace/groups/"
-    "https://www.facebook.com/videos"
-    "https://www.facebook.com/jobs"
-    "https://www.facebook.com/offers/v2/wallet"
-    )
-    for SPOT01url in ${_SPOTS[@]}; do
-      echofunc "${FUNCNAME[0]}"
-      echo "$(( (i * 100) /$iter ))%"
-      echo -e "\e[32m walking_around_wall... step: $step#$iter SPOT: $SPOT01url\e[0m" | logline
-      echo -e '... ... ... ... ... \e[44m Start move mouse  \e[0m ...'
-      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-around...\e[0m" | logline
-      screen -S mouse-move-around -X kill
-      screen -S mouse-move-around$DISPLAY -X kill
-      screen -dmS mouse-move-around$DISPLAY '/opt/busy4me/fb/mouse-move-around.py'
-      echo -e '\e[35m\e[7m'
-      screen -ls
-      echo -e '\e[0m'
-      kd_1=$((600 + RANDOM % 8 * 200)) # Key Delay between 600 and 2000[ms]
-      kd_2=$((900 + RANDOM % 8 * 200)) # Key Delay between 900 and 2000[ms]
-      kdl=$((1500 + RANDOM % 15 * 200)) # Key Delay Long between 1500 and 4000[ms]
-      random=$((6 + RANDOM % 10)) # random number between 6 and 16
-      kd_1_sec=`echo "scale=2;${kd_1}/1000" | bc`
-      kd_2_sec=`echo "scale=2;${kd_2}/1000" | bc`
-      walking_around_wall
-      sleep 0.2
-      shift 1
-    done
-done
+extra_pause() {
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  pause_status=1
+  while [ $pause_status = 1 ]; do
+    H=$(date +%k)
+    if (( 6 <= $H && $H < 12 )); then
+      pause_status=0
+      echoinfo "extra_pause, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=keep going..."
+      return
+    elif (( 13 <= $H && $H < 16 )); then
+      pause_status=0
+      echoinfo "extra_pause, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=keep going..."
+      return
+    elif (( 17 <= $H && $H < 22 )); then
+      pause_status=0
+      echoinfo "extra_pause, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=keep going..."
+      return
+    else
+      pause_status=1
+    	echoinfo "extra_pause, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=go to bed..."
+    fi
+    extra_pause=3600
+    echoinfo "sleep, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=sleep 1h if outside hours..."
+    zenity --info --title="extra pause" --text="Extra pause: $extra_pause sec\n\n OK, ..." --width 210 --height 140  --timeout $extra_pause
+#    sleep 3600 # sleep 1h if outside hours
+  done
 }
 
-loop
-transset -a 0.9 # set lighter window
+spot() {
+  case $1 in
+    facebook)
+    declare -a _SPOTS=(
+    "https://www.facebook.com/"
+  #  "https://www.facebook.com/jobs"
+    "https://www.facebook.com/videos"
+  #  "https://www.facebook.com/games/instantgames/category/?category=400"
+  #  "https://www.facebook.com/gaming/feed/"
+  #  "https://www.facebook.com/marketplace/"
+    "https://www.facebook.com/watch/"
+  #  "https://www.facebook.com/watch/shows/"
+    "https://www.facebook.com/watch/live/"
+  #  "https://www.facebook.com/pages/"
+  #  "https://www.facebook.com/marketplace/groups/"
+  #  "https://www.facebook.com/jobs"
+  #  "https://www.facebook.com/offers/v2/wallet"
+    )
+   ;;
+    youtube)
+    declare -a _SPOTS=(
+    "https://www.facebook.com/"
+    "https://www.youtube.com/watch"
+    )
+    ;;
+    instagram)
+    declare -a _SPOTS=(
+    "https://www.instagram.com/"
+    "https://www.instagram.com/watch"
+    )
+    ;;
+  esac
+}
 
-set +x
+loop () {
+  function_start=$(date +%s) # calculate how long script runs (see on the end)
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  declare -a _SPOTS=(
+  "https://www.facebook.com/"
+  "https://www.facebook.com/jobs"
+  "https://www.facebook.com/videos"
+  "https://www.facebook.com/videos"
+  "https://www.facebook.com/videos"
+  "https://www.facebook.com/videos"
+  "https://www.facebook.com/games/instantgames/category/?category=400"
+#  "https://www.facebook.com/gaming/feed/"
+#  "https://www.facebook.com/marketplace/"
+  "https://www.facebook.com/watch/"
+  "https://www.facebook.com/watch/"
+  "https://www.facebook.com/watch/"
+  "https://www.facebook.com/watch/"
+  "https://www.facebook.com/watch/shows/"
+  "https://www.facebook.com/watch/live/"
+  "https://www.facebook.com/watch/live/"
+  "https://www.facebook.com/watch/live/"
+  "https://www.facebook.com/watch/live/"
+#  "https://www.facebook.com/pages/"
+#  "https://www.facebook.com/marketplace/groups/"
+#  "https://www.facebook.com/jobs"
+#  "https://www.facebook.com/offers/v2/wallet"
+  )
+  _SPOTS_SIZE=${#_SPOTS[@]}
+  iter=100 #how many steps to do
+  for (( step=1; step<$iter; step++ )); do
+    _SPOTS_INDEX=$(( RANDOM % $_SPOTS_SIZE ))
+    SPOT01url=$(echo ${_SPOTS[$_SPOTS_INDEX]})
+    progress=$(echo "$(( (step * 100) /$iter ))%")
+    echo "[ WEBPAGE ] url, step=$step, progress=$progress, SPOT01url=$SPOT01url, FUNCNAME=$FUNCNAME, comment=open url page"
+    walking_around_wall $SPOT01url
+    step_pause=$(gen_random 1 60)
+    echopause "steppause, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 1-60s... PAUSE..."
+    zenity --info --title="step pause" --text="Step pause: $step_pause sec\n" --width 210 --height 140  --timeout $step_pause
+  done #| sort -R #shuf -n 1 #shuffle random SPOT01url
+#  echo "[ LOOP ] start, step=$step, progress=$progress, SPOT01url=$SPOT01url, FUNCNAME=$FUNCNAME, comment=open url page"
+# locate_elements
+#    for SPOT01url in ${_SPOTS[@]}; do
+#      screen -S mouse-move-around -X kill  >> /dev/null 2>&1
+#      screen -S mouse-move-around$DISPLAY -X kill  >> /dev/null 2>&1
+#    done | shuf
+}
 
-#done | zenity --progress --title="Walking around test..." --percentage=0 --no-cancel --auto-close
-#(sleep 2 && wmctrl -F -a "Walking around test..." -b add,above) & loop
+# get options
+while getopts 'Vs:' opt
+do
+  case "${opt}" in
+    "V")
+    verbose="true"
+    debug_set
+    ;;
+    "s")
+    stuff="$OPTARG" # 1,2,3
+    echowarning "additional stuff to do: locate more elements..."
+    ;;
+  esac
+done
+shift $((OPTIND-1))
+
+case $1 in
+  "--debug")
+    debug_set --debug
+    loop
+  ;;
+  "$1")
+    $1 $2 $3
+    echoinfo "\$1=$1"
+    if [[ -z $1 ]]; then
+      extra_pause
+      loop
+    fi
+    if [ ! $? == "0" ]; then
+      echoerror "$1 - command not found, try $0 --help"
+    fi
+  ;;
+  *)
+    echoinfo "$1 - command not found, try $0 --help"
+  ;;
+esac
+# transset -a 0.9 # set lighter window
+time_elapsed=$(echo "$(( $(date +%s) - ${_START}))") | tee /dev/tty
