@@ -229,7 +229,7 @@ else
 	mkdir -p /opt/busy/fb/db
 	# create sqlite3 local user database
 	sqlite3 /opt/busy/fb/db/fb_$login_string.db "SELECT 1;"
-	/bin/bash /opt/busy4me/busy DB --create all
+	/bin/bash /opt/busy4me/busy.sh DB --create all
 	sqlite3 $user_db "SELECT COUNT (*) FROM fb_groups";
 fi
 }

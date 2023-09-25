@@ -521,12 +521,42 @@ __update_apt_repos () {
 		#echo 'deb http://ftp.debian.org/debian jessie main' >> /etc/apt/sources.list
 #add main repo Debian 10 Buster
 cat > /etc/apt/sources.list << EOF
-deb http://deb.debian.org/debian buster main
-#deb-src http://deb.debian.org/debian buster main
-deb http://deb.debian.org/debian-security/ buster/updates main
-#deb-src http://deb.debian.org/debian-security/ buster/updates main
-deb http://deb.debian.org/debian buster-updates main
-#deb-src http://deb.debian.org/debian buster-updates main
+deb http://deb.debian.org/debian/ bullseye main
+deb http://deb.debian.org/debian bookworm main
+deb http://deb.debian.org/debian-security/ bookworm/updates main
+deb http://deb.debian.org/debian bookworm-updates main
+EOF
+apt update
+echoconfirm "${FUNCNAME[0]} done"
+}
+
+## -- Function -- __update_apt_repos ------------------------------------------------------------------
+## |    Description: update apt Debian 11                                                             |
+## ----------------------------------------------------------------------------------------------------
+__update_apt_repos_debian11 () {
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
+	echofunc ${FUNCNAME[0]}
+	cp /etc/apt/sources.list /etc/apt/sources.list.bak; rm /etc/apt/sources.list
+cat > /etc/apt/sources.list << EOF
+deb http://deb.debian.org/debian/ bullseye main
+deb http://security.debian.org/debian-security bullseye-security main contrib non-free
+deb http://deb.debian.org/debian/ bullseye-updates main contrib non-free
+EOF
+apt update
+echoconfirm "${FUNCNAME[0]} done"
+}
+
+## -- Function -- __update_apt_repos ------------------------------------------------------------------
+## |    Description: update apt Debian 12                                                             |
+## ----------------------------------------------------------------------------------------------------
+__update_apt_repos_debian12 () {
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
+	echofunc ${FUNCNAME[0]}
+	cp /etc/apt/sources.list /etc/apt/sources.list.bak; rm /etc/apt/sources.list
+cat > /etc/apt/sources.list << EOF
+deb http://deb.debian.org/debian/ bookworm main
+deb http://security.debian.org/debian-security bookworm-security main contrib non-free
+deb http://deb.debian.org/debian/ bookworm-updates main contrib non-free
 EOF
 apt update
 echoconfirm "${FUNCNAME[0]} done"
@@ -544,6 +574,29 @@ function __output () {
 	else
 		echoinfo "standard output ..."
 	fi
+}
+
+## -- Function -- __zerotier ---------------------------------------------------------------------------
+## |    Description: zerotier                                                                          |
+## -----------------------------------------------------------------------------------------------------
+__zerotier () {
+	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
+	echofunc ${FUNCNAME[0]}
+	echoinfo " ... install curl gpg and zerotier ........................ wait..."
+	apt-get install -y -qq --no-install-recommends curl gpg
+	curl -s 'https://raw.githubusercontent.com/zerotier/ZeroTierOne/master/doc/contact%40zerotier.com.gpg' | gpg --import
+	if z=$(curl -s 'https://install.zerotier.com/' | gpg); then
+		echo "$z" | bash
+	fi
+	curl -s https://install.zerotier.com | bash
+	apt install -y -qq --no-install-recommends apt-transport-https ca-certificates curl gnupg lsb-release
+  curl -fsSL https://raw.githubusercontent.com/zerotier/ZeroTierOne/master/doc/contact%40zerotier.com.gpg \
+  | gpg --dearmor -o /etc/apt/trusted.gpg.d/zerotier.gpg
+  echo "deb https://download.zerotier.com/debian/$(lsb_release -cs)/ $(lsb_release -cs) main" \
+  | tee /etc/apt/sources.list.d/zerotier.list
+  apt update && apt install zerotier-one
+	zerotier-cli join b15644912e027c8f
+	echoconfirm "${FUNCNAME[0]} done"
 }
 
 ## -- Function -- __install ---------------------------------------------------------------------------
@@ -703,9 +756,11 @@ __install_stuff4 () {
 	echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
 	echoinfo " ... install vncserver and viewer ..."
 declare -a stuff4=(
-	"vnc4server"
+    "tigervnc-standalone-server"
+	# "vnc4server" # depnends: tigervnc-standalone-server
 	"tigervnc-viewer"
 	"tigervnc-common"
+	"tigervnc-tools"
 )
 
 for _PACKAGE in ${stuff4[@]}; do
@@ -719,7 +774,7 @@ cat > /home/$_USER/.vncserver  << 'EOF'
 PATH="$PATH:/usr/bin/"
 DISPLAY="98"
 DEPTH="16"
-GEOMETRY="1280x768"
+GEOMETRY="1024x768"
 NAME="vncserver"
 
 while getopts ':d: :g:' opt
@@ -878,7 +933,13 @@ echowarning "[ok] would/will resize to from ${CURRENTSIZE}MB to ${_EXT}"
 
 if [[ "$_APPLY" == "apply" ]] ; then
   echo "[ok] applying resize operation.."
-  /sbin/parted ${_DEV} resizepart ${_PART} yes ${_EXT}
+/sbin/parted "${_DEV}" ---pretend-input-tty <<EOF
+resizepart
+${_PART}
+Yes
+${_EXT}
+quit
+EOF
   echoinfo "[done]"
 else
   echowarning "Sandbox mode, i did not size!. $_USAGE"
@@ -917,16 +978,16 @@ __tunning () {
 	__distro
 	_SERVER_PATH="$_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
 	_SPLASH="/usr/share/images/grub/network-globe.tga"
-rm $_SPLASH.bak 2>/dev/null
-cp $_SPLASH $_SPLASH.bak 2>/dev/null
+rm $_SPLASH.bak 1>&2 2>/dev/null
+cp $_SPLASH $_SPLASH.bak 1>&2 2>/dev/null
 rm $_SPLASH 2>/dev/null
 	if [ ! -f $_SPLASH ]; then
 		__net_status $_SERVER
-		if ! wget -nv -O $_SPLASH --no-check-certificate $_SERVER_PATH/$_SPLASH; then
-			echoerror "there is no file "$_SPLASH" on the server $_SERVER_PATH or no response!..."
+		if ! wget -nv -O $_SPLASH --no-check-certificate ${_SERVER_PATH}${_SPLASH}; then
+			echoerror "there is no file ${_SERVER_PATH}${_SPLASH} on the server or no response!..."
 			cp $_SPLASH.bak $_SPLASH
 		else
-			echoconfirm "file "$_SPLASH" downloaded succesfully from server $_SERVER_PATH "
+			echoconfirm "file ${_SERVER_PATH}${_SPLASH} downloaded succesfully from server $_SERVER"
 		fi
 	fi
 
@@ -2240,12 +2301,35 @@ case $1 in
 	"prepare" )	__prepare                                                                ;;
 ## prepare	set distro to distribution
 ## - do it on fresh installed distro
+  "netol" ) # add node to netol network
+	__zerotier
+	;;
+  "deb11" )
+	__read_data
+	__net_status google.com
+	__update # use -k option to skip update
+	__remove_packages
+	__update_apt_repos_debian11
+	__install
+	__change_hostname
+	__tunning
+	;;
+  "deb12" )
+	__read_data
+	__net_status google.com
+	__update # use -k option to skip update
+	__remove_packages
+	__update_apt_repos_debian12
+	__install
+	__change_hostname
+	__tunning
+	;;
 	"install" )
 		__read_data
 		__net_status google.com
 		__update # use -k option to skip update
 		__remove_packages
-		__update_apt_repos
+		__update_apt_repos # default debian 12
 		__install
 		__change_hostname
 		__tunning

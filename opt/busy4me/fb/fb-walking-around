@@ -6,6 +6,7 @@ LOGFILE=/var/log/busy4me.log
 STATFILE=/var/log/busy4me-nocolor.log # log file without escape characters, used for time series databases (eg.influxdb-telegraf-grok)
 source /opt/busy4me/busy-functions # global functions
 source /opt/busy4me/fb/fb-config # fb variables from there
+verbose="true"
 
 old_logline() {
     while IFS= read -r line; do
@@ -21,7 +22,7 @@ logline() { # get line and send to log file
     done
 }
 
-debug_set () {
+verbose_set () {
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
   if [[ "$1" == "--debug" ]] || [[ "$verbose" == "true" ]]; then
     echoinfo "verbose, FUNCNAME=${FUNCNAME[0]}, comment=set verbose mode by exec | tee =========================="
@@ -300,20 +301,19 @@ check_alerts() {
 
 video() {
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]} << SPOT01url=$SPOT01url"
+  step_pause=$(gen_random 120 720)
+  title="watch_video"
   if [ "$1" = "watch" ]; then
     if [[ $SPOT01url == *"com/watch"* ]] || [[ $SPOT01url == *"com/videos"* ]] || [[ $SPOT01url == *"com/watch/live/"* ]]; then
       locate -i fb-watch--push-button-red--live.jpg -a circle
       if [ $(echo "$?") = "0" ]; then
         xdotool key --delay $kd_2 Escape
         locate -i fb-watch--push-button-red--live.jpg -a click --offx=100 --offy=100
-        step_pause=$(gen_random 360 720)
         echopause "steppause, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 360-720s... PAUSE..."
         echoinfo "watch, FUNCNAME=${FUNCNAME[0]}, comment=fb-watch--push-button-red--live"
-        zenity --info --title="step pause" --text="Watch Live... step_pause=$step_pause sec\n\n Press OK to stop pause and continue..." --width 410 --height 120  --timeout $step_pause
+        pause $step_pause $title # show zenity message
         return
       fi
-#      locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a circle
-#      if [ $(echo "$?") = "0" ]; then
       if [[ $(locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a circle) ]]\
       || [[ $(locate -i fb-post--push-button-grey-icon-and-inscription--share-2.jpg -a circle) ]]
       then
@@ -344,14 +344,12 @@ video() {
         if [ $(echo "$?") = "0" ]; then
           echowarning "video, comment=video not running... click on the screen..."
           locate -i video.jpg -a click
-#          xdotool key --delay $kd space
         else
           echoconfirm "video, comment=video running..."
         fi
-        step_pause=$(gen_random 360 720)
         echopause "steppause, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 360-720s... PAUSE..."
         echoinfo "watch, FUNCNAME=${FUNCNAME[0]}, comment=fb-post--push-button-grey-icon-and-inscription--share"
-        zenity --info --title="step pause" --text="Watch video... step_pause=$step_pause sec\n\n Press OK to stop pause and continue..." --width 410 --height 120  --timeout $step_pause
+        pause $step_pause $title # show zenity message
         watched_video="$clip"
         echoinfo "watched, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, watched_video=$clip"
       else
@@ -532,7 +530,7 @@ extra_pause() {
   pause_status=1
   while [ $pause_status = 1 ]; do
     H=$(date +%k)
-    if (( 6 <= $H && $H < 12 )); then
+    if (( 5 <= $H && $H < 10 )); then
       pause_status=0
       echoinfo "extra_pause, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=keep going..."
       return
@@ -589,6 +587,20 @@ spot() {
   esac
 }
 
+pause () {
+  pause=$1
+  steps=$(( $1 * 10 ))
+  title=$2
+  echopause "steppause, step_pause=$1, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 1-60s... PAUSE..."
+  for (( pause_step=1; pause_step<$steps; pause_step++ )); do
+      value=$(( (steps - $pause_step) / 10 ))
+      echo "# Pause: $pause s \nWait $value seconds \nor close it if you want..."
+      echo "$(( (pause_step * 100) /$steps ))"
+      sleep 0.1
+      shift 1
+  done | zenity --progress --title="$title" --percentage=0 --no-cancel --auto-close --width 400 --height 90
+}
+
 loop () {
   function_start=$(date +%s) # calculate how long script runs (see on the end)
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
@@ -623,10 +635,10 @@ loop () {
     SPOT01url=$(echo ${_SPOTS[$_SPOTS_INDEX]})
     progress=$(echo "$(( (step * 100) /$iter ))%")
     echo "[ WEBPAGE ] url, step=$step, progress=$progress, SPOT01url=$SPOT01url, FUNCNAME=$FUNCNAME, comment=open url page"
+    title='extra_pause'
     walking_around_wall $SPOT01url
-    step_pause=$(gen_random 1 60)
-    echopause "steppause, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 1-60s... PAUSE..."
-    zenity --info --title="step pause" --text="Step pause: $step_pause sec\n" --width 210 --height 140  --timeout $step_pause
+    pause $(gen_random 1 60) $title
+    extra_pause
   done #| sort -R #shuf -n 1 #shuffle random SPOT01url
 #  echo "[ LOOP ] start, step=$step, progress=$progress, SPOT01url=$SPOT01url, FUNCNAME=$FUNCNAME, comment=open url page"
 # locate_elements
@@ -642,7 +654,6 @@ do
   case "${opt}" in
     "V")
     verbose="true"
-    debug_set
     ;;
     "s")
     stuff="$OPTARG" # 1,2,3
@@ -654,14 +665,14 @@ shift $((OPTIND-1))
 
 case $1 in
   "--debug")
-    debug_set --debug
+    verbose_set --debug
     loop
   ;;
   "$1")
+    verbose_set
     $1 $2 $3
     echoinfo "\$1=$1"
     if [[ -z $1 ]]; then
-      extra_pause
       loop
     fi
     if [ ! $? == "0" ]; then

@@ -124,7 +124,7 @@ do
 	mem=$(free -m | awk 'NR==2{printf "%s\n", $3,$2,$3*100/$2 }')
 	echo "Difference: $difference"
 	echo "Factor: $factor"
-	echo "# Random wall content... \nThis is just a scroll page down and memory usage test.\n \
+	echo "# Random news feed content... \nThis is just a scroll page down and memory usage test.\n \
 	Scroll step: $scroll_count/$scroll_limit ...please wait\n\
 	\n\
 	Usage system memory bar: $mem/$limit MB"

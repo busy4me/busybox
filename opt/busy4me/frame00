@@ -117,10 +117,10 @@ echo -e "...script run in DISPLAY $DISPLAY" | logline
 #task_to_do="/opt/busy4me/fb/fb-walking-around --debug"
 #screen -dmS fb-walking-around$DISPLAY $task_to_do
 _TASK='fb-walking-around'
-_OPT_1='-V'
+#_OPT_1='-V'
 #_OPT_2='-s'
 #_OPT_3='3'
-task_to_do="/opt/busy4me/fb/$_TASK $_OPT_1 $_OPT_2 $_OPT_3 $_OPT_4 $_OPT_5"
+task_to_do="/opt/busy4me/fb/$_TASK"
 echoinfo "=========================== task_to_do=$task_to_do"
 screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$DISPLAY $task_to_do
 screen -ls

@@ -30,4 +30,14 @@ ffmpeg -f x11grab -framerate 30 -video_size 800x600 \
 -f flv rtmp://live.twitch.tv/app/live_279064185_qRAgheqdBj79z4el2XDsdY2iN5EzS3
 
 # no audio
-export DISPLAY=:0 && ffmpeg -f x11grab -framerate 30 -video_size 800x600 -i :0 -c:v libx264 -preset veryfast -maxrate 1984k -bufsize 3968k -vf "format=yuv420p" -f flv rtmp://live.twitch.tv/app/live_279064185_qRAgheqdBj79z4el2XDsdY2iN5EzS3 &
+export DISPLAY=:0 && ffmpeg \
+-f x11grab \
+-framerate 30 \
+-video_size 800x600 \
+-i :0 \
+-c:v libx264 \
+-preset veryfast \
+-maxrate 1984k \
+-bufsize 3968k \
+-vf "format=yuv420p" \
+-f flv rtmp://live.twitch.tv/app/live_279064185_qRAgheqdBj79z4el2XDsdY2iN5EzS3 &

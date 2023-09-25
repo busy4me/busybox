@@ -6,14 +6,14 @@ script_dir = os.path.dirname(__file__)
 rel_path = "fb/img/"
 img_path = os.path.join(script_dir, rel_path)
 
-func_name = "\033[1;97m [ FUNC ]\033[1;90m"
-success = "\033[1;32m\033[1;100m [ SUCCESS ]\033[1;0m\033[1;32m"
-ok = "\033[1;92m [ OK ]\033[1;32m"
-info = "\033[1;94m [ INFO ]\033[1;34m"
-result = "\033[1;96m [ RESULT ]\033[1;36m"
-nok = "\033[1;91m [ NOK ]"
-warning = "\033[1;95m [ WARNING ]\033[1;35m"
-error = "\033[1;91m [ ERROR ]"
+func_name = "\033[1;97m[ FUNC ]\033[1;90m"
+success = "\033[1;32m\033[1;100m[ SUCCESS ]\033[1;0m\033[1;32m"
+ok = "\033[1;92m[ OK ]\033[1;32m"
+info = "\033[1;94m[ INFO ]\033[1;0m"
+result = "\033[1;96m[ RESULT ]\033[1;36m"
+nok = "\033[1;91m[ NOK ]"
+warning = "\033[1;95m[ WARNING ]\033[1;35m"
+error = "\033[1;91m[ ERROR ]"
 nocolor = "\033[1;0m"
 
 

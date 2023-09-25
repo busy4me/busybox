@@ -176,42 +176,48 @@ openbox_config () {
 
 # download busy4me files
 download_busy4me_files () {
+	declare -a _FILES=(
+	"/opt/busy4me/busy"
+	"/opt/busy4me/busy.sh"
+	"/opt/busy4me/busy-config"
+	"/opt/busy4me/busy-functions"
+	"/opt/busy4me/config"
+	"/opt/busy4me/config.py"
+	"/opt/busy4me/frame00"
+	"/opt/busy4me/frame01"
+	"/opt/busy4me/frame02"
+	"/opt/busy4me/frame99"
+	"/opt/busy4me/update"
+	"/opt/busy4me/update2"
+	"/opt/busy4me/windows-init"
+	"/opt/busy4me/windows-normal"
+	"/opt/busy4me/chrome-init"
+	"/opt/busy4me/locate"
+	"/opt/busy4me/menu-init"
+	"/opt/busy4me/mouse-01"
+	"/opt/busy4me/stratum"
+	"/opt/busy4me/compare_logs_reboot.sh"
+	"/opt/busy4me/change_hostname.sh"
+	"/opt/busy4me/change_hostname_uuid.sh"
+	"/opt/busy4me/stream_to_facebook.sh"
+	"/opt/busy4me/stream_to_twitch.sh"
+	"/opt/busy4me/system-meminfo.sh"
+	"/opt/busy4me/tint2rc00"
+	"/opt/busy4me/tint2-data"
+	"/opt/busy4me/windows-check.sh"
+	"/opt/busy4me/windows-uneeded-close.sh"
+	"/opt/busy4me/xterm.sh"
+	"/opt/busy4me/xterm-transparent"
+	"/opt/busy4me/zenity"
+	)
 	cd /opt/$PROJECT
 	mkdir /opt/$PROJECT-backup/
 	cp /opt/$PROJECT/* /opt/$PROJECT-backup/
 	rm /opt/$PROJECT/*
 	echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy-config
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/busy-functions
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/config
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/config.py
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame00
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame01
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame02
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/frame99
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/update
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/update2
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-init
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-normal
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/chrome-init
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/locate
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/menu-init
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/mouse-01
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stratum
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/compare_logs_reboot.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/change_hostname.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/change_hostname_uuid.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stream_to_facebook.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/stream_to_twitch.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/system-meminfo.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/tint2rc00
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/tint2-data
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-check.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/windows-uneeded-close.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/xterm.sh
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/xterm-transparent
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/zenity
+	for _FILE in ${_FILES[@]}; do
+		wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
+	done
 	wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html
 	chmod +x /opt/$PROJECT/*
 	chmod +x /opt/$PROJECT/*.*
@@ -296,6 +302,7 @@ echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http:/
 openbox_autostart () {
 echo -e "\e[44m ................... update Openbox autostart file \e[0m"
 rm /home/busyman/.config/openbox/autostart
+
 cat > /home/busyman/.config/openbox/autostart << 'EOF'
 # Programs that will run after Openbox windows manager has started
 xrandr --output default --mode 1280x768 &
@@ -310,10 +317,14 @@ if [ $(echo $DISPLAY) = ":98" ]; then
   export DISPLAY=:98 && screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":97" ]; then
-  export DISPLAY=:97 && /opt/busy4me/frame00 &
+	(sleep 2s && tint2 -c /home/busyman/.config/tint2/mask01) &
+	(sleep 2s && tint2 -c /home/busyman/.config/tint2/panel01) &
+  export DISPLAY=:97 && screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":96" ]; then
-  export DISPLAY=:96 && /opt/busy4me/frame00 &
+	(sleep 2s && tint2 -c /home/busyman/.config/tint2/mask01) &
+	(sleep 2s && tint2 -c /home/busyman/.config/tint2/panel01) &
+  export DISPLAY=:96 && screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":0" ]; then
   export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
