@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # stratum
 # run as root
-
+#
 SCRIPT=stratum
 LOGFILE=/var/log/stratum.log
 
