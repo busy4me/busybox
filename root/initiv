@@ -2365,7 +2365,7 @@ case $1 in
 		__interface
 		__net_status # used for waitng for IP from DHCP
 		__change_hostname # previously used for waiting for IP from DHCP
-		__salt
+		## __salt ## do not install salt
 		__update
 		__update_apt_repos
 		__install_stuff1
