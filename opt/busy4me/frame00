@@ -1,27 +1,23 @@
 #!/bin/bash
-# Framework 00 ....
-# init all scripts one by one
-
+# busyman framework 00 .... init all scripts one by one
 SCRIPT=frame00
 source /opt/busy4me/busy-functions # global functions
 source /opt/busy4me/busy-config # global variables
-
-busy4me_log
+busy4me_log ## logging
 
 if [ $USER = "root" ]
-	then
-	echo "Do not run as root! exit..."
-	exit
+  then
+  echo "Do not run as root! exit..."
+  exit
 fi
 
 if [ -f /opt/busy4me/config ];then
     . /opt/busy4me/config
-	else
-	echo "There is no config file!... stop." | logline
-		exit 0
+  else
+  echo "There is no config file!... stop." | logline
+  exit 0
 fi
 
-# export PATH just in case, but should be already in .bashrc
 export PATH=$PATH:/opt/busy4me
 export PATH=$PATH:/opt/busy4me/fb
 
@@ -34,81 +30,57 @@ echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
 # set directories for big files
 mkdir /opt/busy/{files,images,sounds,videos} 2>/dev/null
 
-# set_crontab fb-post
-
-# disable crontab job
-#crontab -l | sed "/^[^#].*export DISPLAY=:98 && \/opt\/busy4me\/fb\/fb-post -c all/s/^/#/" | crontab -
-#crontab -l | sed "/^[^#].*export DISPLAY=:98 && \/opt\/busy4me\/busy/s/^/#/" | crontab -
-
 # kill all screen sessions
-#screen -S fb-walking-around -X kill
 screen -S fb-walking-around$DISPLAY -X kill
-#screen -S windows-uneeded-close -X kill
 screen -S windows-uneeded-close$DISPLAY -X kill
-#screen -S mouse-move-around -X kill
 screen -S mouse-move-around$DISPLAY -X kill
-#screen -S mouse-move-01 -X kill
 screen -S mouse-move-01$DISPLAY -X kill
-#screen -S mouse-move-02 -X kill
 screen -S mouse-move-02$DISPLAY -X kill
 
-# reset status, delete all *-status files or particular -status file
 reset_status() {
-	if [[ -z ${1} ]]; then
-		rm /opt/busy/fb/*-status
-		return
-	fi
-	rm /opt/busy/fb/$1-status
+  if [[ -z ${1} ]]; then
+    rm /opt/busy/fb/*-status
+    return
+  fi
+  rm /opt/busy/fb/$1-status
 }
 reset_status
 
-# move mouse away...
 echo "move mouse away...." | logline
 xdotool mousemove 8 45
-# update date before login....
 echo "update date before login...." | logline
 ntpdate -s time.nist.gov | logline
-
-#echo "Start $SCRIPT..." | logline
-#echo "Start /opt/busy4me/windows-init..." | logline
-#/bin/bash /opt/busy4me/windows-init
 
 echo "Start /opt/busy4me/fb/fb-init..." | logline
 # /bin/bash /opt/busy4me/fb/fb-init
 screen -S fb-init$DISPLAY -X kill 2>/dev/null
 screen -dmS fb-init$DISPLAY '/opt/busy4me/fb/fb-init'
-#fb_init=$(echo "fb-init"$DISPLAY"_status" | tr '-' '_' | tr ':' '_')
-#eval $fb_init="done"
-#echo $fb_init$DISPLAY_status
 while [[ ! $fb_init_status == *"done"* ]]; do
-	fb_init_status=$(cat /opt/busy/fb/fb-init$DISPLAY-status)
-	sleep 1
+  fb_init_status=$(cat /opt/busy/fb/fb-init$DISPLAY-status)
+  sleep 1
 done
 reset_status fb-init$DISPLAY
 
-echo "Start /opt/busy4me/fb/fb-login..." | logline
-# /bin/bash /opt/busy4me/fb/fb-login --debug
-screen -S fb-login$DISPLAY -X kill 2>/dev/null
-screen -dmS fb-login$DISPLAY '/opt/busy4me/fb/fb-login'
-while [[ ! $fb_login_status == *"done"* ]]; do
-	fb_login_status=$(cat /opt/busy/fb/fb-login$DISPLAY-status)
-	sleep 1
-done
-reset_status fb-login$DISPLAY
+# echo "Start /opt/busy4me/fb/fb-login..." | logline
+# screen -S fb-login$DISPLAY -X kill 2>/dev/null
+# screen -dmS fb-login$DISPLAY '/opt/busy4me/fb/fb-login'
+# while [[ ! $fb_login_status == *"done"* ]]; do
+#   fb_login_status=$(cat /opt/busy/fb/fb-login$DISPLAY-status)
+#   sleep 1
+# done
+# reset_status fb-login$DISPLAY
 
 echo "Start /opt/busy4me/fb/fb-scroll..." | logline
-# /bin/bash /opt/busy4me/fb/fb-scroll --debug
 screen -S fb-scroll$DISPLAY -X kill 2>/dev/null
 screen -dmS fb-scroll$DISPLAY '/opt/busy4me/fb/fb-scroll'
 while [[ ! $fb_scroll_status == *"done"* ]]; do
-	fb_scroll_status=$(cat /opt/busy/fb/fb-scroll$DISPLAY-status)
-	sleep 1
+  fb_scroll_status=$(cat /opt/busy/fb/fb-scroll$DISPLAY-status)
+  sleep 1
 done
 reset_status fb-scroll$DISPLAY
 
 #echo "Start /opt/busy4me/fb/fb-save-my-groups..." | logline
 #/bin/bash /opt/busy4me/fb/fb-save-my-groups
-
 echo "Start /opt/busy4me/fb/fb-walking-around..." | logline
 # /bin/bash /opt/busy4me/fb/fb-walking-around
 
@@ -125,20 +97,4 @@ echoinfo "=========================== task_to_do=$task_to_do"
 screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$DISPLAY $task_to_do
 screen -ls
 
-# fb-init-99 runs Xvfb in display :99, ffmpeg on port 9000 and chrome with facebook
-# echo "Run fb-init-99 at the screen shell session..." | logline
-# screen -dmS fb-init-99 '/opt/busy4me/fb/fb-init-99'
-#echo "Run fb-init-99" | logline
-#/bin/bash /opt/busy4me/fb/fb-init-99
-
-#echo "Start /opt/busy4me/fb/fb-login-02 on screen 99..." | logline
-#/bin/bash $(export DISPLAY=:99 && /opt/busy4me/fb/fb-login)
-
-# sleep 180
-# enable crontab job
-#crontab -l | sed "/^#.*export DISPLAY=:98 && \/opt\/busy4me\/fb\/fb-post -c all/s/^#//" | crontab -
-#crontab -l | sed "/^#.*export DISPLAY=:98 && \/opt\/busy4me\/busy/s/^#//" | crontab -
-
 echo "Stop $SCRIPT..." | logline
-
-# screen -dmS stream_to_twitch '/opt/busy4me/stream_to_twitch.sh'
