@@ -218,69 +218,69 @@ download_fb_files () { # download fb files
   rm -rf /opt/$PROJECT/fb/*
   mkdir /opt/$PROJECT/fb/img
   chown busyman:busyman /opt/$PROJECT/fb/img
-  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/* \e[0m"
-  wget -nv -O /opt/$PROJECT/fb/img/chat_icon.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/chat_icon.png
-  wget -nv -O /opt/$PROJECT/fb/img/cross_chat.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat.png
-  wget -nv -O /opt/$PROJECT/fb/img/cross_chat2.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat2.png
-  wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/cross_chat3.png
-  wget -nv -O /opt/$PROJECT/fb/img/button_blue_allow_all_cookies.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/button_blue_allow_all_cookies.png
-  wget -nv -O /opt/$PROJECT/fb/img/fb_logo.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb_logo.png
-  wget -nv -O /opt/$PROJECT/fb/img/fb_blue.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb_blue.png
-  wget -nv -O /opt/$PROJECT/fb/img/fb-icon-home-grey.png --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-icon-home-grey.png
+  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/* \e[0m"
+  wget -nv -O /opt/$PROJECT/fb/img/chat_icon.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/chat_icon.png
+  wget -nv -O /opt/$PROJECT/fb/img/cross_chat.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/cross_chat.png
+  wget -nv -O /opt/$PROJECT/fb/img/cross_chat2.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/cross_chat2.png
+  wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/cross_chat3.png
+  wget -nv -O /opt/$PROJECT/fb/img/button_blue_allow_all_cookies.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/button_blue_allow_all_cookies.png
+  wget -nv -O /opt/$PROJECT/fb/img/fb_logo.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb_logo.png
+  wget -nv -O /opt/$PROJECT/fb/img/fb_blue.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb_blue.png
+  wget -nv -O /opt/$PROJECT/fb/img/fb-icon-home-grey.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-icon-home-grey.png
   cd /opt/$PROJECT/fb/img
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb--post-frame--left-bottom-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb--logo.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-jobs--job-post-frame--right-top-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-jobs--job-post-frame--right-bottom-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-jobs--job-post-frame--left-top-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-jobs--job-post-frame--left-bottom-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb--icon--like-with-inscription.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb--icon--home-grey.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb--blue-inscription.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb--message-you-are-temporarily-blocked.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-alert--icon-red-triangle--connection-is-not-private.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-watch--push-button-red--live.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-post--push-button-grey-icon-and-inscription--share.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-post--push-button-grey-icon-and-inscription--share-2.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/img/fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg
-  #wget -r -l1 --no-check-certificate -np "http://busy4.me/busy/opt/busy4me/fb/img" -P /opt/$PROJECT/fb/img -A "fb-*.png"
-  #wget -r --no-parent --no-check-certificate -A 'fb-*.png' http://busy4.me/busy/opt/busy4me/fb/img/
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--post-frame--left-bottom-edge.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--logo.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--right-top-edge.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--right-bottom-edge.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--left-top-edge.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--left-bottom-edge.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--icon--like-with-inscription.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--icon--home-grey.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--blue-inscription.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--message-you-are-temporarily-blocked.png
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--icon-red-triangle--connection-is-not-private.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-watch--push-button-red--live.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--push-button-grey-icon-and-inscription--share.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--push-button-grey-icon-and-inscription--share-2.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg
+  #wget -r -l1 --no-check-certificate -np "http://busy4.me/busy/opt/${PROJECT}/fb/img" -P /opt/$PROJECT/fb/img -A "fb-*.png"
+  #wget -r --no-parent --no-check-certificate -A 'fb-*.png' http://busy4.me/busy/opt/${PROJECT}/fb/img/
   cd /opt/$PROJECT/fb
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-close-windows.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-chat-detect-activity.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-collect-info
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-config
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-fanpage-post-share
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-groups
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-info
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-init
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-init-01
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-init-99
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-live-stream
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-config
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-login
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-mouse-on-element.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-open
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-post
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-respond-to-requests
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-scroll
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-links-sel.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-my-friends
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-save-my-groups
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-update-my-groups-01
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-update-posted-links.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-walking-around
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/fb-watchdog
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-01.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-02.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-move-around.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-position.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-position.sh
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/mouse-show.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-chat-close-windows.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-chat-detect-activity.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-collect-info
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-config
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-fanpage-post-share
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-groups
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-info
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-init
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-init-01
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-init-99
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-live-stream
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-config
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-login
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-mouse-on-element.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-open
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-post
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-respond-to-requests
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-scroll
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-save-links-sel.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-save-my-friends
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-save-my-groups
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-update-my-groups-01
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-update-posted-links.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-walking-around
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-watchdog
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move-01.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move-02.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move-around.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-position.py
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-position.sh
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-show.py
   chmod +x /opt/$PROJECT/*
   chmod +x /opt/$PROJECT/*.*
   chmod +x /opt/$PROJECT/fb/*
@@ -312,7 +312,7 @@ fi
 if [ $(echo $DISPLAY) = ":96" ]; then
   (sleep 2s && tint2 -c /home/busyman/.config/tint2/mask01) &
   (sleep 2s && tint2 -c /home/busyman/.config/tint2/panel01) &
-  export DISPLAY=:96 && screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' &
+  export DISPLAY=:96 && screen -dmS frame00$DISPLAY '/opt/${PROJECT}/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":0" ]; then
   export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
@@ -438,7 +438,7 @@ case $1 in
 	--update|update)
 		root_check
 		echo -e "\e[44m start update file: "update" ...\e[0m\e[31m CAUTION! update itself...  \e[0m"
-		if ! wget -nv -O /opt/${PROJECT}/update.new --no-check-certificate http://busy4.me/busy/opt/busy4me/update; then
+		if ! wget -nv -O /opt/${PROJECT}/update.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/update; then
 			echo -e "\e[101m\e[30m ERROR: there is no file "update" on the server or no response!...\e[0m"
 			exit 1
 		else
@@ -484,7 +484,7 @@ case $1 in
 			exit 1
 		else
 			echo -e '\e[44m start update file: '$UPDATE_FILE' ...\e[0m'
-			if ! wget -nv -O /opt/${PROJECT}/$UPDATE_FILE.new --no-check-certificate http://busy4.me/busy/opt/busy4me/$UPDATE_FILE; then
+			if ! wget -nv -O /opt/${PROJECT}/$UPDATE_FILE.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/$UPDATE_FILE; then
 				echo -e '\e[101m\e[30m ERROR: there is no file "'$UPDATE_FILE'" on the server...\e[0m'
 				rm -rf /opt/${PROJECT}/$UPDATE_FILE.new
 			else
@@ -504,11 +504,11 @@ case $1 in
 					;;
 					*)
 						echo -e "OK, add file $1 to 'update-list' ..."
-						echo "http://busy4.me/busy/opt/busy4me/"$1 >> /opt/${PROJECT}/data/update-list
+						echo "http://busy4.me/busy/opt/${PROJECT}/"$1 >> /opt/${PROJECT}/data/update-list
 					;;
 					esac
 			fi
-			#wget -nv -O /opt/busy4me/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/busy/opt/busy4me/fb/$UPDATE_FILE
+			#wget -nv -O /opt/${PROJECT}/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/$UPDATE_FILE
 			exit 0
 		fi
 	;;
