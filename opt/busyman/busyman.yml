@@ -1,0 +1,15 @@
+## config file
+PROJECT: "busyman"
+XAUTHORITY: "/home/busyman/.Xauthority"
+LOGFILE: "/var/log/busyman.log"
+
+## colors
+func_name: "\033[1;97m [ FUNC ] \u26AA"
+success: "\033[1;32m\033[1;100m [ SUCCESS ] \u2705"
+ok: "\033[1;32m [ OK ] \u2705"
+info: "\033[1;94m [ INFO ] \u23e9"
+nok: "\033[1;91m [ NOK ] \u26D4"
+warning: "\033[1;95m [ WARNING ] \u26a1"
+error: "\033[1;91m [ ERROR ] \u274c \u2757"
+nocolor: "\033[1;0m"
+

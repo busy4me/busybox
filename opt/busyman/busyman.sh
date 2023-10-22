@@ -1,27 +1,44 @@
 #!/bin/bash
-#help# Usage:	busy <function> [command]
-#help# functions:	start, stop, status
-#help# commands: fb-walking-around, fb-login, fb-init,
-
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/busy-config # global variables
-source /opt/busy4me/fb/fb-config # fb variables from there
-# source /opt/busy4me/fb/fb-post # fb post variables from there
-# source /opt/busy4me/fb/fb-user # fb user variables from there
-# edited from Atom
-
-SCRIPT=busy
-
-#screen_name="xterm-"$DISPLAY
-#screen_task="/opt/busy4me/xterm.sh --screen busy"$DISPLAY
-#screen -S $screen_name -X kill # kill screen on this display
-#screen -dmS $screen_name $screen_task
-
-#echo -e "login="$login "| user_first_name="$user_first_name "| user_last_name="$user_last_name | logline
-#echo -e "login_string = "$login_string | logline
-# echo -e "\e[42m\e[30m user_db = \e[0m\e[32m" $user_db "\e[0m" | logline
-
+echo -e "\u00A9 BUSYMAN \u26AA \u26AA \u26AA \u2b07 [ START ] \u2B50"
+PROJECT="busyman"
+SCRIPT="busyman.sh"
 JOB=$((RANDOM%8999+1000))
+
+# yaml parser, source: https://stackoverflow.com/questions/5014632/how-can-i-parse-a-yaml-file-from-a-linux-shell-script
+function parse_yaml {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|,$s\]$s\$|]|" \
+        -e ":1;s|^\($s\)\($w\)$s:$s\[$s\(.*\)$s,$s\(.*\)$s\]|\1\2: [\3]\n\1  - \4|;t1" \
+        -e "s|^\($s\)\($w\)$s:$s\[$s\(.*\)$s\]|\1\2:\n\1  - \3|;p" $1 | \
+   sed -ne "s|,$s}$s\$|}|" \
+        -e ":1;s|^\($s\)-$s{$s\(.*\)$s,$s\($w\)$s:$s\(.*\)$s}|\1- {\2}\n\1  \3: \4|;t1" \
+        -e    "s|^\($s\)-$s{$s\(.*\)$s}|\1-\n\1  \2|;p" | \
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)-$s[\"']\(.*\)[\"']$s\$|\1$fs$fs\2|p" \
+        -e "s|^\($s\)-$s\(.*\)$s\$|\1$fs$fs\2|p" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" | \
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]; idx[i]=0}}
+      if(length($2)== 0){  vname[indent]= ++idx[indent] };
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) { vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, vname[indent], $3);
+      }
+   }'
+}
+
+eval $(parse_yaml /opt/${PROJECT}/${PROJECT}.yml) ### main config file
+echo -e "color test: $info $func_name $success $ok $warning $nok $error $nocolor"
+
+source /opt/${PROJECT}/busy-functions # global functions
+source /opt/${PROJECT}/busy-config # global variables
+source /opt/${PROJECT}/fb/fb-config # fb variables from there
+
+echo -e "${info} PROJECT: $PROJECT ${nocolor}"
 
 if [ $USER = "root" ]; then
  echo -e "\e[92m[info]\e[0m don't run as root ... \n\
@@ -125,3 +142,4 @@ case $1 in
   	first=$1
 	;;
 esac
+echo -e "\u2705 [ STOP ] \u26A1"

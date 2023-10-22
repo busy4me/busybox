@@ -1,8 +1,8 @@
 #!/bin/sh
 # fb config file
-
+PROJECT="busyman"
+BUSYUSER="busyman"
 sql_engine="sqlite3"
-
 login_source="/opt/busy/fb/fb-login"
 password_source="/opt/busy/fb/fb-password"
 user_name=$(cat "/opt/busy/fb/fb-name" 2>/dev/null)
@@ -25,9 +25,6 @@ BR01="google-chrome" # Browser 01
 PROC01="chrome" # process 01
 SPOT01="facebook" # spot 01
 SPOT01url="https://facebook.com" # url 01
-PROJECT="busy4me"
-BUSYUSER="busyman"
-
 profile_id=""
 profile_name="me"
 login_url="http://m.facebook.com"

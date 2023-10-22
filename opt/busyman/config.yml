@@ -1,8 +1,0 @@
-func_name: \033[1;97m [ FUNC ]
-success: "\033[1;32m\033[1;100m [ SUCCESS ]"
-ok: "\033[1;32m [ OK ]"
-info: "\033[1;94m [ INFO ]"
-nok: "\033[1;91m [ NOK ]"
-warning: "\033[1;95m [ WARNING ]"
-error: "\033[1;91m [ ERROR ]"
-nocolor: "\033[1;0m"

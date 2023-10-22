@@ -1,9 +1,10 @@
 #!/bin/bash
+source config
 # busyman framework 00 .... init all scripts one by one
 SCRIPT=frame00
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/busy-config # global variables
-busy4me_log ## logging
+source /opt/${PROJECT}/busy-functions # global functions
+source /opt/${PROJECT}/busy-config # global variables
+${PROJECT}_log ## logging
 
 if [ $USER = "root" ]
   then
@@ -11,15 +12,8 @@ if [ $USER = "root" ]
   exit
 fi
 
-if [ -f /opt/busy4me/config ];then
-    . /opt/busy4me/config
-  else
-  echo "There is no config file!... stop." | logline
-  exit 0
-fi
-
-export PATH=$PATH:/opt/busy4me
-export PATH=$PATH:/opt/busy4me/fb
+export PATH=$PATH:/opt/${PROJECT}
+export PATH=$PATH:/opt/${PROJECT}/fb
 
 logline() {
     while IFS= read -r line; do
@@ -28,7 +22,7 @@ echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
 }
 
 # set directories for big files
-mkdir /opt/busy/{files,images,sounds,videos} 2>/dev/null
+mkdir /opt/${PROJECT}/data/{files,images,sounds,videos} 2>/dev/null
 
 # kill all screen sessions
 screen -S fb-walking-around$DISPLAY -X kill
@@ -51,48 +45,48 @@ xdotool mousemove 8 45
 echo "update date before login...." | logline
 ntpdate -s time.nist.gov | logline
 
-echo "Start /opt/busy4me/fb/fb-init..." | logline
-# /bin/bash /opt/busy4me/fb/fb-init
+echo "Start /opt/${PROJECT}/fb/fb-init..." | logline
+# /bin/bash /opt/${PROJECT}/fb/fb-init
 screen -S fb-init$DISPLAY -X kill 2>/dev/null
-screen -dmS fb-init$DISPLAY '/opt/busy4me/fb/fb-init'
+screen -dmS fb-init$DISPLAY '/opt/${PROJECT}/fb/fb-init'
 while [[ ! $fb_init_status == *"done"* ]]; do
   fb_init_status=$(cat /opt/busy/fb/fb-init$DISPLAY-status)
   sleep 1
 done
 reset_status fb-init$DISPLAY
 
-# echo "Start /opt/busy4me/fb/fb-login..." | logline
+# echo "Start /opt/${PROJECT}/fb/fb-login..." | logline
 # screen -S fb-login$DISPLAY -X kill 2>/dev/null
-# screen -dmS fb-login$DISPLAY '/opt/busy4me/fb/fb-login'
+# screen -dmS fb-login$DISPLAY '/opt/${PROJECT}/fb/fb-login'
 # while [[ ! $fb_login_status == *"done"* ]]; do
 #   fb_login_status=$(cat /opt/busy/fb/fb-login$DISPLAY-status)
 #   sleep 1
 # done
 # reset_status fb-login$DISPLAY
 
-echo "Start /opt/busy4me/fb/fb-scroll..." | logline
+echo "Start /opt/${PROJECT}/fb/fb-scroll..." | logline
 screen -S fb-scroll$DISPLAY -X kill 2>/dev/null
-screen -dmS fb-scroll$DISPLAY '/opt/busy4me/fb/fb-scroll'
+screen -dmS fb-scroll$DISPLAY '/opt/${PROJECT}/fb/fb-scroll'
 while [[ ! $fb_scroll_status == *"done"* ]]; do
   fb_scroll_status=$(cat /opt/busy/fb/fb-scroll$DISPLAY-status)
   sleep 1
 done
 reset_status fb-scroll$DISPLAY
 
-#echo "Start /opt/busy4me/fb/fb-save-my-groups..." | logline
-#/bin/bash /opt/busy4me/fb/fb-save-my-groups
-echo "Start /opt/busy4me/fb/fb-walking-around..." | logline
-# /bin/bash /opt/busy4me/fb/fb-walking-around
+#echo "Start /opt/${PROJECT}/fb/fb-save-my-groups..." | logline
+#/bin/bash /opt/${PROJECT}/fb/fb-save-my-groups
+echo "Start /opt/${PROJECT}/fb/fb-walking-around..." | logline
+# /bin/bash /opt/${PROJECT}/fb/fb-walking-around
 
-echo "Continue /opt/busy4me/fb/fb-walking-around at the screen shell session..." | logline
+echo "Continue /opt/${PROJECT}/fb/fb-walking-around at the screen shell session..." | logline
 echo -e "...script run in DISPLAY $DISPLAY" | logline
-#task_to_do="/opt/busy4me/fb/fb-walking-around --debug"
+#task_to_do="/opt/${PROJECT}/fb/fb-walking-around --debug"
 #screen -dmS fb-walking-around$DISPLAY $task_to_do
 _TASK='fb-walking-around'
 #_OPT_1='-V'
 #_OPT_2='-s'
 #_OPT_3='3'
-task_to_do="/opt/busy4me/fb/$_TASK"
+task_to_do="/opt/${PROJECT}/fb/$_TASK"
 echoinfo "=========================== task_to_do=$task_to_do"
 screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$DISPLAY $task_to_do
 screen -ls

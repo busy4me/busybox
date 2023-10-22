@@ -2,7 +2,7 @@
 # global functions used in every sripts
 # edit wit ftp-remote-edit Atom
 #
-source /opt/busy4me/busy-config # busy variables from there
+source /opt/busyman/busy-config # busy variables from there
 
 if [[ $SCRIPT == "" ]]; then
 	SCRIPT="busy-functions"
@@ -18,10 +18,10 @@ __help () {
 	grep -E '^*#help#' "$0" | sed -e 's|#help#|\||g' | column -s"|" -t
 }
 
-busy4me_log () {
-if ! [ -f /var/log/busy4me.log ];then
-	touch /var/log/busy4me.log
-	chmod 777 /var/log/busy4me.log
+busyman_log () {
+if ! [ -f /var/log/busyman.log ];then
+	touch /var/log/busyman.log
+	chmod 777 /var/log/busyman.log
 fi
 }
 
@@ -140,7 +140,7 @@ start () {
 	_OPT_4=$5
 	_OPT_5=$6
 	if [ -z "$_TASK" ]; then
-		screen -dmS frame00$DISPLAY '/opt/busy4me/frame00' # default task to run: frame00
+		screen -dmS frame00$DISPLAY '/opt/busyman/frame00' # default task to run: frame00
 		sleep 2
 		screen -ls
 		return
@@ -189,7 +189,7 @@ stop () {
 
 start-walking () {
 	echo -e "\e[32m start fb-walking-around in screen $DISPLAY...\e[0m"
-	screen_start=$(screen -dmS fb-walking-around$DISPLAY '/opt/busy4me/fb/fb-walking-around')
+	screen_start=$(screen -dmS fb-walking-around$DISPLAY '/opt/busyman/fb/fb-walking-around')
 	echo $screen_start
 }
 
@@ -218,7 +218,7 @@ stop-fb-save-my-groups () {
 }
 
 start-fb-save-my-groups () {
-	screen_start=$(screen -dmS fb-save-my-groups$DISPLAY '/opt/busy4me/fb/fb-save-my-groups')
+	screen_start=$(screen -dmS fb-save-my-groups$DISPLAY '/opt/busyman/fb/fb-save-my-groups')
 	echo $screen_start
 }
 
@@ -255,7 +255,7 @@ case $1 in
 		CRON disable
 		stop-mouse-move-around
 		stop-walking
-		screen_task="/opt/busy4me/fb/fb-post COMMENT "$1
+		screen_task="/opt/busyman/fb/fb-post COMMENT "$1
 		screen_name="busy"$DISPLAY
 		echo -e "\e[43m\e[30m start screen session: \e[0m\e[95m screen -dmS $screen_name $screen_task \e[0m" | logline
 		screen -S $screen_name -X kill # kill screen on this display
@@ -266,7 +266,7 @@ case $1 in
 		CRON disable
 		stop-mouse-move-around
 		stop-walking
-		screen_task="/opt/busy4me/fb/fb-post COMMENT "$1
+		screen_task="/opt/busyman/fb/fb-post COMMENT "$1
 		screen_name="busy"$DISPLAY
 		echo -e "\e[43m\e[30m start screen session: \e[0m\e[95m screen -dmS $screen_name $screen_task \e[0m" | logline
 		screen -S $screen_name -X kill # kill screen on this display
@@ -292,11 +292,11 @@ case $task in
 			;;
 			$empty)
 			echo -e "\e[31m crontab is empty ... add task: \e[33m $task \e[0m" | logline
-			crontab -l | echo "*/5 * * * * export DISPLAY=:0 && /opt/busy4me/fb/fb-post -c all" | crontab - | logline
+			crontab -l | echo "*/5 * * * * export DISPLAY=:0 && /opt/busyman/fb/fb-post -c all" | crontab - | logline
 			;;
 			*)
 			echo -e "\e[31m crontab is not contains \e[33m $task ... add task: $task \e[0m" | logline
-			crontab -l | echo "*/5 * * * * export DISPLAY=:0 && /opt/busy4me/fb/fb-post -c all" | crontab - | logline
+			crontab -l | echo "*/5 * * * * export DISPLAY=:0 && /opt/busyman/fb/fb-post -c all" | crontab - | logline
 			;;
 		esac
 		echo -e "\e[32m crontab: \e[33m" | logline
@@ -319,15 +319,15 @@ echo -e "job: " $job
 case $1 in
 	disable|--disable)
 		echo -e "\e[91m # disable \e[95m crontab job ... $job\e[90m"
-		crontab -l | sed "/^[^#].*export DISPLAY=$DISPLAY && \/opt\/busy4me\/fb\/$job/s/^/#/" | crontab -
-		crontab -l | sed "/^[^#].*export DISPLAY=$DISPLAY && \/opt\/busy4me\/busy/s/^/#/" | crontab -
+		crontab -l | sed "/^[^#].*export DISPLAY=$DISPLAY && \/opt\/busyman\/fb\/$job/s/^/#/" | crontab -
+		crontab -l | sed "/^[^#].*export DISPLAY=$DISPLAY && \/opt\/busyman\/busy/s/^/#/" | crontab -
 		crontab -l
 	;;
 	enable|--enable)
 		echo -e "\e[32m # enable \e[95m crontab job ... $job \e[90m"
 		echo -e "\e[32m # enable \e[95m crontab job ... $job \e[90m"
-		crontab -l | sed "/^#.*export DISPLAY=$DISPLAY && \/opt\/busy4me\/fb\/$job/s/^#//" | crontab -
-		crontab -l | sed "/^#.*export DISPLAY=$DISPLAY && \/opt\/busy4me\/busy/s/^#//" | crontab -
+		crontab -l | sed "/^#.*export DISPLAY=$DISPLAY && \/opt\/busyman\/fb\/$job/s/^#//" | crontab -
+		crontab -l | sed "/^#.*export DISPLAY=$DISPLAY && \/opt\/busyman\/busy/s/^#//" | crontab -
 		crontab -l
 	;;
 	status|--status)
@@ -718,20 +718,20 @@ case $1 in
 				stop-walking
 				case $3 in
 					category|--category|-cat|-c)
-					# screen -dmS fb-groups-$3\:$4$DISPLAY '/opt/busy4me/fb/fb-groups $3 $4'
-					/bin/bash /opt/busy4me/fb/fb-groups $3 $4
+					# screen -dmS fb-groups-$3\:$4$DISPLAY '/opt/busyman/fb/fb-groups $3 $4'
+					/bin/bash /opt/busyman/fb/fb-groups $3 $4
 					;;
 					--key|--key-random|--key-table)
-					screen_task="/opt/busy4me/fb/fb-groups "$3" "$4
-#					/bin/bash /opt/busy4me/fb/fb-groups $3 $4
+					screen_task="/opt/busyman/fb/fb-groups "$3" "$4
+#					/bin/bash /opt/busyman/fb/fb-groups $3 $4
 					;;
 					--collect-info)
-					screen_task="/opt/busy4me/fb/fb-collect-info "$3" "$4
-#					/bin/bash /opt/busy4me/fb/fb-collect-info $3 $4
+					screen_task="/opt/busyman/fb/fb-collect-info "$3" "$4
+#					/bin/bash /opt/busyman/fb/fb-collect-info $3 $4
 					;;
 					--save-my-groups)
-					screen_task="/opt/busy4me/fb/fb-save-my-groups"
-#					/bin/bash /opt/busy4me/fb/fb-save-my-groups
+					screen_task="/opt/busyman/fb/fb-save-my-groups"
+#					/bin/bash /opt/busyman/fb/fb-save-my-groups
 					;;
 					'')
 						echo -e "\e[41m bad argument ... \e[0m\e[95m $3 $4 \e[33m\e[0m"
@@ -752,7 +752,7 @@ case $1 in
 				stop-walking
 				case $3 in
 					--save-my-pages)
-						/bin/bash /opt/busy4me/fb/fb-save-my-pages
+						/bin/bash /opt/busyman/fb/fb-save-my-pages
 					;;
 					*)
 						echo -e "\e[41m wrong --method argument ... \e[0m\e[95m $3 $4 \e[33m\e[0m"
@@ -767,7 +767,7 @@ case $1 in
 				stop-walking
 				case $3 in
 					--save-my-friends)
-						/bin/bash /opt/busy4me/fb/fb-save-my-friends
+						/bin/bash /opt/busyman/fb/fb-save-my-friends
 					;;
 					*)
 						echo -e "\e[41m wrong --method argument ... \e[0m\e[95m $3 $4 \e[33m\e[0m"

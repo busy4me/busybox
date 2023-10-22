@@ -3,7 +3,7 @@
 # updated with Atom
 # XAUTHORITY needs for root
 XAUTHORITY="/home/busyman/.Xauthority"
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busyman.log
 
 UPDATE="auto" # auto update on start
 

@@ -4,16 +4,12 @@
 PROJECT="busyman"
 SCRIPT="update"
 VERSION="23.10.1801"
-#export PATH=$PATH:/opt/$PROJECT
 BUSYUSER="busyman"
-
 LOGFILE=/var/log/${PROJECT}.log
 BACKUP=/var/backups/${PROJECT}
 BACKUP_2=/var/backups/${PROJECT}/data
-# source /opt/${PROJECT}/busy-functions # global functions
-# source /opt/${PROJECT}/fb/fb-config # fb variables from there
 
-root_check () {
+root_check() {
   if [ "$USER" != "root" ]; then
     echo -e "\e[31mRun this script as root! exit...\e[0m"
     echo "Run this script as root! exit..." | logline
@@ -29,7 +25,6 @@ chmod 777 /opt/${PROJECT}/data
 mkdir /opt/${PROJECT}/data/{files,images,sounds,videos} 2>/dev/null
 chmod 777 /opt/${PROJECT}/data/{files,images,sounds,videos}
 touch /opt/${BUSYMAN}/data/files/blank 2>/dev/null # create empty file for blank clipboard if not exists
-
 mkdir $BACKUP 2>/dev/null # create backup directories
 mkdir $BACKUP/fb 2>/dev/null
 mkdir $BACKUP_2 2>/dev/null
@@ -47,28 +42,28 @@ mkdir /opt/$PROJECT 2>/dev/null
 mkdir /tmp/$PROJECT-tmp 2>/dev/null
 cd /opt/$PROJECT
 
-update_preferences () { # update root and user bash preference files
-  rm /root/.bash_aliases
-  rm /root/.bashrc
-  rm /root/.profile
+update_preferences() { # update root and busyuser bash preference files
+  rm -R /root/.ssh
   mkdir /root/.ssh
 cat > /root/.ssh/authorized_keys  << `EOF`
 ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdHSHHO1PAnapODFUQJWIJwgG44fob3HcicgurDl0UaCsIEX3aYAclr1yk+NmsZSjlK8PJ4mJUxD61JDBpwrOdzokmj4JSl2KQEDMySYZ1zyrmjsGZabyW69DsZVaKktdy8tueqr4hrJwD5CqNB/o4KaYqtgGb4CT0nEFPH0nZ8lp1tWVAX5bxsEJxr/LpAAfYK3dHTb4H9HLgx7p8+Tdior8TPUtBvrRRfOYBzfxxKvDOFIPEiYl3eDUd1EN1C7Okxe/0bSPPcwzAV/CfF+jF07iDFRw//mrAAX63fqY+DRQ==
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
 `EOF`
-  rm -rf /home/$BUSYUSER/.bash_aliases
-  rm -rf /home/$BUSYUSER/.bashrc
-  echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
+  echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/* \e[0m"
+  rm /root/.bash_aliases
   wget -nv -O /root/.bash_aliases --no-check-certificate http://busy4.me/busy/root/.bash_aliases
+  rm /root/.bashrc
   wget -nv -O /root/.bashrc --no-check-certificate http://busy4.me/busy/root/.bashrc
+  rm /root/.profile
   wget -nv -O /root/.profile --no-check-certificate http://busy4.me/busy/root/.profile
-  wget -nv -O /home/busyman/.bash_aliases --no-check-certificate http://busy4.me/busy/home/busyman/.bash_aliases
-  wget -nv -O /home/busyman/.bashrc --no-check-certificate http://busy4.me/busy/home/busyman/.bashrc
+  rm -rf /home/$BUSYUSER/.bash_aliases
+  wget -nv -O /home/${BUSYUSER}/.bash_aliases --no-check-certificate http://busy4.me/busy/home/${BUSYUSER}/.bash_aliases
+  rm -rf /home/$BUSYUSER/.bashrc
+  wget -nv -O /home/${BUSYUSER}/.bashrc --no-check-certificate http://busy4.me/busy/home/${BUSYUSER}/.bashrc
+  chown ${BUSYUSER}:${BUSYUSER} /home/$BUSYUSER/.*
 }
 
-chown busyman:busyman /home/$BUSYUSER/.*
-
-backup_all_project_files () { # create backup in tmp
+backup_all_project_files() { # create backup in tmp
   echo -e "\e[32m Backup ...\e[0m"
   TMP_DIR="/tmp/$PROJECT-tmp/$(date +%Y-%m-%d--%H-%M-%S)"
   mkdir $TMP_DIR
@@ -81,7 +76,7 @@ backup_all_project_files () { # create backup in tmp
 }
 backup_all_project_files
 
-delete_all_project_files () { # delete all project files and folders
+delete_all_project_files() { # delete all project files and folders
   rm -rf /opt/$PROJECT/*
 }
 
@@ -92,7 +87,7 @@ echo -e "\e[33m Clean google-chrome busyman data... \e[0m"
 	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*; echo -e "remove .config/google-chrome/Singleton* \e[0m"
 
 # download big files
-download_big_files () {
+download_big_files() {
 declare -a _FILES=(
 "/opt/${PROJECT}/data/images/wallpaper.jpg"
 "/opt/${PROJECT}/data/images/wallpaper0.jpg"
@@ -117,7 +112,7 @@ done
 }
 
 # download binaries
-download_binaries () {
+download_binaries() {
 	# update tint2 binaries
 	wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2 -O /usr/bin/tint2 | logline
 	chmod +x /usr/bin/tint2
@@ -125,7 +120,7 @@ download_binaries () {
 	chmod +x /usr/bin/tint2conf
 }
 
-tint2 () {
+tint2() {
 	DSP=$DISPLAY
 	echo "DSP=" $DSP
 	sleep 2
@@ -159,7 +154,7 @@ fi
 	fi
 }
 
-openbox_config () {
+openbox_config() {
 	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/openbox/rc.xml -O /home/busyman/.config/openbox/rc.xml | logline
 	chown busyman:busyman /home/busyman/.config/openbox/rc.xml
 	export DISPLAY=:0
@@ -167,17 +162,16 @@ openbox_config () {
 	openbox --reconfigure
 }
 
-download_busyman_files () { # download busyman files
+download_busyman_files() { # download busyman files
   declare -a _FILES=(
-  "/opt/${PROJECT}/busy"
-  "/opt/${PROJECT}/busy.sh"
   "/opt/${PROJECT}/busy-config"
   "/opt/${PROJECT}/busy-functions"
   "/opt/${PROJECT}/config"
-  "/opt/${PROJECT}/config.py"
+  "/opt/${PROJECT}/${PROJECT}.py"
+  "/opt/${PROJECT}/${PROJECT}.sh"
+  "/opt/${PROJECT}/${PROJECT}.yml"
   "/opt/${PROJECT}/frame00"
   "/opt/${PROJECT}/update"
-  "/opt/${PROJECT}/update2"
   "/opt/${PROJECT}/windows-init"
   "/opt/${PROJECT}/windows-normal"
   "/opt/${PROJECT}/chrome-init"
@@ -203,16 +197,19 @@ download_busyman_files () { # download busyman files
   mkdir /opt/$PROJECT-backup/
   cp /opt/$PROJECT/* /opt/$PROJECT-backup/
   rm /opt/$PROJECT/*
-  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busy4me/* \e[0m"
+  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busyman/* \e[0m"
   for _FILE in ${_FILES[@]}; do
     wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
   done
   wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html
+  ln -s ./${PROJECT}.sh ./bm 2>/dev/null
+  ln -s ./${PROJECT}.sh ./busy 2>/dev/null
+  ln -s ./${PROJECT}.sh ./${PROJECT} 2>/dev/null
   chmod +x /opt/$PROJECT/*
   chmod +x /opt/$PROJECT/*.*
 }
 
-download_fb_files () { # download fb files
+download_fb_files() { # download fb files
   mkdir /opt/$PROJECT/fb
   cd /opt/$PROJECT/fb
   rm -rf /opt/$PROJECT/fb/*
@@ -287,7 +284,7 @@ download_fb_files () { # download fb files
 }
 
 # update openbox autostart
-openbox_autostart () {
+openbox_autostart() {
 echo -e "\e[44m ................... update Openbox autostart file \e[0m"
 rm /home/busyman/.config/openbox/autostart
 
@@ -323,7 +320,7 @@ chown busyman:busyman /home/busyman/.config/openbox/*
 
 # add tasks to crontab
 # compare logs in every 10 min and reboot if notting happened
-cron_task () {
+cron_task() {
   echo -e "\e[44m ................... update cron \e[0m"
   rm /etc/cron.d/compare_logs_reboot 2>/dev/null
   cat > /etc/cron.d/compare_logs_reboot  << 'EOF'
@@ -342,7 +339,7 @@ EOF
 # logrotate
 # add tesk to logrotate
 # rotate logs daily, was problem with compare logs when log is a big file
-logrotate () {
+logrotate() {
   echo -e "\e[44m ................... update logrotate for project $PROJECT\e[0m"
   rm /etc/logrotate.d/${PROJECT} 2>/dev/null
   mkdir /var/log/${PROJECT} 2>/dev/null
