@@ -2,7 +2,8 @@
 # Autoupdate if changed...
 # Upgrade if needed...
 # curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
-source ../_config
+PROJECT="busyman"
+source /opt/${PROJECT}/${PROJECT}.cfg
 SCRIPT=fb-init
 LOGFILE=/var/log/${PROJECT}.log
 SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
@@ -33,20 +34,17 @@ xdotool key --delay 200 Page_Down End Page_Up Home
 echo "\e[95m$(date +%F' '%T) $USER $SCRIPT start.............................................." | logline
 echo "start..." | logline
 
-if [ $USER = "root" ]
-	then
+if [ $USER = "root" ]; then
 	echo "Do not run as root! exit..." | logline
 	exit
 fi
 
-if [ -f /opt/busy4me/fb/fb-config ];then
-    . /opt/busy4me/fb/fb-config
+if [ -f /opt/${PROJECT}/${PROJECT}.cfg ];then
+    . /opt/${PROJECT}/${PROJECT}.cfg
 	else
 	echo "There is no fb_config file!... stop." | logline
 	exit 1
 fi
-
-# variables moved to /opt/busy4me/fb/fb-config
 
 # Clean google-chrome busyman data... just in case...
 echo -e "\e[91m *F:_clean_data, clean google-chrome busyman data...\e[0m" | logline
@@ -115,7 +113,7 @@ xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
 # unhide browser window
 wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,below
 pkill xli
-feh --bg-scale /opt/busy/images/wall-blue.png
+feh --bg-scale /opt/${PROJECT}/data/images/wall-blue.png
 transset -a 0.1; sleep 0.1
 transset -a 0.2; sleep 0.1
 transset -a 0.3; sleep 0.1
@@ -202,14 +200,14 @@ BR01_run () {
 
 echo -e "\e[96m *F:BR01_run, first run \"$BR01\" \e[0m" | logline
 
-#( _PTH="/opt/busy/images"; \
+#( _PTH="/opt/${PROJECT}/data/images"; \
 #for i in {1..20}; do; feh --bg-scale $_PTH/wall00.png; sleep 1; \
 #feh --bg-scale $_PTH/wall01.png; sleep 1; \
-#feh --bg-scale /opt/busy/images/wall02.png; sleep 1; \
-#feh --bg-scale /opt/busy/images/wall03.png; sleep 1; \
+#feh --bg-scale /opt/${PROJECT}/data/images/wall02.png; sleep 1; \
+#feh --bg-scale /opt/${PROJECT}/data/images/wall03.png; sleep 1; \
 #done ) | logline
 
-feh --bg-scale /opt/busy/images/wall00.png
+feh --bg-scale /opt/${PROJECT}/data/images/wall00.png
 BR01_run
 for i in {1..20} ; do
   xdotool search --sync --onlyvisible --class chrome windowactivate | logline
@@ -225,8 +223,8 @@ transset_blank
 SPOT01_probe
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.9
-feh --bg-scale /opt/busy/images/wall_black_with_vertical_logo.jpg
+feh --bg-scale /opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg
 while  [ 1 ]; do
-  echo "done" > /opt/busy/fb/fb-init$DISPLAY-status
+  echo "done" > /opt/${PROJECT}/data/fb/fb-init$DISPLAY-status
   sleep 86400 # sleep 1 day
 done

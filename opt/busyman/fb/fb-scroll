@@ -1,18 +1,16 @@
 #!/bin/bash
 #set -x
-
-echo "start"
+PROJECT="busyman"
+source /opt/${PROJECT}/${PROJECT}.cfg
 SCRIPT=fb-scroll
-LOGFILE=/var/log/busy4me.log
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/fb/fb-config # fb variables from there
+LOGFILE=/var/log/${PROJECT}.log
 
 if [[ "$1" == "--debug" ]]; then
   exec &> >(tee -ia $LOGFILE)
   exec 2>&1
 fi
 
-echo "start" > /opt/busy/fb/fb-scroll$DISPLAY-status
+echo "start" > /opt/${PROJECT}/data/fb/fb-scroll$DISPLAY-status
 xdotool mousemove 0 0
 
 logline() {
@@ -24,7 +22,7 @@ logline() {
 report_fb_scroll_done () {
   while  [ 1 ]; do
     echo -e "\e[33m[OK] ... report: 'fb-scroll done' and sleep this screen for 1 hour for inspect...\e[0m"
-    echo "done" > /opt/busy/fb/fb-scroll$DISPLAY-status
+    echo "done" > /opt/${PROJECT}/data/fb/fb-scroll$DISPLAY-status
     sleep 3600 # sleep 1 hour
   done
 }

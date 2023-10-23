@@ -1,13 +1,12 @@
 #!/bin/bash
-source config
 # busyman framework 00 .... init all scripts one by one
+PROJECT="busyman"
 SCRIPT=frame00
-source /opt/${PROJECT}/busy-functions # global functions
-source /opt/${PROJECT}/busy-config # global variables
+source /opt/${PROJECT}/${PROJECT}.cfg # global functions
+source /opt/${PROJECT}/${PROJECT}.sh # global variables
 ${PROJECT}_log ## logging
 
-if [ $USER = "root" ]
-  then
+if [ $USER = "root" ]; then
   echo "Do not run as root! exit..."
   exit
 fi
@@ -33,10 +32,10 @@ screen -S mouse-move-02$DISPLAY -X kill
 
 reset_status() {
   if [[ -z ${1} ]]; then
-    rm /opt/busy/fb/*-status
+    rm /opt/${PROJECT}/data/fb/*-status
     return
   fi
-  rm /opt/busy/fb/$1-status
+  rm /opt/${PROJECT}/data/fb/$1-status
 }
 reset_status
 
@@ -46,11 +45,10 @@ echo "update date before login...." | logline
 ntpdate -s time.nist.gov | logline
 
 echo "Start /opt/${PROJECT}/fb/fb-init..." | logline
-# /bin/bash /opt/${PROJECT}/fb/fb-init
 screen -S fb-init$DISPLAY -X kill 2>/dev/null
-screen -dmS fb-init$DISPLAY '/opt/${PROJECT}/fb/fb-init'
+screen -dmS fb-init$DISPLAY "/opt/${PROJECT}/fb/fb-init"
 while [[ ! $fb_init_status == *"done"* ]]; do
-  fb_init_status=$(cat /opt/busy/fb/fb-init$DISPLAY-status)
+  fb_init_status=$(cat /opt/${PROJECT}/data/fb/fb-init$DISPLAY-status)
   sleep 1
 done
 reset_status fb-init$DISPLAY
@@ -66,9 +64,9 @@ reset_status fb-init$DISPLAY
 
 echo "Start /opt/${PROJECT}/fb/fb-scroll..." | logline
 screen -S fb-scroll$DISPLAY -X kill 2>/dev/null
-screen -dmS fb-scroll$DISPLAY '/opt/${PROJECT}/fb/fb-scroll'
+screen -dmS fb-scroll$DISPLAY "/opt/${PROJECT}/fb/fb-scroll"
 while [[ ! $fb_scroll_status == *"done"* ]]; do
-  fb_scroll_status=$(cat /opt/busy/fb/fb-scroll$DISPLAY-status)
+  fb_scroll_status=$(cat /opt/${PROJECT}/data/fb/fb-scroll$DISPLAY-status)
   sleep 1
 done
 reset_status fb-scroll$DISPLAY

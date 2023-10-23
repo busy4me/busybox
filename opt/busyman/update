@@ -103,12 +103,12 @@ declare -a _FILES=(
 "/opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg"
 "/opt/${PROJECT}/data/sounds/cafe_noise.mp3"
 "/opt/${PROJECT}/data/sounds/calm_piano.mp3"
+"/opt/${PROJECT}/data/files/chromedriver"
 )
 for _FILE in ${_FILES[@]}; do
-	wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
+  wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
 done
-	wget -nv --no-check-certificate http://busy4.me/busy/opt/busy/files/chromedriver -O /opt/${PROJECT}/data/files/chromedriver | logline
-	chmod +x /opt/${PROJECT}/data/files/chromedriver
+  chmod +x /opt/${PROJECT}/data/files/chromedriver
 }
 
 # download binaries
@@ -164,9 +164,7 @@ openbox_config() {
 
 download_busyman_files() { # download busyman files
   declare -a _FILES=(
-  "/opt/${PROJECT}/_config"
-  "/opt/${PROJECT}/_functions"
-  "/opt/${PROJECT}/config"
+  "/opt/${PROJECT}/${PROJECT}.cfg"
   "/opt/${PROJECT}/${PROJECT}.py"
   "/opt/${PROJECT}/${PROJECT}.sh"
   "/opt/${PROJECT}/${PROJECT}.yml"
@@ -194,9 +192,9 @@ download_busyman_files() { # download busyman files
   "/opt/${PROJECT}/zenity"
   )
   cd /opt/$PROJECT
-  mkdir /opt/$PROJECT-backup/
-  cp /opt/$PROJECT/* /opt/$PROJECT-backup/
-  rm /opt/$PROJECT/*
+  mkdir /opt/$PROJECT-backup/ 2>/dev/null
+  cp /opt/$PROJECT/* /opt/$PROJECT-backup/ 2>/dev/null
+  rm /opt/$PROJECT/* 2>/dev/null
   echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busyman/* \e[0m"
   for _FILE in ${_FILES[@]}; do
     wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
@@ -207,6 +205,13 @@ download_busyman_files() { # download busyman files
   ln -s ./${PROJECT}.sh ./${PROJECT} 2>/dev/null
   chmod +x /opt/$PROJECT/*
   chmod +x /opt/$PROJECT/*.*
+  chmod -x /opt/$PROJECT/*.cfg
+  rm /usr/local/bin/bm 2>/dev/null
+  rm /usr/local/bin/busy 2>/dev/null
+  rm /usr/local/bin/${PROJECT} 2>/dev/null
+  ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/bm 2>/dev/null
+  ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/busy 2>/dev/null
+  ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/${PROJECT} 2>/dev/null
 }
 
 download_fb_files() { # download fb files
@@ -449,6 +454,7 @@ case $1 in
 			cp /opt/${PROJECT}/update.new /opt/${PROJECT}/update 2>/dev/null
 				echo -e '\e[32m chmod +x ...\e[0m'
 			chmod +x /opt/${PROJECT}/update
+            ln -s /opt/${PROJECT}/update /usr/local/bin/update 2>/dev/null
 			echo -e $"\e[32m file: \"update\" updated...\e[0m"
 		fi
 		exit 0

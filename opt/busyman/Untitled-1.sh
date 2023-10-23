@@ -15,34 +15,49 @@ BR01x=1160 #BROWSER_01 size x, changed for 1280x768
 BR01y=852 #BROWSER_01 size y,  changed for 1280x768
 POSITION_x="137" # position x
 POSITION_y="-81" # position y
+
+sql_engine="sqlite3"
+login_source="/opt/busy/fb/fb-login"
+password_source="/opt/busy/fb/fb-password"
+user_name=$(cat "/opt/busy/fb/fb-name" 2>/dev/null)
+user_first_name=$(cat "/opt/busy/fb/fb-first-name" 2>/dev/null)
+user_last_name=$(cat "/opt/busy/fb/fb-last-name" 2>/dev/null)
+login=$(cat "$login_source" 2>/dev/null)
+login_string=$login
+login_string=$(echo $login_string | tr '@.' '-')
+password=$(cat "$password_source" 2>/dev/null)
+#login_string=$login
+login_string=$(echo $login | tr [:punct:] '-')
+user_db="/opt/busy/fb/db/fb_$login_string.db"
+fb_db=/opt/${PROJECT}/fb/db/fb.db
+profile_id=""
+profile_name="me"
+login_url="http://m.facebook.com"
+fb_login_url="http://facebook.com/login"
+fb_search_url="https://www.facebook.com/search"
+fb_groups_url="https://www.facebook.com/groups"
+my_groups_url="$SPOT01url/$profile_name/groups"
+my_pages_url="$SPOT01url/bookmarks/pages"
+my_pages_url_source="view-source:$SPOT01url/bookmarks/pages"
+about_url="$SPOT01url/$profile_name/about"
+settings_url="$SPOT01url/$profile_name/settings"
+profile_url="$SPOT01url/$profile_name"
+allactivity_url="$SPOT01url/$profile_name/allactivity"
+profile_allactivity="$SPOT01url/$profile_name/allactivity"
+requests_url="$SPOT01url/friends/requests"
+kds=50 # Key Delay Short [miliseconds]
+kd=200
+kd_1=400
+kd_2=600
+kdl=1000
+random=5 # random generated in active scripts
+pause_time=5
+tos=1 # Time Out Short zenity messages time out [seconds]
+to=2 # Time Out zenity messages time out [seconds]
+tol=5 # Time Out Long zenity messages time out [seconds]
+
 #
 # yaml parser, source: https://stackoverflow.com/questions/5014632/how-can-i-parse-a-yaml-file-from-a-linux-shell-script
-function parse_yaml {
-   local prefix=$2
-   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
-   sed -ne "s|,$s\]$s\$|]|" \
-        -e ":1;s|^\($s\)\($w\)$s:$s\[$s\(.*\)$s,$s\(.*\)$s\]|\1\2: [\3]\n\1  - \4|;t1" \
-        -e "s|^\($s\)\($w\)$s:$s\[$s\(.*\)$s\]|\1\2:\n\1  - \3|;p" $1 | \
-   sed -ne "s|,$s}$s\$|}|" \
-        -e ":1;s|^\($s\)-$s{$s\(.*\)$s,$s\($w\)$s:$s\(.*\)$s}|\1- {\2}\n\1  \3: \4|;t1" \
-        -e    "s|^\($s\)-$s{$s\(.*\)$s}|\1-\n\1  \2|;p" | \
-   sed -ne "s|^\($s\):|\1|" \
-        -e "s|^\($s\)-$s[\"']\(.*\)[\"']$s\$|\1$fs$fs\2|p" \
-        -e "s|^\($s\)-$s\(.*\)$s\$|\1$fs$fs\2|p" \
-        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
-        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" | \
-   awk -F$fs '{
-      indent = length($1)/2;
-      vname[indent] = $2;
-      for (i in vname) {if (i > indent) {delete vname[i]; idx[i]=0}}
-      if(length($2)== 0){  vname[indent]= ++idx[indent] };
-      if (length($3) > 0) {
-         vn=""; for (i=0; i<indent; i++) { vn=(vn)(vname[i])("_")}
-         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, vname[indent], $3);
-      }
-   }'
-}
-
 eval $(parse_yaml /opt/${PROJECT}/${PROJECT}.yml) ### main config file
 echo -e "color test: $info $func_name $success $ok $warning $nok $error $nocolor"
 echo -e "${info} PROJECT: $PROJECT ${nocolor}"
@@ -75,7 +90,6 @@ logline_cron() {
 # example:
 # echo -e "${gre}green text, ${mag}magenta text, ${coloroff}default"
 coloroff='\e[0m'; nocolor=$coloroff   # default
-
 # basic colors (rgb order)
 bla='\e[0;30m'; rgb000='\e[0;30m'; k='\e[0;30m'; black='\e[0;30m'     # 000 black
 blu='\e[0;34m'; rgb001='\e[0;34m'; b='\e[0;34m'; blue='\e[0;34m'      # 001 blue
