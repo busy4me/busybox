@@ -1,11 +1,10 @@
 #!/bin/bash
 # global functions used in every sripts
-# edit wit ftp-remote-edit Atom
 #
-source /opt/busyman/busy-config # busy variables from there
+source /opt/${PROJECT}/_config # busy variables from there
 
 if [[ $SCRIPT == "" ]]; then
-	SCRIPT="busy-functions"
+	SCRIPT=".functions"
 fi
 #echo "SCRIPT=$SCRIPT"
 

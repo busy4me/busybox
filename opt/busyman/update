@@ -164,8 +164,8 @@ openbox_config() {
 
 download_busyman_files() { # download busyman files
   declare -a _FILES=(
-  "/opt/${PROJECT}/busy-config"
-  "/opt/${PROJECT}/busy-functions"
+  "/opt/${PROJECT}/_config"
+  "/opt/${PROJECT}/_functions"
   "/opt/${PROJECT}/config"
   "/opt/${PROJECT}/${PROJECT}.py"
   "/opt/${PROJECT}/${PROJECT}.sh"

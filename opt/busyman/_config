@@ -1,11 +1,51 @@
 #!/bin/bash
 # global functions used in every sripts
-# updated with Atom
-# XAUTHORITY needs for root
-XAUTHORITY="/home/busyman/.Xauthority"
-LOGFILE=/var/log/busyman.log
-
+PROJECT="busyman"
+BUSYUSER="busyman"
+XAUTHORITY="/home/busyman/.Xauthority" # XAUTHORITY needs for root
+LOGFILE="/var/log/busyman.log"
 UPDATE="auto" # auto update on start
+BR01="google-chrome" # Browser 01
+PROC01="chrome" # process 01
+SPOT01="facebook" # spot 01
+SPOT01url="https://facebook.com" # url 01
+SPOT02url="https://localhost"
+SPOT03="terminal"
+BR01x=1160 #BROWSER_01 size x, changed for 1280x768
+BR01y=852 #BROWSER_01 size y,  changed for 1280x768
+POSITION_x="137" # position x
+POSITION_y="-81" # position y
+#
+# yaml parser, source: https://stackoverflow.com/questions/5014632/how-can-i-parse-a-yaml-file-from-a-linux-shell-script
+function parse_yaml {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|,$s\]$s\$|]|" \
+        -e ":1;s|^\($s\)\($w\)$s:$s\[$s\(.*\)$s,$s\(.*\)$s\]|\1\2: [\3]\n\1  - \4|;t1" \
+        -e "s|^\($s\)\($w\)$s:$s\[$s\(.*\)$s\]|\1\2:\n\1  - \3|;p" $1 | \
+   sed -ne "s|,$s}$s\$|}|" \
+        -e ":1;s|^\($s\)-$s{$s\(.*\)$s,$s\($w\)$s:$s\(.*\)$s}|\1- {\2}\n\1  \3: \4|;t1" \
+        -e    "s|^\($s\)-$s{$s\(.*\)$s}|\1-\n\1  \2|;p" | \
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)-$s[\"']\(.*\)[\"']$s\$|\1$fs$fs\2|p" \
+        -e "s|^\($s\)-$s\(.*\)$s\$|\1$fs$fs\2|p" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p" | \
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]; idx[i]=0}}
+      if(length($2)== 0){  vname[indent]= ++idx[indent] };
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) { vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, vname[indent], $3);
+      }
+   }'
+}
+
+eval $(parse_yaml /opt/${PROJECT}/${PROJECT}.yml) ### main config file
+echo -e "color test: $info $func_name $success $ok $warning $nok $error $nocolor"
+echo -e "${info} PROJECT: $PROJECT ${nocolor}"
 
 # save line to log
 logline() {

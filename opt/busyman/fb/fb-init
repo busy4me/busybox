@@ -2,26 +2,21 @@
 # Autoupdate if changed...
 # Upgrade if needed...
 # curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
+source ../_config
 SCRIPT=fb-init
-LOGFILE=/var/log/busy4me.log
-SAVE_DIR=/opt/busy/fb # with user permision 777
-PROJECT_DIR=/opt/busy4me/fb # with root permision 755, read only for users
+LOGFILE=/var/log/${PROJECT}.log
+SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
+PROJECT_DIR=/opt/${PROJECT}/fb # with root permision 755, read only for users
 
-echo "start" > /opt/busy/fb/fb-init$DISPLAY-status
-
-# export DISPLAY=:98
+echo "start" > /opt/${PROJECT}/fb/fb-init$DISPLAY-status
 mkdir -p $SAVE_DIR 2>/dev/null
 
 __wallpaper_change () {
-  # open fullscreen image and set above off all to hide web browser loading
   INT=$(( $INT +1 ))
   if [ $INT -eq 4 ]; then
     INT=0
   fi
-#_SPLASH="/opt/busy/images/wall0$INT.png"
-#xli -fullscreen $_SPLASH &
-#wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,above
-feh --bg-scale /opt/busy/images/wall0$INT.png
+feh --bg-scale /opt/${PROJECT}/data/images/wall0$INT.png
 }
 
 logline() {
