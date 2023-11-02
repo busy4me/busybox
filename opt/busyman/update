@@ -3,7 +3,7 @@
 # set -x
 PROJECT="busyman"
 SCRIPT="update"
-VERSION="23.10.1801"
+VERSION="231030"
 BUSYUSER="busyman"
 LOGFILE=/var/log/${PROJECT}.log
 BACKUP=/var/backups/${PROJECT}
@@ -88,23 +88,26 @@ echo -e "\e[33m Clean google-chrome busyman data... \e[0m"
 
 # download big files
 download_big_files() {
-declare -a _FILES=(
-"/opt/${PROJECT}/data/images/wallpaper.jpg"
-"/opt/${PROJECT}/data/images/wallpaper0.jpg"
-"/opt/${PROJECT}/data/images/wallpaper1.jpg"
-"/opt/${PROJECT}/data/images/wallpaper2.jpg"
-"/opt/${PROJECT}/data/images/wallpaper3.jpg"
-"/opt/${PROJECT}/data/images/wall00.png"
-"/opt/${PROJECT}/data/images/wall01.png"
-"/opt/${PROJECT}/data/images/wall02.png"
-"/opt/${PROJECT}/data/images/wall03.png"
-"/opt/${PROJECT}/data/images/wall-blue.png"
-"/opt/${PROJECT}/data/images/mouse.png"
-"/opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg"
-"/opt/${PROJECT}/data/sounds/cafe_noise.mp3"
-"/opt/${PROJECT}/data/sounds/calm_piano.mp3"
-"/opt/${PROJECT}/data/files/chromedriver"
-)
+  declare -a _FILES=(
+    "/opt/${PROJECT}/data/images/wallpaper.jpg"
+    "/opt/${PROJECT}/data/images/wallpaper0.jpg"
+    "/opt/${PROJECT}/data/images/wallpaper1.jpg"
+    "/opt/${PROJECT}/data/images/wallpaper2.jpg"
+    "/opt/${PROJECT}/data/images/wallpaper3.jpg"
+    "/opt/${PROJECT}/data/images/wall00.png"
+    "/opt/${PROJECT}/data/images/wall01.png"
+    "/opt/${PROJECT}/data/images/wall02.png"
+    "/opt/${PROJECT}/data/images/wall03.png"
+    "/opt/${PROJECT}/data/images/wall-blue.png"
+    "/opt/${PROJECT}/data/images/mouse.png"
+    "/opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg"
+    "/opt/${PROJECT}/data/sounds/cafe_noise.mp3"
+    "/opt/${PROJECT}/data/sounds/calm_piano.mp3"
+    "/opt/${PROJECT}/data/files/chromedriver"
+  )
+  mkdir /opt/$PROJECT/data 2>/dev/null
+  mkdir /opt/${PROJECT}/data/{sound,images,files,videos} 2>/dev/null
+  rm -rf /opt/$PROJECT/data/{sound,images,files,videos}/*
 for _FILE in ${_FILES[@]}; do
   wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
 done
@@ -164,32 +167,33 @@ openbox_config() {
 
 download_busyman_files() { # download busyman files
   declare -a _FILES=(
-  "/opt/${PROJECT}/${PROJECT}.cfg"
-  "/opt/${PROJECT}/${PROJECT}.py"
-  "/opt/${PROJECT}/${PROJECT}.sh"
-  "/opt/${PROJECT}/${PROJECT}.yml"
-  "/opt/${PROJECT}/frame00"
-  "/opt/${PROJECT}/update"
-  "/opt/${PROJECT}/windows-init"
-  "/opt/${PROJECT}/windows-normal"
-  "/opt/${PROJECT}/chrome-init"
-  "/opt/${PROJECT}/locate"
-  "/opt/${PROJECT}/menu-init"
-  "/opt/${PROJECT}/mouse-01"
-  "/opt/${PROJECT}/stratum"
-  "/opt/${PROJECT}/compare_logs_reboot.sh"
-  "/opt/${PROJECT}/change_hostname.sh"
-  "/opt/${PROJECT}/change_hostname_uuid.sh"
-  "/opt/${PROJECT}/stream_to_facebook.sh"
-  "/opt/${PROJECT}/stream_to_twitch.sh"
-  "/opt/${PROJECT}/system-meminfo.sh"
-  "/opt/${PROJECT}/tint2rc00"
-  "/opt/${PROJECT}/tint2-data"
-  "/opt/${PROJECT}/windows-check.sh"
-  "/opt/${PROJECT}/windows-uneeded-close.sh"
-  "/opt/${PROJECT}/xterm.sh"
-  "/opt/${PROJECT}/xterm-transparent"
-  "/opt/${PROJECT}/zenity"
+  "${PROJECT}.cfg"
+  "${PROJECT}.py"
+  "${PROJECT}.sh"
+  "${PROJECT}.yml"
+  "${PROJECT}Config.py"
+  "frame00"
+  "update"
+  "windows-init"
+  "windows-normal"
+  "chrome-init"
+  "locate"
+  "menu-init"
+  "stratum"
+  "compare_logs_reboot.sh"
+  "change_hostname.sh"
+  "change_hostname_uuid.sh"
+  "stream_to_facebook.sh"
+  "stream_to_twitch.sh"
+  "system-meminfo.sh"
+  "tint2rc00"
+  "tint2-data"
+  "windows-check.sh"
+  "windows-uneeded-close.sh"
+  "xterm.sh"
+  "xterm-transparent"
+  "zenity"
+  "mouse-move"
   )
   cd /opt/$PROJECT
   mkdir /opt/$PROJECT-backup/ 2>/dev/null
@@ -197,7 +201,7 @@ download_busyman_files() { # download busyman files
   rm /opt/$PROJECT/* 2>/dev/null
   echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busyman/* \e[0m"
   for _FILE in ${_FILES[@]}; do
-    wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
+    wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/$_FILE -O /opt/${PROJECT}/$_FILE | logline
   done
   wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html
   ln -s ./${PROJECT}.sh ./bm 2>/dev/null
@@ -215,7 +219,9 @@ download_busyman_files() { # download busyman files
 }
 
 download_fb_files() { # download fb files
-  mkdir /opt/$PROJECT/fb
+  mkdir /opt/${PROJECT}/data/fb 2>/dev/null
+  chmod 777 /opt/${PROJECT}/data/fb
+  mkdir /opt/$PROJECT/fb 2>/dev/null
   cd /opt/$PROJECT/fb
   rm -rf /opt/$PROJECT/fb/*
   mkdir /opt/$PROJECT/fb/img
@@ -276,13 +282,6 @@ download_fb_files() { # download fb files
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-update-posted-links.py
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-walking-around
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-watchdog
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move-01.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move-02.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-move-around.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-position.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-position.sh
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/mouse-show.py
   chmod +x /opt/$PROJECT/*
   chmod +x /opt/$PROJECT/*.*
   chmod +x /opt/$PROJECT/fb/*

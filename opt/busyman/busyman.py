@@ -5,7 +5,7 @@
 from __future__ import print_function
 import pyautogui, time, sys, math, random, os, getopt, numpy, imutils, cv2, inspect, yaml
 from time import sleep
-from config import *
+from busymanConfig import *
 #global verbose
 
 def options(argv):

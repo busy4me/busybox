@@ -4,20 +4,6 @@ BUSYUSER=busyman
 SCRIPT=init-1
 LOGFILE=/var/log/${PROJECT}.log
 chmod 777 /var/log/${PROJECT}.log
-echo -e "\e[44m ................... update logrotate \e[0m"
-rm /etc/logrotate.d/${PROJECT} 2>/dev/null
-mkdir /var/log/${PROJECT} 2>/dev/null
-cat > /etc/logrotate/${PROJECT} << EOF
-/var/log/${PROJECT}.log
-{
-  rotate 7
-  size 1M
-  missingok
-  dateext
-  copytruncate
-  olddir /var/log/${PROJECT}
-}
-EOF
 
 logline() {
   while IFS= read -r line; do
@@ -34,133 +20,18 @@ if [ $USER != "root" ]
     echo -e "\e[32mRun OK as root...\e[0m" | logline
 fi
 
-groupadd ${BUSYUSER} >> $LOGFILE
-useradd ${BUSYUSER} -s /bin/bash -m -g ${BUSYUSER} | logline
+# groupadd ${BUSYUSER} >> $LOGFILE
+# useradd ${BUSYUSER} -s /bin/bash -m -g ${BUSYUSER} | logline
 # add directory for write any files by users, chmod 777
 # don't want to see any files in busyman directory, sometime it's seen on the screen when somehow open file dialog apears, in chrome Ctrl+o
 # create directory with access for users
-mkdir /opt/${PROJECT}/data 2>/dev/null
-chmod 777 /opt/${PROJECT}/data
-mkdir /opt/${PROJECT}/data/{files,images,sounds,videos} 2>/dev/null
-chmod 777 /opt/${PROJECT}/data/{files,images,sounds,videos}
-cat > /home/${BUSYUSER}/.bash_aliases << EOF
-# Command aliases for ${BUSYUSER}
-alias ls="ls --color -lAGbh --time-style='+%b %d %Y %H:%M'"
-EOF
-
 # add file .bash_aliases to root account
-cat > /root/.bash_aliases << EOF
-# Command aliases for root
-alias ls="ls --color -lAGbh --time-style='+%b %d %Y %H:%M'"
-EOF
-
-echo -e "\e[31m Remove init-0 file..................... \e[0m" >> $LOGFILE
-rm /root/init-0 >> $LOGFILE
-lsb_release -a | logline
-uname -a | logline
-
 # install X, browser, and other packages
-echo -e "\e[100m Install software-properties-common ... \e[0m" | logline
 apt-get install -y software-properties-common | logline # for Debian
-echo -e "\e[100m Install wget curl ... \e[0m" | logline
-apt-get install -y wget curl | logline
-wget -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - | logline
-_GGL_REPO="deb http://dl.google.com/linux/chrome/deb/ stable main"
-_SRC_FILE="/etc/apt/sources.list"
-if grep -x -q "$_GGL_REPO" $_SRC_FILE; then
-    echoinfo "$_GGL_REPO exists..."
-  else
-    echo $_GGL_REPO >> $_SRC_FILE
-fi
 # added above if, to avoid double it
 apt-get update | logline >> $LOGFILE
-sysctl vm.swappiness=10
-echo "vm.swappiness = 10" >> /etc/sysctl.conf
-echo -e "\e[33m Change autostart startx in user busyman .profile file.........................\e[0m" | logline
-# run X in tty1 (after autologin)
-rm /home/$BUSYUSER/.profile
-cat > /home/$BUSYUSER/.profile  << 'EOF'
-[[ $(tty) = /dev/tty1 ]] && setterm -blank 0 -powersave off && startx
-EOF
-chown $BUSYUSER:$BUSYUSER /home/${BUSYUSER}/.profile | logline
-# download big files
-wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg | logline
-wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg | logline
-rm -R /home/${BUSYUSER}/.config/openbox/ | logline
-mkdir -pv /home/${BUSYUSER}/.config/openbox/ | logline
-echo -e "\e[36m Copy openbox config files.....................\e[0m" | logline
-cp -R /etc/xdg/openbox /home/${BUSYUSER}/.config | logline
-chown -R ${BUSYUSER}:${BUSYUSER} /home/${BUSYUSER}/.config | logline
-
-rm -R /home/${BUSYUSER}/.config/openbox/autostart | logline
-cat > /home/${BUSYUSER}/.config/openbox/autostart << 'EOF'
-# Programs that will run after Openbox windows manager has started
-xrandr --output default --mode 800x600 &
-xrandr --output Virtual1 --mode 800x600 &
-feh --bg-scale /opt/${BUSYUSER}/data/images/wall03.png &
-xset -dpms &
-xset s off &
-xcompmgr &
-(sleep 2s && tint2) &
-if [ $(echo $DISPLAY) = ":98" ]; then
-    export DISPLAY=:98 && /opt/${BUSYUSER}/frame00 &
-fi
-if [ $(echo $DISPLAY) = ":97" ]; then
-    export DISPLAY=:97 && /opt/${BUSYUSER}/frame00 &
-fi
-if [ $(echo $DISPLAY) = ":0" ]; then
-    export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
-fi
-EOF
-
-chown ${BUSYUSER}:${BUSYUSER} /home/${BUSYUSER}/.config/openbox/*
-chmod +x /home/${BUSYUSER}/.config/openbox/autostart | logline
-
-cat > /usr/share/xsessions/${BUSYUSER}.desktop << EOF
-[Desktop Entry]
-Version=1.0
-Name=${BUSYUSER}
-Exec=default
-Icon=
-Type=Application
-EOF
 
 # download or update particular service (in this case project "busyman")
-rm -Rf /opt/$PROJECT
-mkdir /opt/$PROJECT
-mkdir /opt/$PROJECT/log
-ln -s /var/log/${PROJECT}.log /opt/${PROJECT}/${PROJECT}.log
-export PATH=$PATH:/opt/$PROJECT
-cd /opt/$PROJECT
-echo "wget -q --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/*"
-wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/update -O /opt/${PROJECT}/update | logline
-wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/config -O /opt/${PROJECT}/config | logline
-wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/windows-init -O /opt/${PROJECT}/windows-init | logline
-chmod +x /opt/${PROJECT}/*
-ls -la /opt/$PROJECT
-echo "Start /opt/${PROJECT}/update..." | logline
-/bin/bash /opt/${PROJECT}/update -t full | logline
-getent group ${BUSYUSER} | logline
-# add tasks to crontab, compare logs in every 10 min and reboot if notting happened
-echo -e "\e[44m ................... update crontab \e[0m"
-rm /etc/cron.d/compare_logs_reboot 2>/dev/null
-cat > /etc/cron.d/compare_logs_reboot  << 'EOF'
-*/10 * * * * root /bin/bash /opt/${BUSYUSER}/compare_logs_reboot.sh
-*/5 * * * * root export DISPLAY=:0 && export XAUTHORITY="/home/${BUSYUSER}/.Xauthority" && /bin/bash /opt/${BUSYUSER}/windows-check.sh
-EOF
-
-date | logline
-ntpdate -s time.nist.gov | logline
-date | logline
-sleep 1
-echo -e "\e[35m apt-get --purge autoremove && apt-get clean.............................................."
-sleep 1
-echo -e "\e[32m clean up............\e[0m" | logline
-apt-get -y remove exim4 exim4-base exim4-config exim4-daemon-light
-apt-get -y autoremove exim4
-rm -r /var/log/exim4/
-rm -r /var/spool/mail/*
-apt-get -qq --purge autoremove && apt-get clean
 echo -e "\e[32m All done......................\e[0m" | logline
 echo -e "Next to do: Run 'reboot' and should start google-chrome browser...." | logline
 echo -e "Logifile: /var/log/${PROJECT}.log" | logline

@@ -2,10 +2,11 @@
 # set -x
 _START=$(date +%s) # calculate how long script runs (see on the end)
 SCRIPT=fb-walking-around
-LOGFILE=/var/log/busy4me.log
-STATFILE=/var/log/busy4me-nocolor.log # log file without escape characters, used for time series databases (eg.influxdb-telegraf-grok)
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/fb/fb-config # fb variables from there
+PROJECT="busyman"
+source /opt/${PROJECT}/${PROJECT}.cfg
+LOGFILE=/var/log/${PROJECT}.log
+STATFILE=/var/log/${PROJECT}-nocolor.log # log file without escape characters, used for time series databases (eg.influxdb-telegraf-grok)
+source /opt/${PROJECT}/${PROJECT}.sh # global functions
 verbose="true"
 
 old_logline() {
@@ -68,27 +69,23 @@ mouse_move () {
   echoinfo "mouse, comment=Start move mouse"
   screen -S mouse-move -X kill >/dev/null 2>&1
   screen -S mouse-move$DISPLAY -X kill >/dev/null 2>&1
-  screen -S mouse-move-01 -X kill >/dev/null 2>&1
-  screen -S mouse-move-02 -X kill >/dev/null 2>&1
-  screen -S mouse-move-01$DISPLAY -X kill >/dev/null 2>&1
-  screen -S mouse-move-02$DISPLAY -X kill >/dev/null 2>&1
   if [[ "$1" == "1" ]]; then
-    screen -dmS mouse-move$DISPLAY '/opt/busy4me/fb/mouse-move'
+    screen -dmS mouse-move$DISPLAY "/opt/${PROJECT}/mouse-move"
     return
   fi
   chose=$((1 + RANDOM % 2))
   case "$chose" in
     1)
       echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m"
-      screen -dmS mouse-move-01$DISPLAY '/opt/busy4me/fb/mouse-move-01.py'
+      screen -dmS mouse-move$DISPLAY "/opt/${PROJECT}/mouse-move"
     ;;
     2)
       echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-02...\e[0m"
-      screen -dmS mouse-move-02$DISPLAY '/opt/busy4me/fb/mouse-move-02.py'
+      screen -dmS mouse-move$DISPLAY "/opt/${PROJECT}/mouse-move"
     ;;
     *)
-      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m"
-      screen -S mouse-move-01$DISPLAY -X kill
+      echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move...\e[0m"
+      screen -S mouse-move$DISPLAY -X kill
     ;;
   esac
 }
@@ -135,7 +132,7 @@ page_probe () {
     *$mark011*|*$mark012*)
       pause_time=$(( pause_time + 30 ))
       echopause "pause, pause_time=$pause_time, mark011=$mark011, FUNCNAME=${FUNCNAME[0]}, comment=slow down... PAUSE... "
-      locate -i fb--message-you-are-temporarily-blocked.png -a circle
+      /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--message-you-are-temporarily-blocked.png -a circle
       zenity --info --title="temporarily blocked" --text="I see: $mark011\n pause_time=$pause_time\n OK, slow down..." --width 250 --height 120  --timeout $pause_time
 		;;
 		*$mark02*)
@@ -286,14 +283,14 @@ press_enter_morning_and_afternoon_01 () {
 
 check_alerts() {
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
-  locate -i fb-alert--icon-red-triangle--connection-is-not-private.jpg -a circle
-  locate -i fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg -a click
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-alert--icon-red-triangle--connection-is-not-private.jpg -a circle
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg -a click
   if [ $(echo "$?") = "0" ]; then
     echook "ok, FUNCNAME=${FUNCNAME[0]}, comment=found fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg, back to safety... "
   else
     echowarning "warning, , FUNCNAME=${FUNCNAME[0]}, comment=can't find fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg"
   fi
-  locate -i fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg -a click
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg -a click
   if [ $(echo "$?") = "0" ]; then
     echook "ok, FUNCNAME=${FUNCNAME[0]}, comment=found fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved "
   fi
@@ -305,23 +302,23 @@ video() {
   title="watch_video"
   if [ "$1" = "watch" ]; then
     if [[ $SPOT01url == *"com/watch"* ]] || [[ $SPOT01url == *"com/videos"* ]] || [[ $SPOT01url == *"com/watch/live/"* ]]; then
-      locate -i fb-watch--push-button-red--live.jpg -a circle
+      /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-watch--push-button-red--live.jpg -a circle
       if [ $(echo "$?") = "0" ]; then
         xdotool key --delay $kd_2 Escape
-        locate -i fb-watch--push-button-red--live.jpg -a click --offx=100 --offy=100
+        /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-watch--push-button-red--live.jpg -a click --offx=100 --offy=100
         echopause "steppause, step_pause=$step_pause, FUNCNAME=${FUNCNAME[0]}, comment=step pause between 360-720s... PAUSE..."
         echoinfo "watch, FUNCNAME=${FUNCNAME[0]}, comment=fb-watch--push-button-red--live"
         pause $step_pause $title # show zenity message
         return
       fi
-      if [[ $(locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a circle) ]]\
-      || [[ $(locate -i fb-post--push-button-grey-icon-and-inscription--share-2.jpg -a circle) ]]
+      if [[ $(/opt/venv/bin/python /opt/${PROJECT}/locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a circle) ]]\
+      || [[ $(/opt/venv/bin/python /opt/${PROJECT}/locate -i fb-post--push-button-grey-icon-and-inscription--share-2.jpg -a circle) ]]
       then
         xdotool key --delay $kd_2 Escape
-        locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a click
-        locate -i fb-post--push-button-grey-icon-and-inscription--share-2.jpg -a click
+        /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-post--push-button-grey-icon-and-inscription--share.jpg -a click
+        /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-post--push-button-grey-icon-and-inscription--share-2.jpg -a click
         sleep 3
-        locate -i fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg -a click
+        /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg -a click
         if [ $(echo "$?") = "0" ]; then
           clip=$(xclip -out -selection clipboard )
           case "$clip" in
@@ -340,10 +337,10 @@ video() {
         # check if video running
         scrot -a 300,150,700,400 /opt/busy4me/fb/img/video.jpg
         sleep 15
-        locate -i video.jpg
+        /opt/venv/bin/python /opt/${PROJECT}/locate -i video.jpg
         if [ $(echo "$?") = "0" ]; then
           echowarning "video, comment=video not running... click on the screen..."
-          locate -i video.jpg -a click
+          /opt/venv/bin/python /opt/${PROJECT}/locate -i video.jpg -a click
         else
           echoconfirm "video, comment=video running..."
         fi
@@ -370,16 +367,16 @@ locate_elements() {
   # available stuffs: 1,2,3.. etc. - 1 - additional locate more elements
   action="move" # available actions in 'locate' program: move, circle, click, squere, x-corner, x-edge
   if [ "$stuff" = "1" ] || [ "$stuff" = "2" ] || [ "$stuff" = "3" ]; then
-    echowarning "warning, FUNCNAME=${FUNCNAME[0]}, stuff=$stuff, comment=additional stuff to do: locate more elements..."
+    echowarning "warning, FUNCNAME=${FUNCNAME[0]}, stuff=$stuff, comment=additional stuff to do: /opt/venv/bin/python /opt/${PROJECT}/locate more elements..."
     action="circle"
-    locate -i fb--icon--home-grey.png -a $action
-    locate -i fb--logo.png -a $action
+    /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--icon--home-grey.png -a $action
+    /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--logo.png -a $action
   fi
-  locate -i fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg -a click
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg -a click
   if [ $(echo "$?") = "0" ]; then
     echoinfo "content, FUNCNAME=${FUNCNAME[0]}, comment=go-to-news-feed--this-content-isn-t-available-right-now"
   fi
-  locate -i fb--message-you-are-temporarily-blocked.png -a circle
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--message-you-are-temporarily-blocked.png -a circle
   if [ $(echo "$?") = "0" ]; then
     pause_time=$(( pause_time + 30 ))
     echopause "pause, pause_time=$pause_time, FUNCNAME=${FUNCNAME[0]}, comment=temporarily blocked"
@@ -391,11 +388,11 @@ locate_elements() {
     echopause "unpause, pause_time=$pause_time, FUNCNAME=${FUNCNAME[0]}, comment=minus 30 from last value"
   fi
   xdotool key --delay $kd_2 Escape
-  locate -i fb--post-frame--left-bottom-edge.png -a $action
-  locate -i fb-jobs--job-post-frame--right-top-edge.png -a $action
-  locate -i fb-jobs--job-post-frame--left-top-edge.png -a $action
-  locate -i fb-jobs--job-post-frame--right-bottom-edge.png -a $action
-  locate -i fb-jobs--job-post-frame--left-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--post-frame--left-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--right-top-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-top-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--right-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-bottom-edge.png -a $action
   xdotool key --delay $kd_2 Down Down Down Down
   xdotool key --delay $kd_2 Escape
 }
@@ -411,7 +408,9 @@ walking_around_wall () {
   xdotool key --delay 100 Ctrl+a
   xdotool type --delay 100 $SPOT01url
   xdotool key --delay 100 Return
+  /opt/venv/bin/python /opt/${PROJECT}/mouse-move
   transset -a 1 # set darker window
+  /opt/venv/bin/python /opt/${PROJECT}/mouse-move
   sleep 3
   scrot_local # screenshot
   check_alerts
@@ -427,6 +426,7 @@ walking_around_wall () {
   if [ "$stuff" = "3" ]; then
     press_keys_03
   fi
+  /opt/venv/bin/python /opt/${PROJECT}/mouse-move
   check_alerts
   switch_to_english
   press_keys_04
@@ -445,7 +445,7 @@ walking_around_wall () {
 	/bin/bash /opt/busy4me/windows-check.sh
 	sleep 1
 	echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=external script start windows-check.sh"
-  locate -i fb-left-edge-of-post-frame.png -a move
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-left-edge-of-post-frame.png -a move
   page_probe
   windows_check
   xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up Down Down Down
@@ -457,6 +457,7 @@ walking_around_wall () {
   windows_check
   xdotool key --delay $kd_2 Escape Escape
   xdotool key --delay $kd_1 Escape Escape
+  /opt/venv/bin/python /opt/${PROJECT}/mouse-move
 }
 
 detect_input_field () {

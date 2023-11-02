@@ -2,9 +2,9 @@
 # Autoupdate if changed...
 # Upgrade if needed...
 # curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
+SCRIPT=fb-init
 PROJECT="busyman"
 source /opt/${PROJECT}/${PROJECT}.cfg
-SCRIPT=fb-init
 LOGFILE=/var/log/${PROJECT}.log
 SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
 PROJECT_DIR=/opt/${PROJECT}/fb # with root permision 755, read only for users
@@ -28,7 +28,7 @@ logline() {
 }
 
 shake() {
-xdotool key --delay 200 Page_Down End Page_Up Home
+  xdotool key --delay 200 Page_Down End Page_Up Home
 }
 
 echo "\e[95m$(date +%F' '%T) $USER $SCRIPT start.............................................." | logline
@@ -42,7 +42,7 @@ fi
 if [ -f /opt/${PROJECT}/${PROJECT}.cfg ];then
     . /opt/${PROJECT}/${PROJECT}.cfg
 	else
-	echo "There is no fb_config file!... stop." | logline
+	echo "There is no config file!... stop." | logline
 	exit 1
 fi
 
@@ -52,9 +52,9 @@ echo -e "\e[91m *F:_clean_data, clean google-chrome busyman data...\e[0m" | logl
 	rm -rf /home/$BUSYUSER/.cache/google-chrome
 	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*
 
-__TRANSSET=1
-transset_blank () {
-  transset -a $__TRANSSET
+__TRANSSET=0                                         ############################################################
+transset_blank () {                                  #  change __TRANSSET to 0 to set current window invisible  #
+  transset -a $__TRANSSET                            ############################################################
 }
 
 # open transparent xtrminal
@@ -76,61 +76,61 @@ xdotool search --onlyvisible --class "$BR01" windowkill | logline
 xdotool search --onlyvisible --class "$SPOT01" windowkill | logline
 xdotool search --onlyvisible --class "$PROC01" windowkill | logline
 
-spot01_position_size () {
-_WINDOW=$(xdotool search --onlyvisible --name "$SPOT01")
-echo -e "\e[96m *F:spot01_position_size, move and resize window... _WINDOW=\e[0m$_WINDOW" | logline
-xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap| logline
-transset_blank
-xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-transset_blank
-for i in {1..10} ; do
+spot01_position_size() {
+  _WINDOW=$(xdotool search --onlyvisible --name "$SPOT01")
+  echo -e "\e[96m *F:spot01_position_size, move and resize window... _WINDOW=\e[0m$_WINDOW" | logline
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap| logline
+  transset_blank
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  transset_blank
+  for i in {1..10} ; do
+    __wallpaper_change
+    sleep 0.1
+  done
   __wallpaper_change
-  sleep 0.1
-done
-__wallpaper_change
-echo "reset zoom...."
-xdotool key --delay $kd Ctrl+0 | logline # reset zoom
-for i in {1..10} ; do
+  echo "reset zoom...."
+  xdotool key --delay $kd Ctrl+0 | logline # reset zoom
+  for i in {1..10} ; do
+    __wallpaper_change
+    sleep 0.1
+  done
+  transset_blank
+  # zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
   __wallpaper_change
-  sleep 0.1
-done
-transset_blank
-#zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
-__wallpaper_change
-echo "set zoom to 75%...."
-xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-# xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
-xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
-transset_blank
-#zenity --info --title="zoom" --text="move window...." --timeout $to
-__wallpaper_change
-#echo "move window 5 steps below x=0...."
-#xdotool key Alt_L+space m | logline
-#xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
-#xdotool key --delay 500 Return | logline
-#xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
-xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-# unhide browser window
-wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,below
-pkill xli
-feh --bg-scale /opt/${PROJECT}/data/images/wall-blue.png
-transset -a 0.1; sleep 0.1
-transset -a 0.2; sleep 0.1
-transset -a 0.3; sleep 0.1
-transset -a 0.4; sleep 0.1
-transset -a 0.5; sleep 0.1
-transset -a 0.6; sleep 0.1
-transset -a 0.7; sleep 0.1
-transset -a 0.8; sleep 0.1
-transset -a 0.1; sleep 0.1
-transset -a 1
-# set fullscreen image below and kill it
-echo "shake...."
-#zenity --info --title="shake" --text="shake...." --timeout $to
-shake
-xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+f type 111 | logline
-xdotool key Escape | logline
+  echo "set zoom to 75%...."
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  # xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
+  transset_blank
+  # zenity --info --title="zoom" --text="move window...." --timeout $to
+  __wallpaper_change
+  #echo "move window 5 steps below x=0...."
+  #xdotool key Alt_L+space m | logline
+  #xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
+  #xdotool key --delay 500 Return | logline
+  #xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  # unhide browser window
+  wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,below
+  pkill xli
+  feh --bg-scale /opt/${PROJECT}/data/images/wall-blue.png
+  transset -a 0.1; sleep 0.1
+  transset -a 0.2; sleep 0.1
+  transset -a 0.3; sleep 0.1
+  transset -a 0.4; sleep 0.1
+  transset -a 0.5; sleep 0.1
+  transset -a 0.6; sleep 0.1
+  transset -a 0.7; sleep 0.1
+  transset -a 0.8; sleep 0.1
+  transset -a 0.9; sleep 0.1
+  transset -a 1
+  # set fullscreen image below and kill it
+  echo "shake...."
+  #zenity --info --title="shake" --text="shake...." --timeout $to
+  shake
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+f type 111 | logline
+  xdotool key Escape | logline
 }
 
 BR01_probe () {
@@ -199,20 +199,18 @@ BR01_run () {
 }
 
 echo -e "\e[96m *F:BR01_run, first run \"$BR01\" \e[0m" | logline
-
 #( _PTH="/opt/${PROJECT}/data/images"; \
 #for i in {1..20}; do; feh --bg-scale $_PTH/wall00.png; sleep 1; \
 #feh --bg-scale $_PTH/wall01.png; sleep 1; \
 #feh --bg-scale /opt/${PROJECT}/data/images/wall02.png; sleep 1; \
 #feh --bg-scale /opt/${PROJECT}/data/images/wall03.png; sleep 1; \
 #done ) | logline
-
 feh --bg-scale /opt/${PROJECT}/data/images/wall00.png
 BR01_run
 for i in {1..20} ; do
   xdotool search --sync --onlyvisible --class chrome windowactivate | logline
   transset_blank
-#  __wallpaper_change
+  #  __wallpaper_change
   sleep 0.25 | logline
 done
 for i in {1..50} ; do
