@@ -76,11 +76,11 @@ gen_random() { # generate random number between two values, usage: generate_rand
 
 # screenshot to local catalog
 scrot_local () {
-code="-"$1
-mkdir /opt/busy/scrot/$SCRIPT 2>/dev/null
-scrot1="/opt/busy/scrot/$SCRIPT/$(date +%Y%m%d-%H%M%S)-$JOB-scrot$DISPLAY$code.jpg"
-scrot -q 50 $scrot1
-echo -e "\e[33m code: \e[35m" $1 "\e[33m scrot file: \e[35m" $scrot1 "\e[0m" | logline
+  code="-"$1
+  mkdir -p /opt/${PROJECT}/data/scrot/$SCRIPT
+  scrot1="/opt/${PROJECT}/data/scrot/$SCRIPT/$(date +%Y%m%d-%H%M%S)-$JOB-scrot$DISPLAY$code.jpg"
+  scrot -q 50 ${scrot1}
+  echo -e "\e[33m code: \e[35m" ${code} "\e[33m scrot file: \e[35m" ${scrot1} "\e[0m" | logline
 }
 
 move_mouse () { # move mouse to position x:y or move to x=0:y=0, usage: move_mouse [x] [y]
@@ -781,7 +781,7 @@ esac
 function SYSTEM () {
 case $1 in
 	--clip-clear|-cc)
-	xclip -selection clipboard /opt/busy/files/blank
+	xclip -selection clipboard /opt/${PROJECT}/data/files/blank
 	[[ $? -eq 0 ]] && echoconfirm "xclip cleared..."
 	;;
 	*)

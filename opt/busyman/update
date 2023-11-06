@@ -24,7 +24,7 @@ mkdir /opt/${PROJECT}/data 2>/dev/null # create directory with access for users 
 chmod 777 /opt/${PROJECT}/data
 mkdir /opt/${PROJECT}/data/{files,images,sounds,videos} 2>/dev/null
 chmod 777 /opt/${PROJECT}/data/{files,images,sounds,videos}
-touch /opt/${BUSYMAN}/data/files/blank 2>/dev/null # create empty file for blank clipboard if not exists
+touch /opt/${PROJECT}/data/files/blank 2>/dev/null # create empty file for blank clipboard if not exists
 mkdir $BACKUP 2>/dev/null # create backup directories
 mkdir $BACKUP/fb 2>/dev/null
 mkdir $BACKUP_2 2>/dev/null
@@ -249,6 +249,7 @@ download_fb_files() { # download fb files
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--icon-red-triangle--connection-is-not-private.jpg
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg
+  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-button-allow-all-cookies.jpg
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-watch--push-button-red--live.jpg
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg
   wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--push-button-grey-icon-and-inscription--share.jpg

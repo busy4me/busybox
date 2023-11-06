@@ -109,7 +109,7 @@ page_probe () {
   mark02="follow"
   mark03="o"
   mark04="Accept All" # fb question: Accept cookies from Facebook...  echo -e "\e[35m page probe after Active click..............................\e[0m"
-	xclip -selection clipboard /opt/busy/files/blank
+	xclip -selection clipboard /opt/${PROJECT}/data/files/blank
   hide_window
   echoinfo "screenshoot, comment=check what is on the screen"
 	scrot_local
@@ -284,6 +284,7 @@ press_enter_morning_and_afternoon_01 () {
 check_alerts() {
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
   /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-alert--icon-red-triangle--connection-is-not-private.jpg -a circle
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-button-allow-all-cookies.jpg -a click
   /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg -a click
   if [ $(echo "$?") = "0" ]; then
     echook "ok, FUNCNAME=${FUNCNAME[0]}, comment=found fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg, back to safety... "
@@ -335,7 +336,7 @@ video() {
           echoerror "can't find menu element..."
         fi
         # check if video running
-        scrot -a 300,150,700,400 /opt/busy4me/fb/img/video.jpg
+        scrot -a 300,150,700,400 /opt/${PROJECT}/fb/img/video.jpg
         sleep 15
         /opt/venv/bin/python /opt/${PROJECT}/locate -i video.jpg
         if [ $(echo "$?") = "0" ]; then
@@ -463,7 +464,7 @@ walking_around_wall () {
 detect_input_field () {
   function_start=$(date +%s) # calculate how long script runs (see on the end)
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
-  xclip -selection clipboard /opt/busy/files/blank
+  xclip -selection clipboard /opt/${PROJECT}/data/files/blank
 #  random_letter=$(shuf -zer -n1  {A..Z} {a..z})
   xdotool key --delay $kd Home Shift+End
 #	xdotool key --delay $kd Shift+F10
@@ -476,7 +477,7 @@ detect_input_field () {
     xdotool key --delay $kd Tab Tab Tab Tab Tab
     ;;
     *)
-    xclip -selection clipboard /opt/busy/files/blank
+    xclip -selection clipboard /opt/${PROJECT}/data/files/blank
     random_letter=$(tr -dc A-Za-z </dev/urandom | head -c 1 ; echo '')
     echook "random_letter, random_letter=$random_letter, clip=$clip, clip2=$clip2, kd=$kd, kdl=$kdl, FUNCNAME=${FUNCNAME[0]}"
     #random_letter=$(shuf -zer -n1  {A..Z} {a..z}) >/dev/null
@@ -499,7 +500,7 @@ detect_input_field () {
 switch_to_english () {
   function_start=$(date +%s) # calculate how long script runs (see on the end)
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
-  xclip -selection clipboard /opt/busy/files/blank
+  xclip -selection clipboard /opt/${PROJECT}/data/files/blank
   xdotool type --delay $kds 'English ('
   xdotool key --delay $kds Escape
   xdotool key --delay $kds Shift+End
@@ -509,7 +510,7 @@ switch_to_english () {
     echook "position, FUNCNAME=${FUNCNAME[0]}, comment=on position: English (US)"
     xdotool key --delay $kd Return
     sleep 1
-    xclip -selection clipboard /opt/busy/files/blank
+    xclip -selection clipboard /opt/${PROJECT}/data/files/blank
     hide_window
     clip=$(xclip -out -selection clipboard )
     case "$clip" in
