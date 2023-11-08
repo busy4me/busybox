@@ -123,27 +123,27 @@ reset () {
 }
 
 start () {
-	echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}" | logline
-	_TASK=$1
-	_OPT_1=$2
-	_OPT_2=$3
-	_OPT_3=$4
-	_OPT_4=$5
-	_OPT_5=$6
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}" | logline
+  _TASK=$1
+  _OPT_1=$2
+  _OPT_2=$3
+  _OPT_3=$4
+  _OPT_4=$5
+  _OPT_5=$6
   if [ -z "$_TASK" ]; then
-	screen -dmS frame00$DISPLAY '/opt/busyman/frame00' # default task to run: frame00
-	sleep 2
-	screen -ls
-	return
+    screen -dmS frame00$DISPLAY '/opt/busyman/frame00' # default task to run: frame00
+    sleep 2
+    screen -ls
+    return
   fi
   task_to_do="$_TASK $_OPT_1 $_OPT_2 $_OPT_3 $_OPT_4 $_OPT_5"
   echoinfo "task_to_do=$task_to_do"
   screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$_OPT_4$_OPT_5$DISPLAY '$task_to_do'
   _PROCESS=$(screen -ls | tee /dev/tty)
   if echo "$_PROCESS" | grep -q "$_TASK$_OPT_1$_OPT_2$_OPT_3$_OPT_4$_OPT_5$DISPLAY"; then
-	echosuccess "$task_to_do running succesfully"
+    echosuccess "$task_to_do running succesfully"
   else
-	echoerror "something wrong, cant see $task_to_do"
+    echoerror "something wrong, cant see $task_to_do"
   fi
 }
 

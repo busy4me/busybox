@@ -365,12 +365,12 @@ logrotate() {
   cat > /etc/logrotate.d/${PROJECT} << EOF
 /var/log/${PROJECT}.log
 {
-	rotate 7
-	size 1M
-	missingok
-	dateext
-	copytruncate
-	olddir /var/log/${PROJECT}
+  rotate 7
+  size 1M
+  missingok
+  dateext
+  copytruncate
+  olddir /var/log/${PROJECT}
 }
 EOF
 }
@@ -381,11 +381,11 @@ EOF
 while getopts ':t' opt
 do
   case "${opt}" in
-		t) _EXCLUDE="tint2"; echo "  * - exclude: tint2, _EXCLUDE=$_EXCLUDE" # exlude run tint2, usage: "update -t --all"
-		;;
-		:) echo "Option -$OPTARG requires an argument." >&2
-		;;
-	esac
+    t) _EXCLUDE="tint2"; echo "  * - exclude: tint2, _EXCLUDE=$_EXCLUDE" # exlude run tint2, usage: "update -t --all"
+    ;;
+    :) echo "Option -$OPTARG requires an argument." >&2
+    ;;
+  esac
 done
 shift $((OPTIND-1))
 

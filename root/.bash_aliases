@@ -5,5 +5,5 @@ alias bl='su busyman; cd /'
 alias sb='su busyman; cd /'
 
 alias bu='/opt/busy4me/update'
-alias update='/opt/busy4me/update'
-alias update2='/opt/busy4me/update2'
+alias update='/opt/busyman/update'
+alias update2='/opt/busyman/update2'

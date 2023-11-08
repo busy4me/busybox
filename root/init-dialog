@@ -1,3 +1,0 @@
-#!/bin/bash
-dialog --title "busy4.me" --inputbox "E-mail address:" 8 45
-#
