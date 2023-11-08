@@ -1100,10 +1100,10 @@ rm $_SPLASH 2>/dev/null
 	fi
 
 # add this to skip fsck: GRUB_CMDLINE_LINUX_DEFAULT="fsck.mode=skip"
-cat > $_GRUB <<	EOF
+cat > $_GRUB << EOF
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=0
-GRUB_DISTRIBUTOR="busy4.me"
+GRUB_DISTRIBUTOR="${PROJECT}"
 GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"
 GRUB_CMDLINE_LINUX=""
 GRUB_GFXMODE=800x600

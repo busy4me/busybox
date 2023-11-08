@@ -1,15 +1,13 @@
 #!/bin/bash
-# Autoupdate if changed...
-# Upgrade if needed...
-# curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
-SCRIPT=fb-init
 PROJECT="busyman"
-source /opt/${PROJECT}/${PROJECT}.cfg
+PLUGIN="yo"
+SCRIPT="yo-init"
+SPOT_NAME="youtube"
+SPOT_URL="https://youtube.com"
 LOGFILE=/var/log/${PROJECT}.log
-SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
-PROJECT_DIR=/opt/${PROJECT}/fb # with root permision 755, read only for users
-
-echo "start" > /opt/${PROJECT}/fb/fb-init$DISPLAY-status
+SAVE_DIR=/opt/${PROJECT}/plugins/${PLUGIN}/data # with user permision 777
+PROJECT_DIR=/opt/${PROJECT}/plugins/${PLUGIN} # with root permision 755, read only for users
+echo "start" > ${SAVE_DIR}/${SCRIPT}${DISPLAY}-status
 mkdir -p $SAVE_DIR 2>/dev/null
 
 __wallpaper_change () {
@@ -23,65 +21,46 @@ feh --bg-scale /opt/${PROJECT}/data/images/wall0$INT.png
 logline() {
   __wallpaper_change
     while IFS= read -r line; do
-        echo -e "$(date +%F' '%T) $USER $SCRIPT - $line\e[0m" | tee -a $LOGFILE
+      echo -e "$(date +%F' '%T) $USER $SCRIPT - $line\e[0m" | tee -a $LOGFILE
     done
 }
 
-shake() {
-  xdotool key --delay 200 Page_Down End Page_Up Home
-}
-
-echo "\e[95m$(date +%F' '%T) $USER $SCRIPT start.............................................." | logline
-echo "start..." | logline
-
-if [ $USER = "root" ]; then
-	echo "Do not run as root! exit..." | logline
-	exit
+source /opt/${PROJECT}/${PROJECT}.sh # global functions
+if ! source /opt/${PROJECT}/${PROJECT}.cfg; then
+  echo "There is no config file!... stop." | logline; exit 1
 fi
 
-if [ -f /opt/${PROJECT}/${PROJECT}.cfg ];then
-    . /opt/${PROJECT}/${PROJECT}.cfg
-	else
-	echo "There is no config file!... stop." | logline
-	exit 1
+echo -e "\e[95m$(date +%F' '%T) $USER $SCRIPT start.............................................." | logline
+echo -e "start..." | logline
+
+if [ $USER = "root" ]; then
+  echo "Do not run as root! exit..." | logline
+  exit
 fi
 
 # Clean google-chrome busyman data... just in case...
 echo -e "\e[91m *F:_clean_data, clean google-chrome busyman data...\e[0m" | logline
-	rm -rf /home/$BUSYUSER/.config/google-chrome/Default
-	rm -rf /home/$BUSYUSER/.cache/google-chrome
-	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*
+  rm -rf /home/$BUSYUSER/.config/google-chrome/Default
+  rm -rf /home/$BUSYUSER/.cache/google-chrome
+  rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*
 
 __TRANSSET=0                                         ############################################################
 transset_blank () {                                  #  change __TRANSSET to 0 to set current window invisible  #
   transset -a $__TRANSSET                            ############################################################
 }
 
-# open transparent xtrminal
-#echo "pkill xterm... cancelled temporary..." | logline
-#xdotool search --onlyvisible --class xterm windowkill | logline
-#echo "open transparent xterm...." | logline
-#xterm -maximize & 2>/dev/null
-#echo "wait for xterm and set window on top...." | logline
-#xdotool search --sync --onlyvisible --class xterm windowactivate | logline
-#echo "Always on top...." | logline
-# xdotool key Alt_L+space l t
-#wmctrl -i -r $(wmctrl -l | grep -i busyman@ | awk '{print $1}') -b add,above
-#echo "set transparent xterm...." | logline
-#transset_blank | logline
-
 xdotool mousemove 45 45
-echo "... * kill existing windows: BR01=$BR01 SPOT01=$SPOT01 PROC01=$PROC01..." | logline
+echo "... * kill existing windows: BR01=$BR01 SPOT_NAME=$SPOT_NAME PROC01=$PROC01..." | logline
 xdotool search --onlyvisible --class "$BR01" windowkill | logline
-xdotool search --onlyvisible --class "$SPOT01" windowkill | logline
+xdotool search --onlyvisible --class "$SPOT_NAME" windowkill | logline
 xdotool search --onlyvisible --class "$PROC01" windowkill | logline
 
-spot01_position_size() {
-  _WINDOW=$(xdotool search --onlyvisible --name "$SPOT01")
-  echo -e "\e[96m *F:spot01_position_size, move and resize window... _WINDOW=\e[0m$_WINDOW" | logline
-  xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap| logline
+SPOT_NAME_position_size() {
+  _WINDOW=$(xdotool search --onlyvisible --name "$SPOT_NAME")
+  echo -e "\e[96m *F:SPOT_NAME_position_size, move and resize window... _WINDOW=\e[0m$_WINDOW" | logline
+  xdotool search --sync --onlyvisible --name "$SPOT_NAME" windowunmap windowmap| logline
   transset_blank
-  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  xdotool search --sync --onlyvisible --name "$SPOT_NAME" windowactivate | logline
   transset_blank
   for i in {1..10} ; do
     __wallpaper_change
@@ -98,9 +77,9 @@ spot01_position_size() {
   # zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
   __wallpaper_change
   echo "set zoom to 75%...."
-  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  xdotool search --sync --onlyvisible --name "$SPOT_NAME" windowactivate | logline
   # xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
-  xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
+  xdotool search --sync --onlyvisible --name "$SPOT_NAME" windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
   transset_blank
   # zenity --info --title="zoom" --text="move window...." --timeout $to
   __wallpaper_change
@@ -108,8 +87,8 @@ spot01_position_size() {
   #xdotool key Alt_L+space m | logline
   #xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
   #xdotool key --delay 500 Return | logline
-  #xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
-  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  #xdotool search --sync --onlyvisible --name "$SPOT_NAME" windowunmap windowmap | logline
+  xdotool search --sync --onlyvisible --name "$SPOT_NAME" windowactivate | logline
   # unhide browser window
   wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,below
   pkill xli
@@ -126,14 +105,15 @@ spot01_position_size() {
   transset -a 1
   # set fullscreen image below and kill it
   echo "shake...."
-  #zenity --info --title="shake" --text="shake...." --timeout $to
+  # zenity --info --title="shake" --text="shake...." --timeout $to
   shake
-  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-  xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+f type 111 | logline
+  hide_window
+  xdotool search --sync --onlyvisible --name "$SPOT_NAME" windowactivate | logline
+  xdotool key --delay 500 Ctrl+f type ${SPOT_NAME} | logline
   xdotool key Escape | logline
 }
 
-BR01_probe () {
+BR01_probe() {
 echo -e "\e[96m *F:BR01_probe, check \"$BR01\" window\e[0m" | logline
 if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
 		echo "there is no \"$BR01\"... exit..." | logline
@@ -141,7 +121,7 @@ if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
 		echo "\"$BR01\" is opened already... enter url and set zoom to 75%..." | logline
 		xdotool search --sync --onlyvisible --name "$PROC01" windowactivate | logline
 		xdotool key Ctrl+l | logline
-		xdotool type $SPOT01url | logline
+		xdotool type $SPOT_URL | logline
 		xdotool key Return | logline
 		xdotool key --delay $kd Ctrl+0 | logline # reset zoom
 		# xdotool key --delay $kd Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
@@ -152,18 +132,18 @@ if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
 fi
 }
 
-SPOT01_probe () {
-  echo -e "\e[96m *F:SPOT01_probe, check \"$SPOT01\" window\e[0m" | logline
+SPOT_NAME_probe() {
+  echo -e "\e[96m *F:SPOT_NAME_probe, check \"$SPOT_NAME\" window\e[0m" | logline
 while  [ 1 ]; do
-	if [ -z "$( xdotool search --onlyvisible --name "$SPOT01" )" ]; then
-    echo "$SPOT01 non exists... open  $SPOT01 page..." | logline
-    echo "$SPOT01 non exists... open  $SPOT01 page..."
+	if [ -z "$( xdotool search --onlyvisible --name "$SPOT_NAME" )" ]; then
+    echo "$SPOT_NAME non exists... open  $SPOT_NAME page..." | logline
+    echo "$SPOT_NAME non exists... open  $SPOT_NAME page..."
     BR01_run
     BR01_probe
 	else
-		echo "$date Window with $SPOT01 opened successfuly...." | logline
+		echo "$date Window with $SPOT_NAME opened successfuly...." | logline
 		echo "Move and resize window...." | logline
-		spot01_position_size
+		SPOT_NAME_position_size
 		break
 	fi
   for i in {1..50} ; do
@@ -173,7 +153,7 @@ while  [ 1 ]; do
 done
 }
 
-BR01_run () {
+BR01_run() {
   $BR01 --window-size="900,768" \
   --window-position="140,0" \
   --incognito \
@@ -195,16 +175,10 @@ BR01_run () {
   --no-referrers \
   --disable-infobars \
   --disable-session-crashed-bubble \
-  $SPOT01url & 2>/dev/null | logline
+  $SPOT_URL & 2>/dev/null | logline
 }
 
 echo -e "\e[96m *F:BR01_run, first run \"$BR01\" \e[0m" | logline
-#( _PTH="/opt/${PROJECT}/data/images"; \
-#for i in {1..20}; do; feh --bg-scale $_PTH/wall00.png; sleep 1; \
-#feh --bg-scale $_PTH/wall01.png; sleep 1; \
-#feh --bg-scale /opt/${PROJECT}/data/images/wall02.png; sleep 1; \
-#feh --bg-scale /opt/${PROJECT}/data/images/wall03.png; sleep 1; \
-#done ) | logline
 feh --bg-scale /opt/${PROJECT}/data/images/wall00.png
 BR01_run
 for i in {1..20} ; do
@@ -218,11 +192,11 @@ for i in {1..50} ; do
   sleep 0.1
 done
 transset_blank
-SPOT01_probe
+SPOT_NAME_probe
 xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.9
 feh --bg-scale /opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg
 while  [ 1 ]; do
-  echo "done" > /opt/${PROJECT}/data/fb/fb-init$DISPLAY-status
+  echo "done" > ${SAVE_DIR}/${SCRIPT}${DISPLAY}-status
   sleep 86400 # sleep 1 day
 done

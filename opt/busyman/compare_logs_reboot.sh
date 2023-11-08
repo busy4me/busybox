@@ -4,16 +4,13 @@
 #IMG1="$(cat ~/an_image.jpg | base64)"
 #IMG2="$(cat ~/another_image.jpg | base64)"
 # that could be compare two binaries as above
-
-# executed by cron, compare two files busy4me.log every 5 min
-# if same that means nothing happening and reboot, and write 0 to file /tmp/busy4me_reboot
-# if different, keep going
-# 
-echo "...start script"
-
+# executed by cron, compare two files busyman.log every 5 min
+# if same that means nothing happening and reboot, and write 0 to file /tmp/busyman-reboot
+# if different, keep going 
+PROJECT="busyman"
 SCRIPT=compare_logs_reboot.sh
-LOGFILE_CRON=/var/log/busy4me_cron.log
-source /opt/busy4me/fb/fb-config
+source /opt/${PROJECT}/${PROJECT}.cfg
+LOGFILE_CRON=/var/log/${PROJECT}_cron.log
 
 logline_cron() {
 	while IFS= read -r line; do
@@ -23,7 +20,7 @@ logline_cron() {
 
 clean_scrot_files () {
 echo -e "\e[33m Clean scrot files... \e[0m" | logline
-rm /opt/busy/scrot/fb-walking-around/*
+rm /opt/${PROJECT}/data/scrot/fb-walking-around/*
 }
 	
 echo "$(date +%F' '%T) $USER $SCRIPT start compare $LOG1 and $LOG2"
@@ -60,55 +57,51 @@ memcheck() {
 }
 
 logcompare() {
-# check if the logs are the same
-	LOG1="$(cat /tmp/busy4me_tmp.log | base64)"
-	LOG2="$(cat /var/log/busy4me.log | base64)"
-	echo -e "\e[33m check if the logs are the same... \e[0m"
-	if [ "$LOG1" == "$LOG2" ]; then
-		echo -e "\e[31m Yes... \e0m"
-		echo "_____ ____ ___ __ _ Aw, snap! logs are same! no activity?... reboot now..." | logline_cron
-		clean_scrot_files
-		# reboot
-		/sbin/shutdown -r now
+  # check if the logs are the same
+  LOG1="$(cat /tmp/${PROJECT}_tmp.log | base64)"
+  LOG2="$(cat /var/log/${PROJECT}.log | base64)"
+  echo -e "\e[33m check if the logs are the same... \e[0m"
+  if [ "$LOG1" == "$LOG2" ]; then
+	echo -e "\e[31m Yes... \e0m"
+	echo "_____ ____ ___ __ _ Aw, snap! logs are same! no activity?... reboot now..." | logline_cron
+	clean_scrot_files
+	/sbin/shutdown -r now
+  else
+	echo "logs are different, good :) work in progress ..." | logline_cron
+  fi
+  echo -e "\e[32m Remove old busyman_tmp.log... \e[0m"
+  rm /tmp/${PROJECT}_tmp.log
+  echo -e "\e[32m Copy new busyman.log... \e[0m"
+  cp /var/log/${PROJECT}.log /tmp/${PROJECT}_tmp.log
+  # check if marked to reboot by busyuser
+  echo -e "\e[33m check if marked to reboot by busyuser... \e[0m"
+  if [ -f /tmp/${PROJECT}-reboot ]; then
+	echo "/tmp/${PROJECT}-reboot exists... check inside..." | logline_cron
+	r="$(cat /tmp/${PROJECT}-reboot)"
+	if [ "$r" != 0 ]; then
+	  echo -e "\e[31m Yes... \e0m"
+	  echo "0" > /tmp/${PROJECT}}-reboot | logline_cron
+	  echo "___________________ ____ ___ __ _ oh no! marked for reboot... reboot now..." | logline_cron
+	  clean_scrot_files
+	  /sbin/shutdown -r now
 	else
-		echo "logs are different, good :) work in progress ..." | logline_cron
+	  echo "no marked for reboot, continue..." | logline_cron
 	fi
-
-	echo -e "\e[32m Remove old busy4me_tmp.log... \e0m"
-	rm /tmp/busy4me_tmp.log
-	echo -e "\e[32m Copy new busy4me.log... \e0m"
-	cp /var/log/busy4me.log /tmp/busy4me_tmp.log
-
-	# check if marked to reboot by busyuser
-	echo -e "\e[33m check if marked to reboot by busyuser... \e[0m"
-	if [ -f /tmp/busy4me-reboot ]; then
-		echo "/tmp/busy4me-reboot exists... check inside..." | logline_cron
-		r="$(cat /tmp/busy4me-reboot)"
-		if [ "$r" != 0 ]; then
-			echo -e "\e[31m Yes... \e0m"
-			echo "0" > /tmp/busy4me-reboot | logline_cron
-			echo "___________________ ____ ___ __ _ oh no! marked for reboot... reboot now..." | logline_cron
-			clean_scrot_files
-			# reboot
-			/sbin/shutdown -r now
-		else
-			echo "no marked for reboot, continue..." | logline_cron
-		fi
-	else
-		echo -e "\e[32m No... \e0m"
-		echo "0" > /tmp/busy4me-reboot | logline_cron
-		chown busyman:busyman /tmp/busy4me-reboot
-	fi
+  else
+	echo -e "\e[32m No... \e0m"
+	echo "0" > /tmp/${PROJECT}-reboot | logline_cron
+	chown busyman:busyman /tmp/busyman-reboot
+  fi
 }
 
 case $1 in
-	-m|memcheck)
-		memcheck
-		exit
-	;;
-	-l|logcompare)
+  -m|memcheck)
+	memcheck
+	exit
+  ;;
+  -l|logcompare)
 	logcompare
-	;;
-	*)
-	;;
+  ;;
+  *)
+  ;;
 esac

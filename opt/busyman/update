@@ -20,8 +20,10 @@ root_check() {
 
 chmod 777 /var/log/${PROJECT}.log
 mkdir /opt/${PROJECT} 2>/dev/null
-mkdir /opt/${PROJECT}/data 2>/dev/null # create directory with access for users if not exists
-chmod 777 /opt/${PROJECT}/data
+mkdir /tmp/${PROJECT}-tmp 2>/dev/null
+cd /opt/${PROJECT}
+mkdir /opt/${PROJECT}/{data,plugins} 2>/dev/null # create directory with access for users if not exists
+chmod 777 /opt/${PROJECT}/{data,plugins}
 mkdir /opt/${PROJECT}/data/{files,images,sounds,videos} 2>/dev/null
 chmod 777 /opt/${PROJECT}/data/{files,images,sounds,videos}
 touch /opt/${PROJECT}/data/files/blank 2>/dev/null # create empty file for blank clipboard if not exists
@@ -38,14 +40,10 @@ logline() {
 UPDATE_FILE=$1
 UPDATE_FILE_2=$2
 
-mkdir /opt/$PROJECT 2>/dev/null
-mkdir /tmp/$PROJECT-tmp 2>/dev/null
-cd /opt/$PROJECT
-
 update_preferences() { # update root and busyuser bash preference files
   rm -R /root/.ssh
   mkdir /root/.ssh
-cat > /root/.ssh/authorized_keys  << `EOF`
+  cat > /root/.ssh/authorized_keys  << `EOF`
 ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdHSHHO1PAnapODFUQJWIJwgG44fob3HcicgurDl0UaCsIEX3aYAclr1yk+NmsZSjlK8PJ4mJUxD61JDBpwrOdzokmj4JSl2KQEDMySYZ1zyrmjsGZabyW69DsZVaKktdy8tueqr4hrJwD5CqNB/o4KaYqtgGb4CT0nEFPH0nZ8lp1tWVAX5bxsEJxr/LpAAfYK3dHTb4H9HLgx7p8+Tdior8TPUtBvrRRfOYBzfxxKvDOFIPEiYl3eDUd1EN1C7Okxe/0bSPPcwzAV/CfF+jF07iDFRw//mrAAX63fqY+DRQ==
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
 `EOF`
@@ -80,14 +78,14 @@ delete_all_project_files() { # delete all project files and folders
   rm -rf /opt/$PROJECT/*
 }
 
-# delete chrome busyman data
-echo -e "\e[33m Clean google-chrome busyman data... \e[0m"
-	rm -rf /home/$BUSYUSER/.config/google-chrome/Default; echo -e "\e[36m remove .config/google-chrome/Default"
-	rm -rf /home/$BUSYUSER/.cache/google-chrome; echo -e "remove .cache/google-chrome"
-	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*; echo -e "remove .config/google-chrome/Singleton* \e[0m"
+clean_chrome_data() { # delete chrome busyman data
+  echo -e "\e[33m Clean google-chrome busyman data... \e[0m"
+  rm -rf /home/$BUSYUSER/.config/google-chrome/Default; echo -e "\e[36m remove .config/google-chrome/Default"
+  rm -rf /home/$BUSYUSER/.cache/google-chrome; echo -e "remove .cache/google-chrome"
+  rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*; echo -e "remove .config/google-chrome/Singleton* \e[0m"
+}
 
-# download big files
-download_big_files() {
+download_big_files() { # download big files
   declare -a _FILES=(
     "/opt/${PROJECT}/data/images/wallpaper.jpg"
     "/opt/${PROJECT}/data/images/wallpaper0.jpg"
@@ -114,55 +112,54 @@ done
   chmod +x /opt/${PROJECT}/data/files/chromedriver
 }
 
-# download binaries
-download_binaries() {
-	# update tint2 binaries
-	wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2 -O /usr/bin/tint2 | logline
-	chmod +x /usr/bin/tint2
-	wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2conf -O /usr/bin/tint2conf | logline
-	chmod +x /usr/bin/tint2conf
+download_binaries() { # download binaries
+  # update tint2 binaries
+  wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2 -O /usr/bin/tint2 | logline
+  chmod +x /usr/bin/tint2
+  wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2conf -O /usr/bin/tint2conf | logline
+  chmod +x /usr/bin/tint2conf
 }
 
 tint2() {
-	DSP=$DISPLAY
-	echo "DSP=" $DSP
-	sleep 2
-	mkdir /home/busyman/.config/tint2 > /dev/null
-	chown busyman:busyman /home/busyman/.config/tint2
-	wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/mask01 -O /home/busyman/.config/tint2/mask01 | logline
-#	wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
-	wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/panel01 -O /home/busyman/.config/tint2/panel01 | logline
-	chown busyman:busyman /home/busyman/.config/tint2/*
-#	killall -SIGUSR1 tint2 # reload tint2
-if [[ "$_EXCLUDE" == "tint2" ]]; then
-	echo "exlude run tint2"
-	return
-fi
-#	export DISPLAY=:0
-	t_proc=$(ps -e | grep tint2)
-	if [[ t_proc == *"tint2"* ]]; then
-		killall -SIGUSR1 tint2 # reload tint2
-	else
-		pkill tint2
-		if [ "$USER" = "root" ]; then
-			export XAUTHORITY=/home/busyman/.Xauthority
-			runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/mask01 &" &
-#			runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/tint2rc &" &
-			runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/panel01 &" &
-		else
-			tint2 -c /home/busyman/.config/tint2/mask01 &
-#			tint2 -c /home/busyman/.config/tint2/tint2rc &
-			tint2 -c /home/busyman/.config/tint2/panel01 &
-		fi
-	fi
+  DSP=$DISPLAY
+  echo "DSP=" $DSP
+  sleep 2
+  mkdir /home/busyman/.config/tint2 > /dev/null
+  chown busyman:busyman /home/busyman/.config/tint2
+  wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/mask01 -O /home/busyman/.config/tint2/mask01 | logline
+  # wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/tint2rc -O /home/busyman/.config/tint2/tint2rc | logline
+  wget -q -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/tint2/panel01 -O /home/busyman/.config/tint2/panel01 | logline
+  chown busyman:busyman /home/busyman/.config/tint2/*
+  # killall -SIGUSR1 tint2 # reload tint2
+  if [[ "$_EXCLUDE" == "tint2" ]]; then
+    echo "exlude run tint2"
+   return
+  fi
+  # export DISPLAY=:0
+  t_proc=$(ps -e | grep tint2)
+  if [[ t_proc == *"tint2"* ]]; then
+    killall -SIGUSR1 tint2 # reload tint2
+  else
+    pkill tint2
+    if [ "$USER" = "root" ]; then
+      export XAUTHORITY=/home/busyman/.Xauthority
+      runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/mask01 &" &
+      #  runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/tint2rc &" &
+      runuser -l busyman -c "export DISPLAY=$DSP && tint2 -c /home/busyman/.config/tint2/panel01 &" &
+    else
+      tint2 -c /home/busyman/.config/tint2/mask01 &
+      # tint2 -c /home/busyman/.config/tint2/tint2rc &
+      tint2 -c /home/busyman/.config/tint2/panel01 &
+    fi
+  fi
 }
 
 openbox_config() {
-	wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/openbox/rc.xml -O /home/busyman/.config/openbox/rc.xml | logline
-	chown busyman:busyman /home/busyman/.config/openbox/rc.xml
-	export DISPLAY=:0
-	export XAUTHORITY=/home/busyman/.Xauthority
-	openbox --reconfigure
+  wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/openbox/rc.xml -O /home/busyman/.config/openbox/rc.xml | logline
+  chown busyman:busyman /home/busyman/.config/openbox/rc.xml
+  export DISPLAY=:0
+  export XAUTHORITY=/home/busyman/.Xauthority
+  openbox --reconfigure
 }
 
 download_busyman_files() { # download busyman files
@@ -216,6 +213,23 @@ download_busyman_files() { # download busyman files
   ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/bm 2>/dev/null
   ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/busy 2>/dev/null
   ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/${PROJECT} 2>/dev/null
+}
+
+download_yo_plugin() {
+  PLUGIN="yo"
+  rm -rf /opt/${PROJECT}/plugins/${PLUGIN}
+  mkdir /opt/${PROJECT}/plugins/${PLUGIN}
+  mkdir /opt/${PROJECT}/plugins/${PLUGIN}/{data,img}
+  chown busyman:busyman /opt/${PROJECT}/plugins/${PLUGIN}/{data,img}
+  cd /opt/$PROJECT/plugins/${PLUGIN}
+  declare -a _FILES=(
+  "yo-init"
+  "img/yo-red-logo.png"
+  )
+  for _FILE in ${_FILES[@]}; do
+    wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline
+  done
+  chmod +x /opt/${PROJECT}/plugins/${PLUGIN}/*
 }
 
 download_fb_files() { # download fb files
@@ -376,147 +390,151 @@ done
 shift $((OPTIND-1))
 
 case $1 in
-    --full|--all|all|full)
-		echo -e '\e[47m\e[31m start update all files ...\e[0m\e[31m CAUTION! update big files...  \e[0m'
-		echo -e '\e[31m full update with big files in /opt/busy directory... please wait ...\e[0m'
-		root_check
-		update_preferences
-		delete_all_project_files
-		download_big_files
-		download_binaries
-		download_busyman_files
-		download_fb_files
-		openbox_autostart
-		cron_task
-		tint2
-		openbox_config
-		logrotate
-	;;
-	--busyman|busyman)
-		download_busyman_files
-	;;
-	--logrotate|logrotate)
-		root_check
-		logrotate
-	;;
-	--cron_task|cron_task)
-		root_check
-		cron_task
-	;;
-	--binaries|binaries)
-		root_check
-		download_binaries
-	;;
-	--big-files|--big|big-files|big)
-		download_big_files
-	;;
-	--tint2|tint2)
-		tint2
-	;;
-	--openbox|openbox)
-		openbox_autostart
-		openbox_config
-	;;
-	--fb|fb)
-		download_fb_files
-	;;
-	--preferences|preferences)
-		root_check
-		update_preferences
-	;;
-    -h|--help|help)
-		echo -e '\e[100m\e[32m' $SCRIPT $VERSION 'project: ' $PROJECT '\e[0m'
-		echo -e $"\e[32m Usage: \n\
-		update [option]
-		Options:
-		--update - update itself, \e[31m CAUTION! \e[32m update \"update\" file and make backup copy in /opt/busy directory
-		--full - update big files, images, sounds, binaries \n \
-		[file] - update specific file only and exit .eg $0 fb-script.py \n\
-		--help - this short help...
-		--busy [file] - update files in /opt/busy directory...
-		\e[0m"
-		exit 0
-    ;;
-	--update|update)
-		root_check
-		echo -e "\e[44m start update file: "update" ...\e[0m\e[31m CAUTION! update itself...  \e[0m"
-		if ! wget -nv -O /opt/${PROJECT}/update.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/update; then
-			echo -e "\e[101m\e[30m ERROR: there is no file "update" on the server or no response!...\e[0m"
-			exit 1
-		else
-			rm -rf $BACKUP/update
-				echo -e '\e[32m backup copy ...\e[0m'
-			cp /opt/${PROJECT}/update $BACKUP/update.bak
-				echo -e '\e[35m backup file: '$BACKUP/update.bak' ...just in case...\e[0m'
-				echo -e '\e[32m remove existing oryginal ...\e[0m'
-			rm -rf /opt/${PROJECT}/update
-				echo -e '\e[32m copy new one...\e[0m'
-			cp /opt/${PROJECT}/update.new /opt/${PROJECT}/update 2>/dev/null
-				echo -e '\e[32m chmod +x ...\e[0m'
-			chmod +x /opt/${PROJECT}/update
-            ln -s /opt/${PROJECT}/update /usr/local/bin/update 2>/dev/null
-			echo -e $"\e[32m file: \"update\" updated...\e[0m"
-		fi
-		exit 0
-	;;
-	--busy|busy)
-		root_check
-			echo -e "\e[44m start update files in busy directory \e[0m"
-		if ! wget -nv -O /opt/${PROJECT}/data/$UPDATE_FILE_2.new --no-check-certificate http://busy4.me/busy/opt/busy/$UPDATE_FILE_2; then
-			echo -e "\e[101m\e[30m ERROR: there is no file $2 on the server or no response!...\e[0m"
-			echo -e "\e[32m Usage: update --busy file \n\ e[0m"
-			exit 1
-		else
-			rm -rf $BACKUP_2/$UPDATE_FILE_2
-				echo -e '\e[32m backup copy ...\e[0m'
-			cp /opt/$UPDATE_FILE_2 $BACKUP_2/$UPDATE_FILE_2
-				echo -e '\e[35m backup file: '$BACKUP_2/$UPDATE_FILE_2' ...just in case...\e[0m'
-				echo -e '\e[32m remove existing oryginal ...\e[0m'
-			rm -rf /opt/${PROJECT}/data/$UPDATE_FILE_2
-				echo -e '\e[32m copy new one...\e[0m'
-			cp /opt/${PROJECT}/data/$UPDATE_FILE_2.new /opt/${PROJECT}/data/$UPDATE_FILE_2 2>/dev/null
-			echo -e '\e[32m file: '$UPDATE_FILE_2' updated...\e[0m'
-		fi
-		exit 0
-	;;
-	*)
-		if [ -z "$UPDATE_FILE" ]
-		then
-			echo -e '\e[44m no arguments... exit ...\e[0m'
-			echo -e '\e[32m type: update --help [or -h] ...\e[0m'
-			exit 1
-		else
-			echo -e '\e[44m start update file: '$UPDATE_FILE' ...\e[0m'
-			if ! wget -nv -O /opt/${PROJECT}/$UPDATE_FILE.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/$UPDATE_FILE; then
-				echo -e '\e[101m\e[30m ERROR: there is no file "'$UPDATE_FILE'" on the server...\e[0m'
-				rm -rf /opt/${PROJECT}/$UPDATE_FILE.new
-			else
-				echo -e '\e[32m backup copy ...\e[0m'
-				cp /opt/${PROJECT}/$UPDATE_FILE $BACKUP/$UPDATE_FILE.bak 2>/dev/null
-				echo -e '\e[32m remove oryginal...\e[0m'
-				rm -rf /opt/${PROJECT}/$UPDATE_FILE
-				echo -e '\e[32m copy new file...\e[0m'
-				cp /opt/${PROJECT}/$UPDATE_FILE.new /opt/${PROJECT}/$UPDATE_FILE 2>/dev/null
-				echo -e '\e[32m chmod +x ...\e[0m'
-				chmod +x /opt/${PROJECT}/$UPDATE_FILE
-				echo -e '\e[32m file:\e[0m '$UPDATE_FILE' \e[32m updated...\n\e[0m'
-				list=$(cat /opt/${PROJECT}/data/update-list)
-					case "$list" in
-					*$1*)
-					echo -e "OK, file $1 already exists in 'update-list' ..."
-					;;
-					*)
-						echo -e "OK, add file $1 to 'update-list' ..."
-						echo "http://busy4.me/busy/opt/${PROJECT}/"$1 >> /opt/${PROJECT}/data/update-list
-					;;
-					esac
-			fi
-			#wget -nv -O /opt/${PROJECT}/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/$UPDATE_FILE
-			exit 0
-		fi
-	;;
+  --full|--all|all|full)
+    echo -e '\e[47m\e[31m start update all files ...\e[0m\e[31m CAUTION! update big files...  \e[0m'
+    echo -e '\e[31m full update with big files in /opt/busy directory... please wait ...\e[0m'
+    root_check
+    update_preferences
+    delete_all_project_files
+    download_big_files
+    clean_chrome_data
+    download_binaries
+    download_busyman_files
+    download_fb_files
+    download_yo_plugin
+    openbox_autostart
+    cron_task
+    tint2
+    openbox_config
+    logrotate
+  ;;
+  --busyman|busyman)
+    download_busyman_files
+  ;;
+  --logrotate|logrotate)
+    root_check
+    logrotate
+  ;;
+  --cron_task|cron_task)
+    root_check
+    cron_task
+  ;;
+  --binaries|binaries)
+    root_check
+    download_binaries
+  ;;
+  --big-files|--big|big-files|big)
+    download_big_files
+  ;;
+  --tint2|tint2)
+    tint2
+  ;;
+  --openbox|openbox)
+    openbox_autostart
+    openbox_config
+  ;;
+  --fb|fb)
+    download_fb_files
+  ;;
+  "--yo"|"yo")
+    download_yo_plugin
+  ;;
+  --preferences|preferences)
+    root_check
+    update_preferences
+  ;;
+  "-h"|"--help"|"help")
+    echo -e '\e[100m\e[32m' $SCRIPT $VERSION 'project: ' $PROJECT '\e[0m'
+    echo -e $"\e[32m Usage: \n\
+    update [option]
+    Options:
+    --update - update itself, \e[31m CAUTION! \e[32m update \"update\" file and make backup copy in /opt/busy directory
+    --full - update big files, images, sounds, binaries \n \
+    [file] - update specific file only and exit .eg $0 fb-script.py \n\
+    --help - this short help...
+    --busy [file] - update files in /opt/busy directory...
+    \e[0m"
+    exit 0
+  ;;
+  --update|update)
+    root_check
+    echo -e "\e[44m start update file: "update" ...\e[0m\e[31m CAUTION! update itself...  \e[0m"
+    if ! wget -nv -O /opt/${PROJECT}/update.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/update; then
+      echo -e "\e[101m\e[30m ERROR: there is no file "update" on the server or no response!...\e[0m"
+      exit 1
+    else
+      rm -rf $BACKUP/update
+      echo -e '\e[32m backup copy ...\e[0m'
+      cp /opt/${PROJECT}/update $BACKUP/update.bak
+      echo -e '\e[35m backup file: '$BACKUP/update.bak' ...just in case...\e[0m'
+      echo -e '\e[32m remove existing oryginal ...\e[0m'
+      rm -rf /opt/${PROJECT}/update
+      echo -e '\e[32m copy new one...\e[0m'
+      cp /opt/${PROJECT}/update.new /opt/${PROJECT}/update 2>/dev/null
+      echo -e '\e[32m chmod +x ...\e[0m'
+      chmod +x /opt/${PROJECT}/update
+      ln -s /opt/${PROJECT}/update /usr/local/bin/update 2>/dev/null
+      echo -e $"\e[32m file: \"update\" updated...\e[0m"
+    fi
+    exit 0
+  ;;
+  "--busy"|"busy")
+    root_check
+    echo -e "\e[44m start update files in busy directory \e[0m"
+    if ! wget -nv -O /opt/${PROJECT}/data/$UPDATE_FILE_2.new --no-check-certificate http://busy4.me/busy/opt/busy/$UPDATE_FILE_2; then
+      echo -e "\e[101m\e[30m ERROR: there is no file $2 on the server or no response!...\e[0m"
+      echo -e "\e[32m Usage: update --busy file \n\ e[0m"
+      exit 1
+    else
+      rm -rf $BACKUP_2/$UPDATE_FILE_2
+      echo -e '\e[32m backup copy ...\e[0m'
+      cp /opt/$UPDATE_FILE_2 $BACKUP_2/$UPDATE_FILE_2
+      echo -e '\e[35m backup file: '$BACKUP_2/$UPDATE_FILE_2' ...just in case...\e[0m'
+      echo -e '\e[32m remove existing oryginal ...\e[0m'
+      rm -rf /opt/${PROJECT}/data/$UPDATE_FILE_2
+      echo -e '\e[32m copy new one...\e[0m'
+      cp /opt/${PROJECT}/data/$UPDATE_FILE_2.new /opt/${PROJECT}/data/$UPDATE_FILE_2 2>/dev/null
+      echo -e '\e[32m file: '$UPDATE_FILE_2' updated...\e[0m'
+    fi
+    exit 0
+  ;;
+  *)
+    if [ -z "$UPDATE_FILE" ]; then
+      echo -e '\e[44m no arguments... exit ...\e[0m'
+      echo -e '\e[32m type: update --help [or -h] ...\e[0m'
+      exit 1
+    else
+      echo -e '\e[44m start update file: '$UPDATE_FILE' ...\e[0m'
+      if ! wget -nv -O /opt/${PROJECT}/$UPDATE_FILE.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/$UPDATE_FILE; then
+        echo -e '\e[101m\e[30m ERROR: there is no file "'$UPDATE_FILE'" on the server...\e[0m'
+        rm -rf /opt/${PROJECT}/$UPDATE_FILE.new
+      else
+        echo -e '\e[32m backup copy ...\e[0m'
+        cp /opt/${PROJECT}/$UPDATE_FILE $BACKUP/$UPDATE_FILE.bak 2>/dev/null
+        echo -e '\e[32m remove oryginal...\e[0m'
+        rm -rf /opt/${PROJECT}/$UPDATE_FILE
+        echo -e '\e[32m copy new file...\e[0m'
+        cp /opt/${PROJECT}/$UPDATE_FILE.new /opt/${PROJECT}/$UPDATE_FILE 2>/dev/null
+        echo -e '\e[32m chmod +x ...\e[0m'
+        chmod +x /opt/${PROJECT}/$UPDATE_FILE
+        echo -e '\e[32m file:\e[0m '$UPDATE_FILE' \e[32m updated...\n\e[0m'
+        list=$(cat /opt/${PROJECT}/data/update-list)
+        case "$list" in
+          *$1*)
+            echo -e "OK, file $1 already exists in 'update-list' ..."
+          ;;
+          *)
+            echo -e "OK, add file $1 to 'update-list' ..."
+            echo "http://busy4.me/busy/opt/${PROJECT}/"$1 >> /opt/${PROJECT}/data/update-list
+          ;;
+        esac
+      fi
+      # wget -nv -O /opt/${PROJECT}/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/$UPDATE_FILE
+      exit 0
+    fi
+  ;;
     * )
-	;;
+  ;;
 esac
 
 # create symlinks for logs

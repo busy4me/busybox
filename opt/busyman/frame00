@@ -2,8 +2,8 @@
 # busyman framework 00 .... init all scripts one by one
 PROJECT="busyman"
 SCRIPT=frame00
-source /opt/${PROJECT}/${PROJECT}.cfg # global functions
-source /opt/${PROJECT}/${PROJECT}.sh # global variables
+source /opt/${PROJECT}/${PROJECT}.cfg # global variables
+source /opt/${PROJECT}/${PROJECT}.sh # global functions
 ${PROJECT}_log ## logging
 
 if [ $USER = "root" ]; then

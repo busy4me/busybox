@@ -13,12 +13,6 @@ fi
 echo "start" > /opt/${PROJECT}/data/fb/fb-scroll$DISPLAY-status
 xdotool mousemove 0 0
 
-logline() {
-    while IFS= read -r line; do
-        echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
-    done
-}
-
 report_fb_scroll_done () {
   while  [ 1 ]; do
     echo -e "\e[33m[OK] ... report: 'fb-scroll done' and sleep this screen for 1 hour for inspect...\e[0m"
@@ -26,18 +20,6 @@ report_fb_scroll_done () {
     sleep 3600 # sleep 1 hour
   done
 }
-
-echo "variables..."
-kds=50 # Key Delay Short [miliseconds]
-kd=250 # Key Delay [miliseconds]
-kdl=500 # Key Delay Long [miliseconds]
-tos=1 # Time Out Short zenity messages time out [seconds]
-to=2 # Time Out zenity messages time out [seconds]
-tol=5 # Time Out Long zenity messages time out [seconds]
-
-SPOT01="facebook" # spot 01
-SPOT01url="http://facebook.com" # url 01
-PROC01="chrome" # process 01
 
 echo "activate $SPOT01"
 #xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
@@ -53,37 +35,29 @@ echo "used percent of memory: $percent_memory"
 limit=1024 # max memory usage [MB]
 mem=$(free -m | awk 'NR==2{printf "%s\n", $3,$2,$3*100/$2 }')
 echo "Mem = $mem MB, Scroll down start..." | logline
-
 #(sleep 2 && wmctrl -F -a "I am on top" -b add,above) & (zenity --info --title="I am on top" --text="How to help Zenity to get focus and be always on top" --timeout 2)
-
 zenity --info --title="Scroll down, memory usage" --text="Scroll down, Actual memory usage [MB]: $memory" \
 --width 300 --height 100 --timeout 5
-
 # free memory....
 #free && sync && echo 3 > /proc/sys/vm/drop_caches && free
 
 iter=5
-
 for (( i=1; i<$iter; i++ )); do
-    echo "# Progress bar, step $i"
-    echo "$(( (i * 100) /$iter ))"
-    sleep 0.2
-    shift 1
+  echo "# Progress bar, step $i"
+  echo "$(( (i * 100) /$iter ))"
+  sleep 0.2
+  shift 1
 done | zenity --progress --title="Load progress..." --percentage=0 --no-cancel --auto-close
 #done | zenity --progress --title="Load progress..." --percentage=0 --pulsate --no-cancel --auto-close
 
 full=100
 difference="$(( $limit - $memory ))"
-
 #factor="$(( ($full) /$difference ))"
 #factor=$(($full / $limit))
-
 #factor=$("scale=2 ; $full / $limit" | bc)
-
 factor=$(bc <<< "scale = 4; (($full / $difference))")
 x='4'
 y='2'
-
 
 echo "Test bc: "
 m=34
@@ -117,8 +91,6 @@ do
 			else
         echo "Scroll step: $scroll_step"
 		fi
-	# xdotool key --delay $kds Down Down Down Down Down Down Down Down Down Down
-	# xdotool key --delay $kds Down Down Down Down Down Down Down Down Down Down
 	mem=$(free -m | awk 'NR==2{printf "%s\n", $3,$2,$3*100/$2 }')
 	echo "Difference: $difference"
 	echo "Factor: $factor"
