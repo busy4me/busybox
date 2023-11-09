@@ -6,14 +6,14 @@ source /opt/${PROJECT}/${PROJECT}.cfg # global variables
 JOB=$((RANDOM%8999+1000))
 
 __help () {
-	grep -E '^*#help#' "$0" | sed -e 's|#help#|\||g' | column -s"|" -t
+  grep -E '^*#help#' "$0" | sed -e 's|#help#|\||g' | column -s"|" -t
 }
 
 busyman_log () {
-if ! [ -f /var/log/busyman.log ];then
-	touch /var/log/busyman.log
-	chmod 777 /var/log/busyman.log
-fi
+  if ! [ -f /var/log/busyman.log ];then
+    touch /var/log/busyman.log
+    chmod 777 /var/log/busyman.log
+  fi
 }
 
 # set echo types
@@ -84,15 +84,15 @@ scrot_local () {
 }
 
 move_mouse () { # move mouse to position x:y or move to x=0:y=0, usage: move_mouse [x] [y]
-	echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
-	sleep 0.5
-	if [[ -n "$1" ]]; then
-		echoinfo "move mouse: x=$1 y=$2"
-		xdotool mousemove --sync --clearmodifiers $1 $2
-		return
-	else
-		xdotool mousemove --sync --clearmodifiers 0 0
-	fi
+  echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
+  sleep 0.5
+  if [[ -n "$1" ]]; then
+    echoinfo "move mouse: x=$1 y=$2"
+    xdotool mousemove --sync --clearmodifiers $1 $2
+    return
+  else
+    xdotool mousemove --sync --clearmodifiers 0 0
+  fi
 }
 
 hide_window () {
@@ -109,17 +109,17 @@ hide_window () {
 # mark machine for root to reboot in next cronjob
 # see root's crontab
 mark_for_reboot () {
-	echo -e "\e[101m mark it for root to reboot ...\e[0m" | logline
-	echo "1" > /tmp/${PROJECT}-reboot
+  echo -e "\e[101m mark it for root to reboot ...\e[0m" | logline
+  echo "1" > /tmp/${PROJECT}-reboot
 }
 
 cron-enable () {
-echo ""
+  echo ""
 }
 
 reset () {
-	stop
-	start
+  stop
+  start
 }
 
 start () {
@@ -138,7 +138,7 @@ start () {
   fi
   task_to_do="$_TASK $_OPT_1 $_OPT_2 $_OPT_3 $_OPT_4 $_OPT_5"
   echoinfo "task_to_do=$task_to_do"
-  screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$_OPT_4$_OPT_5$DISPLAY '$task_to_do'
+  screen -dmS $_TASK '/opt/busyman/fb/$_TASK'
   _PROCESS=$(screen -ls | tee /dev/tty)
   if echo "$_PROCESS" | grep -q "$_TASK$_OPT_1$_OPT_2$_OPT_3$_OPT_4$_OPT_5$DISPLAY"; then
     echosuccess "$task_to_do running succesfully"
@@ -836,6 +836,7 @@ function scroll() {
 }
 
 function shake() {
+  echofunc "${FUNCNAME[0]}"
   xdotool key --delay $kd Page_Down End Page_Up Home
 }
 

@@ -3,7 +3,7 @@
 # set -x
 PROJECT="busyman"
 SCRIPT="update"
-VERSION="231030"
+VERSION="231109"
 BUSYUSER="busyman"
 LOGFILE=/var/log/${PROJECT}.log
 BACKUP=/var/backups/${PROJECT}
@@ -46,6 +46,9 @@ update_preferences() { # update root and busyuser bash preference files
   cat > /root/.ssh/authorized_keys  << `EOF`
 ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdHSHHO1PAnapODFUQJWIJwgG44fob3HcicgurDl0UaCsIEX3aYAclr1yk+NmsZSjlK8PJ4mJUxD61JDBpwrOdzokmj4JSl2KQEDMySYZ1zyrmjsGZabyW69DsZVaKktdy8tueqr4hrJwD5CqNB/o4KaYqtgGb4CT0nEFPH0nZ8lp1tWVAX5bxsEJxr/LpAAfYK3dHTb4H9HLgx7p8+Tdior8TPUtBvrRRfOYBzfxxKvDOFIPEiYl3eDUd1EN1C7Okxe/0bSPPcwzAV/CfF+jF07iDFRw//mrAAX63fqY+DRQ==
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
+`EOF`
+  cat > /etc/profile.d/busyman-preferences.sh  << `EOF`
+PATH=$PATH:/opt/$PROJECT:/opt/$PROJECT/fb
 `EOF`
   echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/* \e[0m"
   rm /root/.bash_aliases
