@@ -8,6 +8,8 @@ BUSYUSER="busyman"
 LOGFILE=/var/log/${PROJECT}.log
 BACKUP=/var/backups/${PROJECT}
 BACKUP_2=/var/backups/${PROJECT}/data
+UPDATE_FILE=$1
+UPDATE_FILE_2=$2
 
 root_check() {
   if [ "$USER" != "root" ]; then
@@ -18,6 +20,7 @@ root_check() {
   fi
 }
 
+create_structure() {
 chmod 777 /var/log/${PROJECT}.log
 mkdir /opt/${PROJECT} 2>/dev/null
 mkdir /tmp/${PROJECT}-tmp 2>/dev/null
@@ -31,14 +34,13 @@ mkdir $BACKUP 2>/dev/null # create backup directories
 mkdir $BACKUP/fb 2>/dev/null
 mkdir $BACKUP_2 2>/dev/null
 mkdir $BACKUP_2/{sound,images,files,videos} 2>/dev/null
+}
 
 logline() {
   while IFS= read -r line; do
     echo "$(date +%F' '%T) $USER $SCRIPT - $line"
   done
 }
-UPDATE_FILE=$1
-UPDATE_FILE_2=$2
 
 update_preferences() { # update root and busyuser bash preference files
   rm -R /root/.ssh
@@ -48,7 +50,7 @@ ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdH
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
 `EOF`
   cat > /etc/profile.d/busyman-preferences.sh  << `EOF`
-PATH=$PATH:/opt/$PROJECT:/opt/$PROJECT/fb
+PATH=$PATH:/opt/$PROJECT:/opt/$PROJECT/plugins/fb:/opt/$PROJECT/plugins/yo
 `EOF`
   echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/* \e[0m"
   rm /root/.bash_aliases
@@ -73,9 +75,8 @@ backup_all_project_files() { # create backup in tmp
   mkdir $BCK_DIR
   cp -R /opt/$PROJECT/* $BCK_DIR
   rm /opt/var-backups-*
-  ln -s $BCK_DIR /opt/var-backups-$PROJECT
+  ln -s ${BCK_DIR} /opt/var-backups/${PROJECT}
 }
-backup_all_project_files
 
 delete_all_project_files() { # delete all project files and folders
   rm -rf /opt/$PROJECT/*
@@ -109,9 +110,9 @@ download_big_files() { # download big files
   mkdir /opt/$PROJECT/data 2>/dev/null
   mkdir /opt/${PROJECT}/data/{sound,images,files,videos} 2>/dev/null
   rm -rf /opt/$PROJECT/data/{sound,images,files,videos}/*
-for _FILE in ${_FILES[@]}; do
-  wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
-done
+  for _FILE in ${_FILES[@]}; do
+    wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
+  done
   chmod +x /opt/${PROJECT}/data/files/chromedriver
 }
 
@@ -161,7 +162,7 @@ openbox_config() {
   wget -nv --no-check-certificate http://busy4.me/busy/home/busyman/.config/openbox/rc.xml -O /home/busyman/.config/openbox/rc.xml | logline
   chown busyman:busyman /home/busyman/.config/openbox/rc.xml
   export DISPLAY=:0
-  export XAUTHORITY=/home/busyman/.Xauthority
+  export XAUTHORITY=/home/${PROJECT}/.Xauthority
   openbox --reconfigure
 }
 
@@ -195,9 +196,12 @@ download_busyman_files() { # download busyman files
   "zenity"
   "mouse-move"
   )
+  BCK_DIR="/var/backups/$PROJECT/$(date +%Y-%m-%d--%H-%M-%S)"
+  mkdir $BCK_DIR
+  cp -R /opt/$PROJECT/* $BCK_DIR 2>/dev/null
+  rm /opt/var-backups-* 2>/dev/null
+  ln -s ${BCK_DIR} /opt/var-backups/${PROJECT}
   cd /opt/$PROJECT
-  mkdir /opt/$PROJECT-backup/ 2>/dev/null
-  cp /opt/$PROJECT/* /opt/$PROJECT-backup/ 2>/dev/null
   rm /opt/$PROJECT/* 2>/dev/null
   echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busyman/* \e[0m"
   for _FILE in ${_FILES[@]}; do
@@ -226,90 +230,68 @@ download_yo_plugin() {
   chown busyman:busyman /opt/${PROJECT}/plugins/${PLUGIN}/{data,img}
   cd /opt/$PROJECT/plugins/${PLUGIN}
   declare -a _FILES=(
-  "yo-init"
+  "yo"
   "img/yo-red-logo.png"
   )
   for _FILE in ${_FILES[@]}; do
     wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline
   done
   chmod +x /opt/${PROJECT}/plugins/${PLUGIN}/*
+  rm /opt/${PROJECT}/${PLUGIN}
+  ln -s /opt/${PROJECT}/plugins/${PLUGIN}/${PLUGIN} /opt/${PROJECT}/${PLUGIN} 2>/dev/null
 }
 
 download_fb_files() { # download fb files
-  mkdir /opt/${PROJECT}/data/fb 2>/dev/null
-  chmod 777 /opt/${PROJECT}/data/fb
-  mkdir /opt/$PROJECT/fb 2>/dev/null
-  cd /opt/$PROJECT/fb
-  rm -rf /opt/$PROJECT/fb/*
-  mkdir /opt/$PROJECT/fb/img
-  chown busyman:busyman /opt/$PROJECT/fb/img
-  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/* \e[0m"
-  wget -nv -O /opt/$PROJECT/fb/img/chat_icon.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/chat_icon.png
-  wget -nv -O /opt/$PROJECT/fb/img/cross_chat.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/cross_chat.png
-  wget -nv -O /opt/$PROJECT/fb/img/cross_chat2.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/cross_chat2.png
-  wget -nv -O /opt/$PROJECT/fb/img/cross_chat3.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/cross_chat3.png
-  wget -nv -O /opt/$PROJECT/fb/img/button_blue_allow_all_cookies.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/button_blue_allow_all_cookies.png
-  wget -nv -O /opt/$PROJECT/fb/img/fb_logo.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb_logo.png
-  wget -nv -O /opt/$PROJECT/fb/img/fb_blue.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb_blue.png
-  wget -nv -O /opt/$PROJECT/fb/img/fb-icon-home-grey.png --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-icon-home-grey.png
-  cd /opt/$PROJECT/fb/img
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--post-frame--left-bottom-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--logo.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--right-top-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--right-bottom-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--left-top-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-jobs--job-post-frame--left-bottom-edge.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--icon--like-with-inscription.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--icon--home-grey.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--blue-inscription.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb--message-you-are-temporarily-blocked.png
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--icon-red-triangle--connection-is-not-private.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-button-allow-all-cookies.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-watch--push-button-red--live.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--push-button-grey-icon-and-inscription--share.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-post--push-button-grey-icon-and-inscription--share-2.jpg
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/img/fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg
-  #wget -r -l1 --no-check-certificate -np "http://busy4.me/busy/opt/${PROJECT}/fb/img" -P /opt/$PROJECT/fb/img -A "fb-*.png"
-  #wget -r --no-parent --no-check-certificate -A 'fb-*.png' http://busy4.me/busy/opt/${PROJECT}/fb/img/
-  cd /opt/$PROJECT/fb
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-chat-close-windows.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-chat-detect-activity.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-collect-info
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-config
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-fanpage-post-share
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-groups
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-info
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-init
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-init-01
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-init-99
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-live-stream
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-config
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-login
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-mouse-on-element.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-open
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-post
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-respond-to-requests
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-scroll
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-save-links-sel.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-save-my-friends
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-save-my-groups
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-update-my-groups-01
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-update-posted-links.py
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-walking-around
-  wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/fb-watchdog
-  chmod +x /opt/$PROJECT/*
-  chmod +x /opt/$PROJECT/*.*
-  chmod +x /opt/$PROJECT/fb/*
+  PLUGIN="fb"
+  rm -rf /opt/${PROJECT}/plugins/${PLUGIN}
+  mkdir /opt/${PROJECT}/plugins/${PLUGIN}
+  mkdir /opt/${PROJECT}/plugins/${PLUGIN}/{data,img}
+  chown busyman:busyman /opt/${PROJECT}/plugins/${PLUGIN}/{data,img}
+  cd /opt/$PROJECT/plugins/${PLUGIN}
+  declare -a _FILES=(
+  "fb"
+  "fb-walking-around"
+  "fb-scroll"
+  "img/chat_icon.png"
+  "img/cross_chat.png"
+  "img/cross_chat2.png"
+  "img/cross_chat3.png"
+  "img/button_blue_allow_all_cookies.png"
+  "img/fb_logo.png"
+  "img/fb_blue.png"
+  "img/fb-icon-home-grey.png"
+  "img/yo-red-logo.png"
+  "img/fb--post-frame--left-bottom-edge.png"
+  "img/fb--logo.png"
+  "img/fb-jobs--job-post-frame--right-top-edge.png"
+  "img/fb-jobs--job-post-frame--right-bottom-edge.png"
+  "img/fb-jobs--job-post-frame--left-top-edge.png"
+  "img/fb-jobs--job-post-frame--left-bottom-edge.png"
+  "img/fb--icon--like-with-inscription.png"
+  "img/fb--icon--home-grey.png"
+  "img/fb--blue-inscription.png"
+  "img/fb--message-you-are-temporarily-blocked.png"
+  "img/fb-alert--icon-red-triangle--connection-is-not-private.jpg"
+  "img/fb-alert--push-button-blue--back-to-safety--connection-is-not-private.jpg"
+  "img/fb-alert--push-button-blue--go-to-news-feed--this-content-isn-t-available-right-now.jpg"
+  "img/fb-button-allow-all-cookies.jpg"
+  "img/fb-watch--push-button-red--live.jpg"
+  "img/fb-post--menu-element-grey-icon-and-inscription--copy-link.jpg"
+  "img/fb-post--push-button-grey-icon-and-inscription--share.jpg"
+  "img/fb-post--push-button-grey-icon-and-inscription--share-2.jpg"
+  "img/fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg"
+  )
+  for _FILE in ${_FILES[@]}; do
+    wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline
+  done
+  chmod +x /opt/${PROJECT}/plugins/${PLUGIN}/*
+  ln -s /opt/${PROJECT}/plugins/${PLUGIN}/${PLUGIN} /opt/${PROJECT}/${PLUGIN} 2>/dev/null
 }
 
 # update openbox autostart
 openbox_autostart() {
-echo -e "\e[44m ................... update Openbox autostart file \e[0m"
-rm /home/busyman/.config/openbox/autostart
-
+  echo -e "\e[44m ................... update Openbox autostart file \e[0m"
+  rm /home/busyman/.config/openbox/autostart
 cat > /home/busyman/.config/openbox/autostart << 'EOF'
 # Programs that will run after Openbox windows manager has started
 xrandr --output default --mode 1280x768 &
@@ -337,11 +319,9 @@ if [ $(echo $DISPLAY) = ":0" ]; then
   export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
 fi
 EOF
-chown busyman:busyman /home/busyman/.config/openbox/*
+  chown busyman:busyman /home/busyman/.config/openbox/*
 }
 
-# add tasks to crontab
-# compare logs in every 10 min and reboot if notting happened
 cron_task() {
   echo -e "\e[44m ................... update cron \e[0m"
   rm /etc/cron.d/compare_logs_reboot 2>/dev/null
@@ -358,9 +338,6 @@ cron_task() {
 EOF
 }
 
-# logrotate
-# add tesk to logrotate
-# rotate logs daily, was problem with compare logs when log is a big file
 logrotate() {
   echo -e "\e[44m ................... update logrotate for project $PROJECT\e[0m"
   rm /etc/logrotate.d/${PROJECT} 2>/dev/null
@@ -392,13 +369,16 @@ do
 done
 shift $((OPTIND-1))
 
+create_structure
+backup_all_project_files
+
 case $1 in
   --full|--all|all|full)
     echo -e '\e[47m\e[31m start update all files ...\e[0m\e[31m CAUTION! update big files...  \e[0m'
     echo -e '\e[31m full update with big files in /opt/busy directory... please wait ...\e[0m'
     root_check
     update_preferences
-    delete_all_project_files
+    # delete_all_project_files
     download_big_files
     clean_chrome_data
     download_binaries

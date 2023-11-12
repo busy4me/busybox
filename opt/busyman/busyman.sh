@@ -1,18 +1,23 @@
 #!/bin/bash
-echo -e "\u00A9 BUSYMAN \u26AA \u26AA \u26AA \u2b07 [ START ] \u2B50"
 PROJECT="busyman"
 SCRIPT="busyman.sh"
 source /opt/${PROJECT}/${PROJECT}.cfg # global variables
 JOB=$((RANDOM%8999+1000))
+echo -e "\u2705 [ START ] \u00A9 $PROJECT \u2b07 \u2B50"
 
 __help () {
   grep -E '^*#help#' "$0" | sed -e 's|#help#|\||g' | column -s"|" -t
 }
 
+--test() {
+  echo -e "color test: $info $func_name $success $ok $warning $nok $error $nocolor"
+  echo -e "${info} PROJECT: $PROJECT ${nocolor}"
+}
+
 busyman_log () {
-  if ! [ -f /var/log/busyman.log ];then
-    touch /var/log/busyman.log
-    chmod 777 /var/log/busyman.log
+  if ! [ -f /var/log/$PROJECT.log ];then
+    touch /var/log/$PROJECT.log
+    chmod 777 /var/log/$PROJECT.log
   fi
 }
 
@@ -136,14 +141,14 @@ start () {
     screen -ls
     return
   fi
-  task_to_do="$_TASK $_OPT_1 $_OPT_2 $_OPT_3 $_OPT_4 $_OPT_5"
-  echoinfo "task_to_do=$task_to_do"
-  screen -dmS $_TASK '/opt/busyman/fb/$_TASK'
+  TASK_TO_DO=$(which ${_TASK} $_OPT_1 $_OPT_2 $_OPT_3 $_OPT_4 $_OPT_5)
+  echoinfo "task_to_do=$TASK_TO_DO"
+  screen -dmS $_TASK$DISPLAY "$TASK_TO_DO"
   _PROCESS=$(screen -ls | tee /dev/tty)
   if echo "$_PROCESS" | grep -q "$_TASK$_OPT_1$_OPT_2$_OPT_3$_OPT_4$_OPT_5$DISPLAY"; then
-    echosuccess "$task_to_do running succesfully"
+    echosuccess "$TASK_TO_DO running succesfully"
   else
-    echoerror "something wrong, cant see $task_to_do"
+    echoerror "something wrong, cant see $TASK_TO_DO"
   fi
 }
 
@@ -214,29 +219,16 @@ start-fb-save-my-groups () {
 }
 
 function status () {
-_TASK=$1
-screen -ls
-_TASK_VAR=$(echo "$_TASK" | tr '-' '_' | tr ':' '_')
-if ! screen -list | grep -q "$_TASK"; then
-		_VAL="false"
-		IFS= read -r "$_TASK_VAR" <<<"false"
-	else
-		_VAL="true"
-		IFS= read -r "$_TASK_VAR" <<<"true"
-fi
-#echo $_TASK_VAR
-#export "$_TASK_VAR=$_VAL"
-#ptintf -v $_TASK_VAR %s "$_VAL"# create variable named $_TASK_VAR with value $_VAL
-#echo $_TASK_VAR
-#echo -e "\e[33m$_TASK_VAR=$_VAL\e[0m"
-#if ! screen -list | grep -q "fb-walking-around$DISPLAY"; then
-#		echo -e "\e[33m ... screen fb-walking-around$DISPLAY not exists! \e[0m"
-		#screen -S ScreenName -X quit
-#	else
-#
-#		echo -e "\e[33m ... screen fb-walking-around$DISPLAY exists \e[0m"
-#fi
-
+  _TASK=$1
+  screen -ls
+  _TASK_VAR=$(echo "$_TASK" | tr '-' '_' | tr ':' '_')
+  if ! screen -list | grep -q "$_TASK"; then
+    _VAL="false"
+    IFS= read -r "$_TASK_VAR" <<<"false"
+  else
+    _VAL="true"
+    IFS= read -r "$_TASK_VAR" <<<"true"
+  fi
 }
 
 function COMMENT () {

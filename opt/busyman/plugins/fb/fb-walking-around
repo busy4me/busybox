@@ -56,12 +56,12 @@ windows_uneeded_close () {
   screen -S windows-uneeded-close -X kill
   screen -S windows-uneeded-close$DISPLAY -X kill
   sleep 1
-  screen -dmS windows-uneeded-close$DISPLAY '/opt/busy4me/windows-uneeded-close.sh'
+  screen -dmS windows-uneeded-close$DISPLAY '/opt/${PROJECT}/windows-uneeded-close.sh'
 }
 
 windows_check () {
   echofunc "${FUNCNAME[0]}"
-  /bin/bash /opt/busy4me/windows-check.sh
+  /bin/bash /opt/${PROJECT}/windows-check.sh
 }
 
 mouse_move () {
@@ -109,52 +109,52 @@ page_probe () {
   mark02="follow"
   mark03="o"
   mark04="Accept All" # fb question: Accept cookies from Facebook...  echo -e "\e[35m page probe after Active click..............................\e[0m"
-	xclip -selection clipboard /opt/${PROJECT}/data/files/blank
+  xclip -selection clipboard /opt/${PROJECT}/data/files/blank
   hide_window
   echoinfo "screenshoot, comment=check what is on the screen"
-	scrot_local
-	clip=$(xclip -out -selection clipboard ) 	# check what is on the screen
-	# save clipboard to file
-	echo -e '\e[33m' $clip '\e[0m'> /opt/busy/clipboard/$(date +%Y-%m-%d--%H-%M-%S)-clip
-		case "$clip" in
-		*$mark00*)
+  scrot_local
+  clip=$(xclip -out -selection clipboard )  # check what is on the screen
+  # save clipboard to file
+  echo -e '\e[33m' $clip '\e[0m'> /opt/busy/clipboard/$(date +%Y-%m-%d--%H-%M-%S)-clip
+  case "$clip" in
+    *$mark00*)
       mark00_counter=$(( mark00_counter + 1 ))
       echoerror "error, mark00_counter=$mark00_counter, mark00='$mark00', FUNCNAME=${FUNCNAME[0]}, comment=slow down... PAUSE..."
-			xdotool key --delay 500 Ctrl+f
+      xdotool key --delay 500 Ctrl+f
       xdotool type "$mark00"
       xdotool key --delay 800 Escape Return
-		;;
-		*$mark01*)
+    ;;
+    *$mark01*)
       pause_time=$(( pause_time + 30 ))
       echopause "pause, pause_time=$pause_time, mark01=$mark01, FUNCNAME=${FUNCNAME[0]}, comment=slow down... PAUSE..."
       zenity --info --title="temporarily restricted" --text="I see: $mark01 \n \n OK, slow down..." --width 250 --height 120  --timeout $pause_time
-		;;
+    ;;
     *$mark011*|*$mark012*)
       pause_time=$(( pause_time + 30 ))
       echopause "pause, pause_time=$pause_time, mark011=$mark011, FUNCNAME=${FUNCNAME[0]}, comment=slow down... PAUSE... "
       /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--message-you-are-temporarily-blocked.png -a circle
       zenity --info --title="temporarily blocked" --text="I see: $mark011\n pause_time=$pause_time\n OK, slow down..." --width 250 --height 120  --timeout $pause_time
-		;;
-		*$mark02*)
+    ;;
+    *$mark02*)
       echoinfo "info, mark02=$mark02, FUNCNAME=${FUNCNAME[0]}, comment=I see word 'follow' test OK keep going..."
-#			zenity --info --title="page_probe keep going" --text="I see $mark02 \n \n OK, keep going..." --timeout 5
-		;;
-		*$mark03*)
+      #  zenity --info --title="page_probe keep going" --text="I see $mark02 \n \n OK, keep going..." --timeout 5
+    ;;
+    *$mark03*)
       echoinfo "info, mark03=$mark03, FUNCNAME=${FUNCNAME[0]}, comment=I see word 'o' test OK keep going..."
-#			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
-		;;
+      # zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
+    ;;
     *$mark04*)
       echoinfo "info, mark04=$mark04, comment=Accept cookies... keep going..."
-			xdotool key --delay $kd Ctrl+f && xdotool type $mark04 && xdotool key --delay $kd Escape
+      xdotool key --delay $kd Ctrl+f && xdotool type $mark04 && xdotool key --delay $kd Escape
       sleep 1
       xdotool key Return
-#			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
-		;;
-		*)
-			echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=Looks good... test OK ...keep going..."
-#			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
-		;;
-		esac
+      #  zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
+    ;;
+    *)
+      echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=Looks good... test OK ...keep going..."
+      #  zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
+    ;;
+  esac
 }
 
 press_keys_01 () {
@@ -271,12 +271,12 @@ press_enter_morning_and_afternoon_01 () {
   H=$(date +%k)
   if (( 9 <= $H && $H < 12 )); then
     echowarning "warning, FUNCNAME=${FUNCNAME[0]}, comment=between 9AM and 1PM, hit enter..."
-  	xdotool key --delay 500 Return
+    xdotool key --delay 500 Return
   elif (( 15 <= $H && $H < 18 )); then
     echowarning "warning, FUNCNAME=${FUNCNAME[0]}, comment=between 3PM and 6PM, hit enter..."
-  	xdotool key --delay 500 Return
+    xdotool key --delay 500 Return
   else
-  	echoinfo "bed, FUNCNAME=${FUNCNAME[0]}, comment=go to bed..."
+    echoinfo "bed, FUNCNAME=${FUNCNAME[0]}, comment=go to bed..."
   fi
   echoinfo "enter, FUNCNAME=${FUNCNAME[0]},... ... ... ... ... ENTER only between 9am and 10pm"
 }
@@ -336,7 +336,7 @@ video() {
           echoerror "can't find menu element..."
         fi
         # check if video running
-        scrot -a 300,150,700,400 /opt/${PROJECT}/fb/img/video.jpg
+        scrot -a 300,150,700,400 /opt/${PROJECT}/plugins/fb/img/video.jpg
         sleep 15
         /opt/venv/bin/python /opt/${PROJECT}/locate -i video.jpg
         if [ $(echo "$?") = "0" ]; then
@@ -441,11 +441,11 @@ walking_around_wall () {
   sleep 3
   cd /tmp
   windows_uneeded_close
-	echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=Start screen fb-chat-detect-activity...\e[0m"
+  echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=Start screen fb-chat-detect-activity...\e[0m"
   fb_chat_detect_activity
-	/bin/bash /opt/busy4me/windows-check.sh
-	sleep 1
-	echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=external script start windows-check.sh"
+  /bin/bash /opt/${PROJECT}/windows-check.sh
+  sleep 1
+  echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=external script start windows-check.sh"
   /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-left-edge-of-post-frame.png -a move
   page_probe
   windows_check
@@ -465,9 +465,9 @@ detect_input_field () {
   function_start=$(date +%s) # calculate how long script runs (see on the end)
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
   xclip -selection clipboard /opt/${PROJECT}/data/files/blank
-#  random_letter=$(shuf -zer -n1  {A..Z} {a..z})
+  #  random_letter=$(shuf -zer -n1  {A..Z} {a..z})
   xdotool key --delay $kd Home Shift+End
-#	xdotool key --delay $kd Shift+F10
+  #  xdotool key --delay $kd Shift+F10
   xdotool key --delay $kd Ctrl+c
   clip=$(xclip -out -selection clipboard )
   case "$clip" in
@@ -546,7 +546,7 @@ extra_pause() {
       return
     else
       pause_status=1
-    	echoinfo "extra_pause, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=go to bed..."
+      echoinfo "extra_pause, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=go to bed..."
     fi
     extra_pause=3600
     echoinfo "sleep, H=$H, FUNCNAME=${FUNCNAME[0]}, comment=sleep 1h if outside hours..."

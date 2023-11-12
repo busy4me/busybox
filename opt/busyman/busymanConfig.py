@@ -3,7 +3,7 @@
 
 import os
 script_dir = os.path.dirname(__file__)
-rel_path = "fb/img/"
+rel_path = "plugins/fb/img/"
 img_path = os.path.join(script_dir, rel_path)
 
 func_name = "\033[1;97m[ FUNC ]\033[1;90m"

@@ -44,11 +44,11 @@ xdotool mousemove 8 45
 echo "update date before login...." | logline
 ntpdate -s time.nist.gov | logline
 
-echo "Start /opt/${PROJECT}/fb/fb-init..." | logline
-screen -S fb-init$DISPLAY -X kill 2>/dev/null
-screen -dmS fb-init$DISPLAY "/opt/${PROJECT}/fb/fb-init"
+echo "Start /opt/${PROJECT}/fb..." | logline
+screen -S fb$DISPLAY -X kill 2>/dev/null
+screen -dmS fb$DISPLAY "/opt/${PROJECT}/fb"
 while [[ ! $fb_init_status == *"done"* ]]; do
-  fb_init_status=$(cat /opt/${PROJECT}/data/fb/fb-init$DISPLAY-status)
+  fb_init_status=$(cat /opt/${PROJECT}/plugins/fb/data/fb$DISPLAY-status)
   sleep 1
 done
 reset_status fb-init$DISPLAY
@@ -62,29 +62,27 @@ reset_status fb-init$DISPLAY
 # done
 # reset_status fb-login$DISPLAY
 
-echo "Start /opt/${PROJECT}/fb/fb-scroll..." | logline
+echo "Start /opt/${PROJECT}/plugins/fb/fb-scroll..." | logline
 screen -S fb-scroll$DISPLAY -X kill 2>/dev/null
-screen -dmS fb-scroll$DISPLAY "/opt/${PROJECT}/fb/fb-scroll"
+screen -dmS fb-scroll$DISPLAY "/opt/${PROJECT}/plugins/fb/fb-scroll"
 while [[ ! $fb_scroll_status == *"done"* ]]; do
-  fb_scroll_status=$(cat /opt/${PROJECT}/data/fb/fb-scroll$DISPLAY-status)
+  fb_scroll_status=$(cat /opt/${PROJECT}/plugins/fb/data/fb-scroll$DISPLAY-status)
   sleep 1
 done
 reset_status fb-scroll$DISPLAY
 
 #echo "Start /opt/${PROJECT}/fb/fb-save-my-groups..." | logline
 #/bin/bash /opt/${PROJECT}/fb/fb-save-my-groups
-echo "Start /opt/${PROJECT}/fb/fb-walking-around..." | logline
+echo "Start /opt/${PROJECT}/plugins/fb/fb-walking-around..." | logline
 # /bin/bash /opt/${PROJECT}/fb/fb-walking-around
 
-echo "Continue /opt/${PROJECT}/fb/fb-walking-around at the screen shell session..." | logline
+echo "Continue /opt/${PROJECT}/plugins/fb/fb-walking-around at the screen shell session..." | logline
 echo -e "...script run in DISPLAY $DISPLAY" | logline
-#task_to_do="/opt/${PROJECT}/fb/fb-walking-around --debug"
-#screen -dmS fb-walking-around$DISPLAY $task_to_do
 _TASK='fb-walking-around'
 #_OPT_1='-V'
 #_OPT_2='-s'
 #_OPT_3='3'
-task_to_do="/opt/${PROJECT}/fb/$_TASK"
+task_to_do="/opt/${PROJECT}/plugins/fb/$_TASK"
 echoinfo "=========================== task_to_do=$task_to_do"
 screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$DISPLAY $task_to_do
 screen -ls

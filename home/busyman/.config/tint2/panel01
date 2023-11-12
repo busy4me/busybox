@@ -153,20 +153,20 @@ mouse_scroll_down = iconify
 
 # executor plugin ================================================
 # E               ================================================
-execp = assistant_id_title
-execp_command = echo "Assistant"
+execp = busyman_id_title
+execp_command = echo "Busyman ID"
 execp_interval = 0
 execp_font = sans 10
 execp_markup = 1
 execp_font_color = #ff5900 100
 execp_padding = 0 0
-execp_tooltip = Assistant ID
+execp_tooltip = This is uniqe Busyman Identification Number
 execp_centered = 0
 
-execp = assistant_id
-execp_command = echo "123 456 789"
+execp = busyman_id
+execp_command = echo "000-000-001"
 execp_interval = 5
-execp_font = sans 16
+execp_font = sans 14
 execp_markup = 2
 execp_font_color = #000000 100
 execp_padding = 0 0
@@ -184,7 +184,7 @@ execp_tooltip =
 execp_centered = 0
 
 execp = tail_log
-execp_command = tail -n 1 /var/log/busy4me.log
+execp_command = tail -n 1 /var/log/busyman.log
 execp_interval = 2
 execp_font = sans 8
 execp_markup = 2
@@ -234,7 +234,7 @@ execp_tooltip = Memory usage
 execp_centered = 0
 
 execp = log
-execp_command = wc -l /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//' | awk 'NR==1{printf "Log stats:%s", $1}'
+execp_command = wc -l /var/log/busyman.log | sed 's/\/var\/log\/busyman.log//' | awk 'NR==1{printf "Log stats:%s", $1}'
 execp_interval = 5
 execp_font = sans 8
 execp_markup = 1
@@ -253,13 +253,13 @@ execp_tooltip = local IP
 execp_centered = 0
 
 execp = copyrights
-execp_command = echo "© busy4.me SMAS"
+execp_command = echo "© Busyman"
 execp_interval = 0
 execp_font = DejaVuSansMono 10
 execp_markup = 1
 execp_font_color = #ff5900 100
 execp_padding = 0 0
-execp_tooltip = Copyrights © busy4.me - Social Media Assistant Studio
+execp_tooltip = Copyrights © Busyman - Social Media Automation
 execp_centered = 0
 
 # push buttons ===============================================
@@ -272,7 +272,6 @@ button_background_id = 5
 button_padding = 5 0
 button_centered = 1
 button_max_icon_size = 20
-# button_lclick_command = /opt/busy4me/update --all; zenity --update "--text=update in background..." --width 550 --height 150 --timeout 10
 button_lclick_command = zenity --info "--text=test button... left clicked..." --width 550 --height 150 --timeout 3
 button_rclick_command = zenity --info "--text=test button... right clicked..." --width 550 --height 150 --timeout 3
 button_tooltip = ...left click to execute ...right click for help
@@ -285,8 +284,7 @@ button_background_id = 5
 button_padding = 5 0
 button_centered = 1
 button_max_icon_size = 30
-button_lclick_command = /opt/busy4me/busy stop; (sleep 2; /opt/busy4me/busy start); zenity --reset "--text=reset in progress..." --width 550 --height 150 --timeout 4
-# button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
+button_lclick_command = /opt/busyman/busyman stop; (sleep 2; /opt/busyman/busyman start); zenity --reset "--text=reset in progress..." --width 550 --height 150 --timeout 4
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = left click to reset and login again
 
@@ -299,7 +297,7 @@ button_padding = 5 0
 button_centered = 1
 button_lclick_command = zenity --reboot "--text=reboot in 1s..." --width 350 --height 150 --timeout 2; (sleep 2; sudo reboot)
 button_rclick_command = zenity --info "--text=button 3 right clicked..." --width 550 --height 150 --timeout 3
-button_tooltip = Click to update busy4 software in background
+button_tooltip = Click to update Busyman software in background
 
 button = button_4
 button_text = Stop
@@ -309,8 +307,7 @@ button_background_id = 1
 button_padding = 5 0
 button_centered = 1
 button_max_icon_size = 30
-button_lclick_command = /opt/busy4me/busy stop fb-walking-around; zenity --info "--text=stop..." --width 450 --height 150 --timeout 4
-#button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 && $HOME/.vncserver restart && (sleep 5 && export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &)
+button_lclick_command = /opt/busyman/busyman stop fb-walking-around; zenity --info "--text=stop..." --width 450 --height 150 --timeout 4
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = Click to reset and login again
 

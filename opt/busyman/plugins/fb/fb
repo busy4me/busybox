@@ -2,8 +2,9 @@
 # Autoupdate if changed...
 # Upgrade if needed...
 # curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
-SCRIPT=fb-init
 PROJECT="busyman"
+PLUGIN="fb"
+SCRIPT=$PLUGIN
 source /opt/${PROJECT}/${PROJECT}.cfg
 LOGFILE=/var/log/${PROJECT}.log
 SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
@@ -127,10 +128,10 @@ spot01_position_size() {
   # set fullscreen image below and kill it
   echo "shake...."
   #zenity --info --title="shake" --text="shake...." --timeout $to
-  shake
   xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
   xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+f type 111 | logline
   xdotool key Escape | logline
+  shake
 }
 
 BR01_probe () {
@@ -223,6 +224,6 @@ xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.9
 feh --bg-scale /opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg
 while  [ 1 ]; do
-  echo "done" > /opt/${PROJECT}/data/fb/fb-init$DISPLAY-status
+  echo "done" > /opt/${PROJECT}/plugins/$PLUGIN/data/$SCRIPT$DISPLAY-status
   sleep 86400 # sleep 1 day
 done

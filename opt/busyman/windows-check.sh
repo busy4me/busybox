@@ -1,8 +1,8 @@
 #!/bin/bash
-
+PROJECT="busyman"
 SCRIPT=windows-check.sh
-LOGFILE=/var/log/busy4me_cron.log
-source /opt/busy4me/fb/fb-config
+LOGFILE=/var/log/${PROJECT}.log
+source /opt/${PROJECT}/busyman.cfg
 
 logline() {
 	while IFS= read -r line; do
@@ -17,7 +17,7 @@ check1=$(xdotool search --onlyvisible --name $window1)
 if [ $check1 > 0 ]; then
 	echo -e "window \e[33m $window1 \e[0m exists! ... \e[31m going to reboot in few minutes ..." | logline
 	echo "mark it for root to reboot ..." | logline
-	echo "1" > /tmp/busy4me-reboot
+	echo "1" > /tmp/${PROJECT}-reboot
 
 else
   echo -e "window \e[33m $window1 \e[32m not exists, uff...\e[0m"  | logline
@@ -39,7 +39,7 @@ wmctrl -l
 
 compare_logs_reboot () {
 if [ $USER = "root" ]; then
-	/bin/bash /opt/busy4me/compare_logs_reboot.sh
+	/bin/bash /opt/${PROJECT}/compare_logs_reboot.sh
 fi
 }
 
