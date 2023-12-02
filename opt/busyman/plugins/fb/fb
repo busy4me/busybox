@@ -10,7 +10,7 @@ LOGFILE=/var/log/${PROJECT}.log
 SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
 PROJECT_DIR=/opt/${PROJECT}/fb # with root permision 755, read only for users
 
-echo "start" > /opt/${PROJECT}/fb/fb-init$DISPLAY-status
+echo "start" > /opt/${PROJECT}/tmp/$SCRIPT$DISPLAY-status
 mkdir -p $SAVE_DIR 2>/dev/null
 
 __wallpaper_change () {
@@ -129,7 +129,8 @@ spot01_position_size() {
   echo "shake...."
   #zenity --info --title="shake" --text="shake...." --timeout $to
   xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
-  xdotool key --delay 500 Ctrl+a Ctrl+c Ctrl+f type 111 | logline
+  xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+f | logline
+  xdotool key --delay $kd type $project test | logline
   xdotool key Escape | logline
   shake
 }
@@ -224,6 +225,6 @@ xdotool search --sync --onlyvisible --class chrome windowactivate | logline
 transset -a 0.9
 feh --bg-scale /opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg
 while  [ 1 ]; do
-  echo "done" > /opt/${PROJECT}/plugins/$PLUGIN/data/$SCRIPT$DISPLAY-status
+  echo "done" > /opt/${PROJECT}/tmp/$SCRIPT$DISPLAY-status
   sleep 86400 # sleep 1 day
 done

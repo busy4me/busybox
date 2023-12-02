@@ -109,6 +109,7 @@ page_probe () {
   mark02="follow"
   mark03="o"
   mark04="Accept All" # fb question: Accept cookies from Facebook...  echo -e "\e[35m page probe after Active click..............................\e[0m"
+  mark05="Allow all cookies" # fb question: Allow all cookies from Facebook...  echo -e "\e[35m page probe after Active click..............................\e[0m"
   xclip -selection clipboard /opt/${PROJECT}/data/files/blank
   hide_window
   echoinfo "screenshoot, comment=check what is on the screen"
@@ -148,7 +149,12 @@ page_probe () {
       xdotool key --delay $kd Ctrl+f && xdotool type $mark04 && xdotool key --delay $kd Escape
       sleep 1
       xdotool key Return
-      #  zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
+    ;;
+    *$mark05*)
+      echoinfo "info, mark05=$mark05, comment=Accept cookies... keep going..."
+      xdotool key --delay $kd Ctrl+f && xdotool type $mark05 && xdotool key --delay $kd Escape
+      sleep 1
+      xdotool key Return
     ;;
     *)
       echoinfo "info, FUNCNAME=${FUNCNAME[0]}, comment=Looks good... test OK ...keep going..."
@@ -394,6 +400,8 @@ locate_elements() {
   /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-top-edge.png -a $action
   /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--right-bottom-edge.png -a $action
   /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-cross-icon-black-cross-grey-circle-on-white-background.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-cross-icon-black-cross-grey-circle-on-white-background.png -a click
   xdotool key --delay $kd_2 Down Down Down Down
   xdotool key --delay $kd_2 Escape
 }
@@ -607,18 +615,21 @@ loop () {
   function_start=$(date +%s) # calculate how long script runs (see on the end)
   echofunc "${FUNCNAME[0]}""<< ${FUNCNAME[1]}""<< ${FUNCNAME[2]}""<< ${FUNCNAME[3]}"
   declare -a _SPOTS=(
+  "https://instagram.com/"
+  "https://tiktok.com/"
+  "https://dailymotion.com/"
+  "https://vevo.com/"
+  "https://vimeo.com/"
+  "https://discord.com/"
+  "https://twitter.com/"
+  "https://www.twitch.tv/"
+  "https://www.youtube.com/"
   "https://www.facebook.com/"
   "https://www.facebook.com/jobs"
-  "https://www.facebook.com/videos"
-  "https://www.facebook.com/videos"
-  "https://www.facebook.com/videos"
   "https://www.facebook.com/videos"
   "https://www.facebook.com/games/instantgames/category/?category=400"
 #  "https://www.facebook.com/gaming/feed/"
 #  "https://www.facebook.com/marketplace/"
-  "https://www.facebook.com/watch/"
-  "https://www.facebook.com/watch/"
-  "https://www.facebook.com/watch/"
   "https://www.facebook.com/watch/"
   "https://www.facebook.com/watch/shows/"
   "https://www.facebook.com/watch/live/"
@@ -633,15 +644,17 @@ loop () {
   _SPOTS_SIZE=${#_SPOTS[@]}
   iter=100 #how many steps to do
   for (( step=1; step<$iter; step++ )); do
+    /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-button-allow-all-cookies.jpg -a click
     _SPOTS_INDEX=$(( RANDOM % $_SPOTS_SIZE ))
     SPOT01url=$(echo ${_SPOTS[$_SPOTS_INDEX]})
-    progress=$(echo "$(( (step * 100) /$iter ))%")
+    progress=`echo "$(( (step * 100) /$iter ))%"`
     echo "[ WEBPAGE ] url, step=$step, progress=$progress, SPOT01url=$SPOT01url, FUNCNAME=$FUNCNAME, comment=open url page"
     title='extra_pause'
     walking_around_wall $SPOT01url
     pause $(gen_random 1 60) $title
     extra_pause
-  done #| sort -R #shuf -n 1 #shuffle random SPOT01url
+  done
+#| sort -R #shuf -n 1 #shuffle random SPOT01url
 #  echo "[ LOOP ] start, step=$step, progress=$progress, SPOT01url=$SPOT01url, FUNCNAME=$FUNCNAME, comment=open url page"
 # locate_elements
 #    for SPOT01url in ${_SPOTS[@]}; do

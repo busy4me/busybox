@@ -32,10 +32,10 @@ screen -S mouse-move-02$DISPLAY -X kill
 
 reset_status() {
   if [[ -z ${1} ]]; then
-    rm /opt/${PROJECT}/data/fb/*-status
+    rm /opt/${PROJECT}/tmp/*-status
     return
   fi
-  rm /opt/${PROJECT}/data/fb/$1-status
+  rm /opt/${PROJECT}/tmp/$1
 }
 reset_status
 
@@ -48,10 +48,10 @@ echo "Start /opt/${PROJECT}/fb..." | logline
 screen -S fb$DISPLAY -X kill 2>/dev/null
 screen -dmS fb$DISPLAY "/opt/${PROJECT}/fb"
 while [[ ! $fb_init_status == *"done"* ]]; do
-  fb_init_status=$(cat /opt/${PROJECT}/plugins/fb/data/fb$DISPLAY-status)
+  fb_init_status=$(cat /opt/${PROJECT}/tmp/fb$DISPLAY-status)
   sleep 1
 done
-reset_status fb-init$DISPLAY
+reset_status fb${DISPLAY}-status
 
 # echo "Start /opt/${PROJECT}/fb/fb-login..." | logline
 # screen -S fb-login$DISPLAY -X kill 2>/dev/null
@@ -66,10 +66,10 @@ echo "Start /opt/${PROJECT}/plugins/fb/fb-scroll..." | logline
 screen -S fb-scroll$DISPLAY -X kill 2>/dev/null
 screen -dmS fb-scroll$DISPLAY "/opt/${PROJECT}/plugins/fb/fb-scroll"
 while [[ ! $fb_scroll_status == *"done"* ]]; do
-  fb_scroll_status=$(cat /opt/${PROJECT}/plugins/fb/data/fb-scroll$DISPLAY-status)
+  fb_scroll_status=$(cat /opt/${PROJECT}/tmp/fb-scroll$DISPLAY-status)
   sleep 1
 done
-reset_status fb-scroll$DISPLAY
+reset_status fb-scroll${DISPLAY}-status
 
 #echo "Start /opt/${PROJECT}/fb/fb-save-my-groups..." | logline
 #/bin/bash /opt/${PROJECT}/fb/fb-save-my-groups

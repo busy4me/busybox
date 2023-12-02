@@ -10,13 +10,13 @@ if [[ "$1" == "--debug" ]]; then
   exec 2>&1
 fi
 
-echo "start" > /opt/${PROJECT}/data/fb/fb-scroll$DISPLAY-status
+echo "start" > /opt/${PROJECT}/tmp/$SCRIPT$DISPLAY-status
 xdotool mousemove 0 0
 
 report_fb_scroll_done () {
   while  [ 1 ]; do
     echo -e "\e[33m[OK] ... report: 'fb-scroll done' and sleep this screen for 1 hour for inspect...\e[0m"
-    echo "done" > /opt/${PROJECT}/plugins/fb/data/fb-scroll$DISPLAY-status
+    echo "done" > /opt/${PROJECT}/tmp/$SCRIPT$DISPLAY-status
     sleep 3600 # sleep 1 hour
   done
 }

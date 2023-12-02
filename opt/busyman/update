@@ -25,11 +25,10 @@ chmod 777 /var/log/${PROJECT}.log
 mkdir /opt/${PROJECT} 2>/dev/null
 mkdir /tmp/${PROJECT}-tmp 2>/dev/null
 cd /opt/${PROJECT}
-mkdir /opt/${PROJECT}/{data,plugins} 2>/dev/null # create directory with access for users if not exists
-chmod 777 /opt/${PROJECT}/{data,plugins}
+mkdir /opt/${PROJECT}/{__pycache__,data,plugins,tmp} 2>/dev/null # create directory with access for users if not exists
+chmod 777 /opt/${PROJECT}/{__pycache__,data,plugins,tmp}
 mkdir /opt/${PROJECT}/data/{files,images,sounds,videos} 2>/dev/null
 chmod 777 /opt/${PROJECT}/data/{files,images,sounds,videos}
-touch /opt/${PROJECT}/data/files/blank 2>/dev/null # create empty file for blank clipboard if not exists
 mkdir $BACKUP 2>/dev/null # create backup directories
 mkdir $BACKUP/fb 2>/dev/null
 mkdir $BACKUP_2 2>/dev/null
@@ -43,13 +42,22 @@ logline() {
 }
 
 update_preferences() { # update root and busyuser bash preference files
-  rm -R /root/.ssh
-  mkdir /root/.ssh
-  cat > /root/.ssh/authorized_keys  << `EOF`
+  SSH_DIR="/root/.ssh"
+  rm -R $SSH_DIR
+  install -d -m 0755 -o $USER -g $USER $SSH_DIR
+  cat > $SSH_DIR/authorized_keys  << `EOF`
 ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdHSHHO1PAnapODFUQJWIJwgG44fob3HcicgurDl0UaCsIEX3aYAclr1yk+NmsZSjlK8PJ4mJUxD61JDBpwrOdzokmj4JSl2KQEDMySYZ1zyrmjsGZabyW69DsZVaKktdy8tueqr4hrJwD5CqNB/o4KaYqtgGb4CT0nEFPH0nZ8lp1tWVAX5bxsEJxr/LpAAfYK3dHTb4H9HLgx7p8+Tdior8TPUtBvrRRfOYBzfxxKvDOFIPEiYl3eDUd1EN1C7Okxe/0bSPPcwzAV/CfF+jF07iDFRw//mrAAX63fqY+DRQ==
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
 `EOF`
-  cat > /etc/profile.d/busyman-preferences.sh  << `EOF`
+  SSH_DIR="/home/$BUSYUSER/.ssh"
+  rm -R $SSH_DIR
+  install -d -m 0755 -o $BUSYUSER -g $BUSYUSER $SSH_DIR
+  echo "[INFO] install $SSH_DIR dir for $BUSYUSER"
+  cat > $SSH_DIR/authorized_keys  << `EOF`
+ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdHSHHO1PAnapODFUQJWIJwgG44fob3HcicgurDl0UaCsIEX3aYAclr1yk+NmsZSjlK8PJ4mJUxD61JDBpwrOdzokmj4JSl2KQEDMySYZ1zyrmjsGZabyW69DsZVaKktdy8tueqr4hrJwD5CqNB/o4KaYqtgGb4CT0nEFPH0nZ8lp1tWVAX5bxsEJxr/LpAAfYK3dHTb4H9HLgx7p8+Tdior8TPUtBvrRRfOYBzfxxKvDOFIPEiYl3eDUd1EN1C7Okxe/0bSPPcwzAV/CfF+jF07iDFRw//mrAAX63fqY+DRQ==
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
+`EOF`
+  cat > /etc/profile.d/$BUSYUSER-preferences.sh  << `EOF`
 PATH=$PATH:/opt/$PROJECT:/opt/$PROJECT/plugins/fb:/opt/$PROJECT/plugins/yo
 `EOF`
   echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/* \e[0m"
@@ -220,6 +228,7 @@ download_busyman_files() { # download busyman files
   ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/bm 2>/dev/null
   ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/busy 2>/dev/null
   ln -s /opt/${PROJECT}/${PROJECT}.sh /usr/local/bin/${PROJECT} 2>/dev/null
+  touch /opt/${PROJECT}/data/files/blank 2>/dev/null # create empty file for blank clipboard if not exists
 }
 
 download_yo_plugin() {
@@ -280,6 +289,7 @@ download_fb_files() { # download fb files
   "img/fb-post--push-button-grey-icon-and-inscription--share.jpg"
   "img/fb-post--push-button-grey-icon-and-inscription--share-2.jpg"
   "img/fb-alert--push-button-blue--leave--leave-site--changes-you-made-may-not-be-saved.jpg"
+  "img/fb-cross-icon-black-cross-grey-circle-on-white-background.png"
   )
   for _FILE in ${_FILES[@]}; do
     wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline

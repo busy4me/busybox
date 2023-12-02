@@ -2415,24 +2415,17 @@ case $1 in
 		systemctl disable $_BUSY_ANIME_SERVICE
 		systemctl enable $_BUSY_ANIME_SERVICE
 #		sleep 1
-		(sleep 1; echo -e "\n\e[32m * READY! \n\
-		... installation will start after reboot or reset tty1 console \n\
+		(sleep 1; echo -e "\n\u2705 \e[32m READY! \n\
+		\u2B50... installation will start after reboot or reset tty1 console \n\
 		type: 'reboot' and hit ENTER to reboot and start installation or\n\
 		type: 'service getty@tty1 stop' and hit ENTER to start installation now' or\n\
 		type: 'halt -p' and hit ENTER to switch machine off and clone machine for others.\n\
-		V-Assistant machine is ready for distribution.\e[0m")
+		${PROJECT}\u26A1 machine is ready for distribution.\e[0m")
 		echo "$_DATE_STAMP initiv ready" > $_LOGFILE
-#		/sbin/service $_BUSY_ANIME_SERVICE start
-#		(sleep 10; /usr/bin/initiv reset)
-#		(sleep 2; bash --rcfile <(echo '. ~/.bashrc; /usr/bin/initiv reset'))
-#		(sleep 1, reboot) &
-#		/sbin/service $_BUSY_ANIME_SERVICE start
-		;;
+	;;
 ## install basic packages for splash and first boot
 ## - do it automatically just after first run (partiton will be expanded, and VM file will grow)
 	"0" )
-## 0	execute all initial options, remove packages, set user, install X and basic stuff
-##
 		__read_data
 		__interface
 		__net_status # used for waitng for IP from DHCP
@@ -2459,7 +2452,7 @@ case $1 in
 		echo "... reset in 5s"
 		sleep 5
 		(sleep 2; /usr/bin/initiv reset)
-		;;
+	;;
 	"1" )
 ## 1	execute installation process just after download and first X run by user
 		__fix
@@ -2472,10 +2465,10 @@ case $1 in
 		__install_project
 		# __statistics_set
 		systemctl disable $_BUSY_SERVICE
-		(sleep 2; systemctl disable $_INITIV_1_SERVICE)
-		(sleep 4; systemctl stop $_INITIV_1_SERVICE)
-		(sleep 6; /sbin/service $_INITIV_1_SERVICE stop)
-		(sleep 8; systemctl reboot now)
+		(sleep 6; systemctl disable $_INITIV_1_SERVICE)
+		(sleep 12; systemctl stop $_INITIV_1_SERVICE)
+		(sleep 24; /sbin/service $_INITIV_1_SERVICE stop)
+		(sleep 36; systemctl reboot now)
 #		__reset
 		;;
 	"2" )

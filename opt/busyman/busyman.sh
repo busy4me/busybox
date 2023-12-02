@@ -828,8 +828,15 @@ function scroll() {
 }
 
 function shake() {
-  echofunc "${FUNCNAME[0]}"
+  echo "bzz.. bzz.. shake it kd=$kd"
+  echofunc "function: ${FUNCNAME[0]}"
   xdotool key --delay $kd Page_Down End Page_Up Home
+}
+
+function log() {
+  echo "bzz.. bzz.. show $LOGIFILE"
+  echofunc "function: ${FUNCNAME[0]}"
+  tail -f /var/log/${PROJECT}.log
 }
 
 if [ $USER = "root" ]; then
