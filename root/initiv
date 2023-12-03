@@ -30,9 +30,6 @@ _USER="busyman" # default user name
 _THEME=dark # default installation theme, used in __xt and __anime functions
 _BG=black # default background color, used by xterm option -bg
 _FG=grey # default foreground color, used by xterm option -fg
-_SALT_DIR="/etc/salt"
-_SALT_MASTER="192.168.121.250"
-_SALT_MINION=$(cat /sys/class/dmi/id/product_uuid) # temporary Salt Minion ID, later will change to hostname
 # change hostname to present IP
 exec &> >(tee -ia $_LOGFILE)
 exec 2>&1
@@ -1888,66 +1885,6 @@ echoinfo "/opt/xt.sh ... created"
 echoconfirm "${FUNCNAME[0]} done"
 }
 
-## -- Function -- __salt ---------------------------------------------------------------------------
-## |    Description: install saltstack                                                             |
-## -------------------------------------------------------------------------------------------------
-## |
-__salt () { #help: install salt-minion, UUID used as minion ID if not provided, restart salt-minion service
-	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
-	echofunc ${FUNCNAME[0]}
-	# scenario:
-	# 1. install salt-miniton with ID UUID (client ask server for registration)
-	# 2. auto-register on server side (server)
-	# 3. auto-register and associate UUID to unique ID in MySQL (server)
-	#  Server MySQL, DB: `b4m.nodes`
-	#  | node_id   |              node_uuid               |  node_registration  | status |     secret_key     |
-	#  | 000001176 | 17221794-e1ef-4adc-8e3a-6dd9860c2350 | 2020-05-05 18:24:01 |    1   |
-	#  | 000001177 | 17221794-e1ef-4adc-8e3a-6dd9860c2350 | 2020-05-05 18:24:01 |    1   |
-	#  where:
-	# ID: Primary Key: Unique ID
-	# UUID: not unique?, could be a clone?
-	#  RegDate: registratin time
-	#  IP last seen ext IP
-	#  Status - 1-online, 0-offline
-	# 4. save unique ID in sqlite3 (client side), by salt grains?, txt file?
-	# 5. display ID on the VA screen
-	# 5. install software?
-	# 6. User will register ID number in Studio
-	# `b4m.key_value`
-	#  |         key        |       name        | value |
-	#  | va000001176.status | fb-walking-around |  true |
-	#  | 000001177 | 17221794-e1ef-4adc-8e3a-6dd9860c2350 | 2020-05-05 18:24:01 |
-	# key:
-	# ext_ip, int_ip,
-	# send UUID to saltmaster server and get unique ID
-		# how?
-	UUID=$(cat /sys/class/dmi/id/product_uuid) # same as minion_id
-
-	echoinfo " ... install saltstack, _SALT_MASTER=$_SALT_MASTER"
-	__install_stuff1 gnupg
-	__net_status saltstack.com
-wget -O - http://repo.saltstack.com/py3/debian/10/amd64/latest/SALTSTACK-GPG-KEY.pub | apt-key add -
-echo "deb http://repo.saltstack.com/py3/debian/10/amd64/latest buster main" >> /etc/apt/sources.list
-apt update
-apt install -y salt-common salt-minion
-	# Drop the master address if passed
-[ ! -d "$_SALT_DIR/minion.d" ] && mkdir -p "$_SALT_DIR/minion.d"
-echo "master: $_SALT_MASTER" > $_SALT_DIR/minion.d/99-master-address.conf
-	# Drop the minion id if passed
-[ ! -d "$_SALT_DIR" ] && mkdir -p "$_SALT_DIR"
-
-_SALT_MINION=$(cat /etc/hostname)
-if [ -n $_SALT_MINION ]; then
-#	echo "$_SALT_MINION" > "$_SALT_DIR/minion_id"
-	echoinfo "new salt-minion ID: $_SALT_MINION"
-	/sbin/service salt-minion restart
-fi
-
-# cp /etc/hostname $_SALT_DIR/minion_id
-/sbin/service salt-minion status
-echoconfirm "${FUNCNAME[0]} done"
-}
-
 __show () {
 	echofunc ${FUNCNAME[0]}
 	export DISPLAY=:0
@@ -2232,7 +2169,7 @@ EOF
 ## =================================================================================================
 ## Available options:
 ##
-while getopts ':a: b d: f F h H: i: k l n: N o: r s: S v T: t: u: U: w x X' opt
+while getopts ':a: b d: f F h H: i: k l n: N o: r S v T: t: u: U: w x X' opt
 do
   case "${opt}" in
     a ) _AUTOUSER="$OPTARG"; __autologin; __autostart                                       ;;
@@ -2270,15 +2207,9 @@ do
 ## -N	skip __net_status check
 		r ) __reset; exit 0                                                                     ;;
 ## -r reset ttyX consoles
-		s ) _SALT_MASTER="$OPTARG"                                                              ;;
-## -s <server>	set salt-master server IP address or DNS name (default: saltmaster.localhost)
-## 		stored in ${_SALT_DIR}/minion.d/99-master-address.conf
 		S ) _SHOW="true"                                                                        ;;
 ## show execution in xterm, on tty1, user's X session
 ## use this option if you want see output on DISPLAY:0 instead terminal
-		t ) _SALT_MINION="$OPTARG"                                                              ;;
-## -t <name>	set salt-minion ID (default: machine UUID)
-## 		stored in ${_SALT_DIR}/minion_id
     T ) _NEW_HOSTNAME="$OPTARG"; __change_hostname                                             ;;
 ## -T <hostname>	pass host name value and execute change hostname -T hostname, -T node (default)
 ## -q		option "q"
@@ -2342,8 +2273,6 @@ case $1 in
 ## apt2	install stuff2 from apt
 	"installStuff3"|"install-stuff3"|"apt3" )	__install_stuff3                           ;;
 ## apt3	install stuff3 from apt
-	"salt" ) __salt                                                                      ;;
-## salt - install salt minion
 	"installX"|"install-x"|"X")	__install_x                                                ;;
 ## installX	install Xorg server
 	"interface" )	__interface                                                            ;;
@@ -2430,7 +2359,6 @@ case $1 in
 		__interface
 		__net_status # used for waitng for IP from DHCP
 		__change_hostname # previously used for waiting for IP from DHCP
-		## __salt ## do not install salt
 		__update
 		__update_apt_repos
 		__install_stuff1
@@ -2504,9 +2432,6 @@ esac
 ##		grow a lot when all stuff will be installed
 ## /usr/bin/initiv -S 1	CAUTION! install all stuff
 ## /usr/bin/initiv -a user1 -n light -A "master.hipposite.com" install
-##
-## /usr/bin/initiv -s '192.168.1.30' -t 'saltminionID' salt
-##		install saltstack with salt-master and salt-minion defined
 ##
 ##
 [[ -f /usr/bin/initivRecovery ]] ||	{ echoinfo "create script initivRecovery ... "; __create_recovery; }
