@@ -194,7 +194,7 @@ execp_tooltip = show last the last line from log file
 execp_centered = 0
 
 execp = assistant_info_title
-execp_command = echo "Assistant info:"
+execp_command = echo "Tech info:"
 execp_interval = 0
 execp_font = sans bold 10
 execp_markup = 2
@@ -243,7 +243,7 @@ execp_padding = 2 0
 execp_centered = 0
 
 execp = ip
-execp_command = echo "IP:" | tr '\n' ' ' | sed 's/[[:space:]]//g'; (sleep 5; ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
+execp_command = echo "IP:" | tr '\n' ' ' | sed 's/[[:space:]]//g'; (sleep 10; ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | sed 's/127.0.0.1//' | tr '\n' ' ')
 execp_interval = 0
 execp_font = sans 8
 execp_markup = 1
@@ -252,8 +252,18 @@ execp_padding = 1 0
 execp_tooltip = local IP
 execp_centered = 0
 
+#execp = extip
+#execp_command = echo "ZT:" | tr '\n' ' ' | sed 's/[[:space:]]//g'; (sleep 10; ip -4 addr | grep -oP '\d+.\d+.\d+.\d+(?=\/\d+\sbrd\s\d+.\d+.\d+.\d+\sscope\sglobal\szt)' | tr '\n' ' ')
+#execp_interval = 0
+#execp_font = sans 8
+#execp_markup = 1
+#execp_font_color = #454545 100
+#execp_padding = 1 0
+#execp_tooltip = ext IP
+#execp_centered = 0
+
 execp = copyrights
-execp_command = echo "© Busyman"
+execp_command = echo "Busyman © " | sed -z '$ s/\n$//'; (sleep 1; date '+%Y' | sed -z '$ s/\n$//')
 execp_interval = 0
 execp_font = DejaVuSansMono 10
 execp_markup = 1
