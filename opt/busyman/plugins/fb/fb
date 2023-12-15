@@ -125,6 +125,7 @@ spot01_position_size() {
   transset -a 0.8; sleep 0.1
   transset -a 0.9; sleep 0.1
   transset -a 1
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-button-allow-all-cookies.jpg -a click
   # set fullscreen image below and kill it
   echo "shake...."
   #zenity --info --title="shake" --text="shake...." --timeout $to
