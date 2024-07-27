@@ -1,9 +1,26 @@
-xrandr --output default --mode 1024x768 &
-xrandr --output Virtual1 --mode 1024x768 &
-feh --bg-scale /opt/busy/images/wall03.png &
+# Programs that will run after Openbox windows manager has started
+PROJECT="busyman"
+xrandr --output default --mode 1280x768 &
+xrandr --output Virtual1 --mode 1280x768 &
+feh --bg-scale /opt/${PROJECT}/data/images/wall03.png &
 xset -dpms &
 xset s off &
 xcompmgr &
-(sleep 2s && tint2) &
-/opt/busy4me/frame00 &
-/opt/busy4me/frame99 &
+if [ $(echo $DISPLAY) = ":98" ]; then
+  (sleep 2s && tint2 -c /home/busyman/.config/tint2/mask01) &
+  (sleep 2s && tint2 -c /home/busyman/.config/tint2/panel01) &
+  export DISPLAY=:98 && screen -dmS frame00$DISPLAY '/opt/busyman/frame00' &
+fi
+if [ $(echo $DISPLAY) = ":97" ]; then
+  (sleep 2s && tint2 -c /home/busyman/.config/tint2/mask01) &
+  (sleep 2s && tint2 -c /home/busyman/.config/tint2/panel01) &
+  export DISPLAY=:97 && screen -dmS frame00$DISPLAY '/opt/${PROJECT}/frame00' &
+fi
+if [ $(echo $DISPLAY) = ":96" ]; then
+  (sleep 2s && tint2 -c /home/busyman/.config/tint2/mask01) &
+  (sleep 2s && tint2 -c /home/busyman/.config/tint2/panel01) &
+  export DISPLAY=:96 && screen -dmS frame00$DISPLAY '/opt/${PROJECT}/frame00' &
+fi
+if [ $(echo $DISPLAY) = ":0" ]; then
+  export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &
+fi

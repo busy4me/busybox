@@ -282,7 +282,7 @@ button_background_id = 5
 button_padding = 5 0
 button_centered = 1
 button_max_icon_size = 20
-button_lclick_command = zenity --info "--text=test button... left clicked..." --width 550 --height 150 --timeout 3
+button_lclick_command = sudo /opt/busyman/update all; zenity --info "--text=update in progress" --width 550 --height 150 --timeout 3
 button_rclick_command = zenity --info "--text=test button... right clicked..." --width 550 --height 150 --timeout 3
 button_tooltip = ...left click to execute ...right click for help
 
