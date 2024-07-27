@@ -589,11 +589,11 @@ __zerotier () {
 	curl -s https://install.zerotier.com | bash
 	apt install -y -qq --no-install-recommends apt-transport-https ca-certificates curl gnupg lsb-release
   curl -fsSL https://raw.githubusercontent.com/zerotier/ZeroTierOne/master/doc/contact%40zerotier.com.gpg \
-  | gpg --dearmor -o /etc/apt/trusted.gpg.d/zerotier.gpg
+  | gpg --yes --dearmor -o /etc/apt/trusted.gpg.d/zerotier.gpg
   echo "deb https://download.zerotier.com/debian/$(lsb_release -cs)/ $(lsb_release -cs) main" \
   | tee /etc/apt/sources.list.d/zerotier.list
-  apt update && apt install zerotier-one
-	zerotier-cli join b15644912e027c8f
+  apt update && apt install -y -qq zerotier-one
+	zerotier-cli join 932df01efb1ebd71 ##  busyman zt network
 	echoconfirm "${FUNCNAME[0]} done"
 }
 
@@ -718,6 +718,8 @@ __install_stuff3 () {
 # install google-chrome
 	__net_status google.com
 	wget --no-check-certificate -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+	# depricated above line
+	wget --no-check-certificate -qO- https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/google-chrome.gpg
 	#add-apt-repository 'deb http://dl.google.com/linux/chrome/deb/ stable main'
 	_GGL_REPO="deb http://dl.google.com/linux/chrome/deb/ stable main"
 	_SRC_FILE="/etc/apt/sources.list"
@@ -862,13 +864,15 @@ __install_stuff5 () {
   runuser -l ${_USER} -c "/usr/bin/python3 -m venv /opt/venv"      # create virtual env for $_USER     #
   declare -a stuff5=(                                                         #####################################
     "numpy"
-	"config"
-	"pyyaml"
+    "config"
+    "pyyaml"
     "opencv-contrib-python"
-	"imutils"
-	"tzupdate"
-	"pyautogui"
-	)
+    "imutils"
+    "tzupdate"
+    "pyautogui"
+    "sentry-sdk"
+    "sentry-sdk[opentelemetry]"
+    )
   for _PACKAGE in ${stuff5[@]}; do
 	echoinfo 'install as USER='${_USER}' package: '$_PACKAGE' ................................ wait ...'
 	runuser -l ${_USER} -c '/opt/venv/bin/python -m pip install --upgrade '${_PACKAGE}''
@@ -1811,7 +1815,7 @@ __time () {
 while true; do
 	_ELAPSED=\$((\$(date +%s) - \${_START}))
 	for _DOT in \${_DOTS[@]}; do
-	echo -ne \$(date -ud "@\$_ELAPSED" +'busy4.me %H:%M:%S')"'\${_DOT}\033[0K\r"
+	echo -ne \$(date -ud "@\$_ELAPSED" +'busyman %H:%M:%S')"'\${_DOT}\033[0K\r"
 	sleep 0.1
 	done
 done
@@ -2392,11 +2396,11 @@ case $1 in
 		__install_stuff5
 		__install_project
 		# __statistics_set
-		systemctl disable $_BUSY_SERVICE
-		(sleep 6; systemctl disable $_INITIV_1_SERVICE)
-		(sleep 12; systemctl stop $_INITIV_1_SERVICE)
-		(sleep 24; /sbin/service $_INITIV_1_SERVICE stop)
-		(sleep 36; systemctl reboot now)
+		sudo systemctl disable $_BUSY_SERVICE
+		(sleep 6; sudo systemctl disable $_INITIV_1_SERVICE)
+		(sleep 12; sudo systemctl stop $_INITIV_1_SERVICE)
+		(sleep 24; sudo /sbin/service $_INITIV_1_SERVICE stop)
+		(sleep 36; sudo systemctl reboot -i)
 #		__reset
 		;;
 	"2" )

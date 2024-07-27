@@ -17,6 +17,12 @@
 #   right_bottom_corner -1-1  - (xy)1px offset
 
 from __future__ import print_function
+import sentry_sdk
+sentry_sdk.init(
+    dsn="https://f4aaab6ccb1e1aeaa388f1a584e34417@sentry.netol.io/2",
+    traces_sample_rate=1.0,
+    enable_tracing=True
+)
 import pyautogui, time, sys, math, random, os, getopt, numpy, imutils, cv2, inspect, yaml
 from time import sleep
 from busymanConfig import *

@@ -644,6 +644,7 @@ loop () {
   _SPOTS_SIZE=${#_SPOTS[@]}
   iter=100 #how many steps to do
   for (( step=1; step<$iter; step++ )); do
+    echo "[DETECT] ${0}"
     /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-button-allow-all-cookies.jpg -a click
     _SPOTS_INDEX=$(( RANDOM % $_SPOTS_SIZE ))
     SPOT01url=$(echo ${_SPOTS[$_SPOTS_INDEX]})

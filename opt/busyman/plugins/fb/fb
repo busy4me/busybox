@@ -2,10 +2,11 @@
 # Autoupdate if changed...
 # Upgrade if needed...
 # curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
+source /opt/${PROJECT}/${PROJECT}.cfg
+source /opt/${PROJECT}/${PROJECT}.sh # global functions
 PROJECT="busyman"
 PLUGIN="fb"
 SCRIPT=$PLUGIN
-source /opt/${PROJECT}/${PROJECT}.cfg
 LOGFILE=/var/log/${PROJECT}.log
 SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
 PROJECT_DIR=/opt/${PROJECT}/fb # with root permision 755, read only for users
@@ -125,13 +126,22 @@ spot01_position_size() {
   transset -a 0.8; sleep 0.1
   transset -a 0.9; sleep 0.1
   transset -a 1
+  echo "[DETECT] execute:/opt/${PROJECT}/locate script=${0}"
+  action="move" # available actions in 'locate' program: move, circle, click, squere, x-corner, x-edge
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--post-frame--left-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--right-top-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-top-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--right-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-cross-icon-black-cross-grey-circle-on-white-background.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-cross-icon-black-cross-grey-circle-on-white-background.png -a click
   /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-button-allow-all-cookies.jpg -a click
   # set fullscreen image below and kill it
   echo "shake...."
   #zenity --info --title="shake" --text="shake...." --timeout $to
   xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
   xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+f | logline
-  xdotool key --delay $kd type $project test | logline
+  xdotool key --delay $kd type "$project" | logline
   xdotool key Escape | logline
   shake
 }
