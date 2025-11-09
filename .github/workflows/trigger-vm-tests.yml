@@ -1,0 +1,43 @@
+name: Trigger VM Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  trigger-vm-tests:
+    name: Trigger Tests in Dev Infrastructure
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository info
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+
+      - name: Trigger repository_dispatch
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.DISPATCH_TOKEN }}
+          repository: busy4me/dev
+          event-type: test-request
+          client-payload: |
+            {
+              "repo": "busy4me/busybox",
+              "branch": "${{ github.ref_name }}",
+              "test_suite": "busybox",
+              "sha": "${{ github.sha }}",
+              "triggered_by": "${{ github.actor }}"
+            }
+
+      - name: Notify completion
+        run: |
+          echo "✓ Test request dispatched to busy4me/dev infrastructure"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "Monitor test execution at:"
+          echo "https://github.com/busy4me/dev/actions"
