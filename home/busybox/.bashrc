@@ -3,11 +3,6 @@
 # To enable the settings / commands in this file for login shells as well,
 # this file has to be sourced in /etc/profile.
 
-if [ -f $HOME/.bash_aliases ]
-then
-  . $HOME/.bash_aliases
-fi
-
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
@@ -45,7 +40,6 @@ PS1='${debian_chroot:+($debian_chroot)}\[\033[01;31m\]\u@\h\[\033[00m\]:\[\033[0
 PATH=$PATH:/opt/busy4me:/opt/busy4me/fb:/var/log
 DISPLAY=:0
 XAUTHORITY='/home/busybox/.Xauthority'
-source /opt/busy4me/fb/fb-config
 
 # if the command-not-found package is installed, use it
 if [ -x /usr/lib/command-not-found -o -x /usr/share/command-not-found/command-not-found ]; then
@@ -68,4 +62,5 @@ export LS_OPTIONS='--color=auto'
 eval "`dircolors`"
 alias ls='ls $LS_OPTIONS'
 force_color_prompt=yes
-cd /
+cd $HOME
+export DISPLAY=:98
