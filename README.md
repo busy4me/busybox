@@ -1,202 +1,330 @@
-1. [Wiki index](https://github.com/busy4me/busy/wiki)  
-2. [What is ./busy4.me?](https://github.com/busy4me/busy/wiki#busy4me-is)
-3. [Where ./busy4.me can run?](https://github.com/busy4me/busy/wiki#busy4me-can-run)
-4. [Main goals](https://github.com/busy4me/busy/wiki#main-goals)
-5. User guide  
- • 5.1. Installation  
- • 5.2. Setup  
- • 5.3. Commands  
- • 5.4. Uninstall  
-7. [Genesis](https://github.com/busy4me/busy/wiki#genesis)  
-• 7.1  
-• 7.2  
-8. Developers guide  
-  • 8.1 Basic syntax  
-  • 8.2 Advanced syntax  
-  • 8.3 [Old syntax](https://github.com/busy4me/busy/wiki#%EF%B8%8F-old-syntax)  
-  • 8.4 [Update](https://github.com/busy4me/busy/wiki#update)  
-9. [Copyrights](https://github.com/busy4me/busy/wiki#copyrights-busy4me)
+<div align="center">
 
-# busy
-🐙 busy commands set - to manage "Virtual Assistant" 🌐
+# 🚀 BusyBox
 
-basic usage
-``` shell
+**Automated Virtual Assistant Platform for Linux**
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/busy4me/busybox)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](https://github.com/busy4me/busybox)
+
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Documentation](#documentation) • [Contributing](#contributing)
+
+</div>
+
+---
+
+## 📋 Overview
+
+**BusyBox** is an open-source automation platform that runs continuously on Linux machines, handling routine online tasks through a virtual assistant. It provides internet-based control via web, smartphone, and tablet interfaces, operating securely behind firewalls without exposed ports.
+
+Built on clean Linux architecture with minimalist code, BusyBox offers:
+- 🔐 Encrypted local data storage with firewall protection
+- 🌐 Remote access without port forwarding
+- ⚡ Low resource consumption (minimal storage and memory)
+- 🎯 Click-and-Play accessibility
+- 🛠️ Developer-oriented configuration
+- 📜 Apache v.2 licensed open-source
+
+## ✨ Features
+
+- **Continuous Automation** - Run tasks 24/7 without manual intervention
+- **Secure & Private** - Encrypted connections and firewall-protected data
+- **Platform Agnostic** - Works on VMs, dedicated hardware, ARM, Raspberry Pi
+- **Social Media Automation** - Automated posting, commenting, sharing, and engagement
+- **Database Management** - Built-in database operations for content management
+- **Live Streaming** - Stream desktop to multiple platforms
+- **Remote Console** - SSH access for advanced management
+- **Cron Integration** - Schedule tasks with flexible timing options
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- VirtualBox or VMware (for VM installation)
+- Debian-based Linux system (Debian 10+ recommended)
+- Internet connection
+
+### Installation
+
+#### Option 1: Debian 10 Buster (Recommended)
+
+1. Install minimal Debian 10 Buster in [VirtualBox](https://www.virtualbox.org/wiki/Downloads)
+   - Download ISO: [debian-10.4.0-amd64-netinst.iso](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.4.0-amd64-netinst.iso) (336MB)
+   - Use base installation, skip additional software
+
+2. Run the installation script:
+   ```bash
+   wget busy4.me/initiv && bash ./initiv install
+   ```
+
+3. Wait for browser and login window to appear (several minutes)
+
+4. Enter your credentials - the system will simulate natural user behavior
+
+5. Your host becomes operational via busy4.me
+
+#### Option 2: Debian 8 Jessie (Legacy)
+
+```bash
+wget busy4.me/init-0 && bash ./init-0
+```
+
+## 📖 Usage
+
+### Basic Syntax
+
+```bash
 busy [--option=value]... [:place]
 ```
 
 or
 
-``` shell
+```bash
 busy [sub_command] [--option=value]... [:place]
 ```
 
-# Selected available options:
-🚧 Under construction
+### Command Examples
 
-## --like
-``` shell
---like[="URL"] # to like something eg. post, profile
-```
-⭐️ EXAMPLE: Active profile will like specific post in socialportal.com, executed in DISPLAY:0
-``` shell
+#### Social Media Operations
+
+**Like a post:**
+```bash
 busy --like="https://socialportal.com/fanpage/post" :0
 ```
 
-## --follow
-``` shell
---follow[="URL"] # to follow profile from URL
-```
-☝️ TIP: option without value will will be executed in current opened URL  
-⭐️ EXAMPLE: Active profile will follow other profile in socialportal.com, executed in DISPLAY:02
-``` shell
-busy --like="https://socialportal.com/fanpage/post" :02
+**Follow a profile:**
+```bash
+busy --follow="https://socialportal.com/profile" :2
 ```
 
-## --post
-``` shell
---post[="database.table.record"] # to prepare and publish a post
-```
-☝️ TIP: option without value will put the oldest post from defult table from default database  
-⭐️ EXAMPLE: Active profile will put a post in socialportal.com, from database "roy_visar_db", table "fb_posts", record "4276", executed in DISPLAY:5
-``` shell
-busy --like="roy_visar_db.fb_posts.4276" :5
+**Share content:**
+```bash
+busy --share="https://example.com" --url="https://socialportal.com/group_name" :1
 ```
 
-## --live
-``` shell
---live[=start|=stop|=status] --url[="URL"]
-# live streaming to specific rtmp socket
-```
-☝️ TIP: _live_ option without value will _start_ live streaming eg. "busy --live"  
-☝️ TIP: with no _url_ option, default url socket will be used  
-⭐️ EXAMPLE: Start Live streaming of DISPLAY:0 to blablavideo.com portal
-``` shell
-busy --live=start --url="rtmp://live-api.blablavideo.com:80/api=1&key=As4fRws8Q" :0
+**Comment on a post:**
+```bash
+busy --comment="Great content!" --url="socialportal.com/groups/example/post/123456"
 ```
 
-## --login
-``` shell
---login[=login_name] --url=["URL"]# to login in specific portal
-```
-⭐️ EXAMPLE: Active profile will login in socialportal.com, executed in DISPLAY:1
-``` shell
-busy --login --url="https://socialportal.com" :1
-```  
-☝️ TIP: _login_ option with no value  
-
-## --share
-``` shell
---share[="URL"] # to share something
-```
-⭐️ EXAMPLE: Active profile will share something in Group "group_name" in socialportal.com, executed in DISPLAY:1
-``` shell
-busy --share="https://somethingcool.co" --url="https://socialportal.com/group_name" :1
-```  
-
-## --join
-``` shell
---join[="URL"] # to join somewhere
-```
-⭐️ EXAMPLE: Active profile will join somewhere
-``` shell
+**Join a group:**
+```bash
 busy --join="https://socialportal.com/group_name" :1
-```  
-
-## --invite
-``` shell
---invite[=database.table] --url=["URL"]# to invite others
-```
-⭐️ EXAMPLE: Active profile will invite others
-``` shell
-busy --invite[=roy_visar_db.fb_friends] --url="https://socialportal.com/group_name" :1
-```  
-
-## --subscribe
-``` shell
-busy --subscribe[="URL"] # to subscribe
-```
-⭐️ EXAMPLE: Active profile will subscribe
-``` shell
-busy --subscribe="https://somethingcool.co" :1
-```  
-
-## --comment
-``` shell
-busy --comment="comment text" --url=["URL"] # to comment specific URL
-```
-☝️ TIP: option --comment without value will use default comment from database  
-⭐️ EXAMPLE: Active profile will comment "good to know" in post from group _bleblegroup_ in _socialfrance.eu_
-``` shell
-busy --comment="good to know" --url="socialfrance.eu/groups/bleblegroup/post/0192837465"
-```  
-
-## --cron
-``` shell
-busy --cron[=on|=off|=status] # to operate in crontab
 ```
 
-## --db
-``` shell
-busy --db[=add] --table[="database.table"] # add table in database
-```
-``` shell
-busy --db[=drop] --table[="database.table"] # drop table in database
-```
-``` shell
-busy --db[=add] --table[="database.table"] --data=["data_to_add"] # add record in database
-```
-``` shell
-busy --db[=delete] --record[="database.table.record"] # delete record in database
-```
-``` shell
-busy --db[=show] --table[="database.table.record"] # show records in database
-```
-⭐️ EXAMPLE: Add record with specific data into _fb_friends_ table
-``` shell
-busy --db=add --table="roy_visar_db.fb_friends" --data="001,Roy Visar,http://portal.url/profile,data1,data2"
-```  
-⭐️ EXAMPLE: Update record to specific data in _fb_friends_ table in _roy_visar_db_ database
-``` shell
-busy --db=update --table="roy_visar_db.fb_friends.2345" --data="Roy Visar,data2"
-```  
+#### Content Publishing
 
-# system
-## --clip-clear
-``` shell
-busy --clip-clear|-cc # clip clear in default DISPLAY
+**Publish a post:**
+```bash
+busy --post="database.table.record" :5
+```
+> Posts are fetched from database. Without value, uses oldest post from default table.
+
+**Subscribe to a channel:**
+```bash
+busy --subscribe="https://example.com" :1
 ```
 
-## --restart
-``` shell
-busy --restart :5 # retart DISPLAY:5
-busy --restart=all # restart all
+#### Live Streaming
+
+**Start streaming:**
+```bash
+busy --live=start --url="rtmp://live-api.platform.com:80/api=1&key=YOUR_KEY" :0
 ```
 
-## --screen
-``` shell
-busy --screen=status # clip clear
-busy --screen=on --cmd="htop" # run _htop_ in screen session
+**Stop streaming:**
+```bash
+busy --live=stop :0
 ```
 
-# INSTALL
-1. Install minimal Debian 10 Buster in  [VirtualBox](https://www.virtualbox.org/wiki/Downloads), just base, skip everything,  
-ISO CD image from official website
-[debian.org/debian-10.4.iso](https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-10.4.0-amd64-netinst.iso) << 336MB direct link
-2. Run bellow script in fresh terminal console  
- (all main software will be installed from official Debian repository)
- ``` shell
- wget busy4.me/initiv && bash ./initiv install
- ```
-[...See more](https://github.com/busy4me/busy/wiki)  
-
-``` shell
-wget busy4.me/init-0 && bash ./init-0
+**Check stream status:**
+```bash
+busy --live=status :0
 ```
 
-# NOTES
-🔥 Hot: last update  
-⚠️ Caution: use carefully  
+#### Database Operations
 
-# Wiki
-[busy4me Wiki 🚧 Under construction](https://github.com/busy4me/busy/wiki)
+**Show all tables:**
+```bash
+busy --db=show
+```
+
+**Show table records:**
+```bash
+busy --db=show --table="database.table"
+```
+
+**Add record:**
+```bash
+busy --db=add --table="database.table" --data="field1,field2,field3"
+```
+
+**Update record:**
+```bash
+busy --db=update --table="database.table.record_id" --data="new_data"
+```
+
+**Drop table:**
+```bash
+busy --db=drop --table="database.table"
+```
+
+#### System Operations
+
+**Clear clipboard:**
+```bash
+busy --clip-clear
+# or
+busy -cc
+```
+
+**Restart display:**
+```bash
+busy --restart :5        # restart DISPLAY:5
+busy --restart=all       # restart all displays
+```
+
+**Screen management:**
+```bash
+busy --screen=status                    # show screen sessions
+busy --screen=on --cmd="htop"          # run htop in screen
+```
+
+**Cron management:**
+```bash
+busy --cron=on           # enable cron
+busy --cron=off          # disable cron
+busy --cron=status       # check cron status
+```
+
+### Authentication
+
+**Login to a portal:**
+```bash
+busy --login --url="https://socialportal.com" :1
+```
+
+## 🗄️ Database Tables
+
+BusyBox manages various database tables for different platforms:
+
+- `socialmedia` - General social media data
+- `fb_user` - Facebook user profiles
+- `fb_posts` - Facebook posts queue
+- `fb_groups` - Facebook groups
+- `fb_group__metadata` - Group metadata
+- `fb_people` - People database
+- `fb_friends` - Friends list
+- `fb_pages` - Facebook pages
+- `fb_page__metadata` - Page metadata
+- `fb_plan` - Scheduling plans
+- `yo_user` - YouTube user data
+- `in_user` - Instagram user data
+
+## 🔐 Remote Access
+
+Access your BusyBox instance via SSH:
+
+```bash
+ssh 192.168.1.23 -p 22
+su busybox
+```
+
+## 🏗️ Architecture
+
+### Deployment Models
+
+**Classic User Flow:**
+```
+User → Social Media → Advertisement → Control
+```
+
+**With BusyBox:**
+```
+User (iPhone/Android/Web) → BusyBox Host → Social Media
+                          ↓
+                    Status Reporting
+```
+
+### System Users
+
+- **busybox** - Executes user commands and shell scripts (DISPLAY :1)
+- **root** - System-level operations
+- **admin** - Reserved
+- **vi** - Reserved
+
+### Platform Support
+
+- ✅ Virtual Machines (VMware, VirtualBox, QEMU)
+- ✅ Dedicated Hardware (x86/x64 PCs)
+- ✅ ARM Devices (Raspberry Pi, etc.)
+- ✅ Headless Systems
+
+## 🎯 Design Goals
+
+1. **Clean Implementation** - Simple, maintainable Linux distribution
+2. **Minimalist Architecture** - Reduced code complexity
+3. **Resource Efficiency** - Low storage and memory footprint
+4. **Independence** - Standalone operation without external dependencies
+5. **Automation** - Automatic process management
+6. **Security** - High-standard encrypted internet connections
+
+## 🛠️ Update System
+
+Update BusyBox components:
+
+```bash
+update --full              # Update all files
+update --binaries          # Update binary files only
+update --busy              # Update busy executable
+update --cron_task         # Update cron tasks
+update --logrotate         # Update log rotation config
+update --tint2rc           # Update tint2 configuration
+update --openbox           # Update OpenBox config
+update [path/]file         # Update specific file
+update -h                  # Display help
+```
+
+## 📚 Documentation
+
+For detailed documentation, visit the [BusyBox Wiki](https://github.com/busy4me/busybox/wiki).
+
+### Quick Links
+
+- [Installation Guide](https://github.com/busy4me/busybox/wiki#install-on-linux-debian-10)
+- [Command Reference](https://github.com/busy4me/busybox/wiki#commands)
+- [Configuration](https://github.com/busy4me/busybox/wiki#configuration)
+- [Architecture Details](https://github.com/busy4me/busybox/wiki#architecture)
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+
+## 📄 License
+
+BusyBox is open-source software licensed under the **Apache License 2.0**.
+
+```
+Copyright © busy4.me
+Licensed under Apache License v.2
+```
+
+See [LICENSE](LICENSE) file for details.
+
+## 🌐 Links
+
+- **Website**: [busy4.me](https://busy4.me)
+- **Repository**: [github.com/busy4me/busybox](https://github.com/busy4me/busybox)
+- **Wiki**: [Documentation](https://github.com/busy4me/busybox/wiki)
+- **Issues**: [Bug Reports](https://github.com/busy4me/busybox/issues)
+
+---
+
+<div align="center">
+
+**Made with ❤️ by the busy4.me team**
+
+⭐ Star us on GitHub if you find this project useful!
+
+</div>
