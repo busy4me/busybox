@@ -1,0 +1,90 @@
+#!/bin/bash
+# busybox framework 00 .... init all scripts one by one
+PROJECT="busybox"
+SCRIPT=frame00
+source /opt/${PROJECT}/${PROJECT}.cfg # global variables
+source /opt/${PROJECT}/${PROJECT}.sh # global functions
+${PROJECT}_log ## logging
+
+if [ $USER = "root" ]; then
+  echo "Do not run as root! exit..."
+  exit
+fi
+
+export PATH=$PATH:/opt/${PROJECT}
+export PATH=$PATH:/opt/${PROJECT}/fb
+
+logline() {
+    while IFS= read -r line; do
+echo "$(date +%F' '%T) $USER $SCRIPT - $line" | tee -a $LOGFILE
+    done
+}
+
+# set directories for big files
+mkdir /opt/${PROJECT}/data/{files,images,sounds,videos} 2>/dev/null
+
+# kill all screen sessions
+screen -S fb-walking-around$DISPLAY -X kill
+screen -S windows-uneeded-close$DISPLAY -X kill
+screen -S mouse-move-around$DISPLAY -X kill
+screen -S mouse-move-01$DISPLAY -X kill
+screen -S mouse-move-02$DISPLAY -X kill
+
+reset_status() {
+  if [[ -z ${1} ]]; then
+    rm /opt/${PROJECT}/tmp/*-status
+    return
+  fi
+  rm /opt/${PROJECT}/tmp/$1
+}
+reset_status
+
+echo "move mouse away...." | logline
+xdotool mousemove 8 45
+echo "update date before login...." | logline
+ntpdate -s time.nist.gov | logline
+
+echo "Start /opt/${PROJECT}/plugins/fb/fb..." | logline
+screen -S fb$DISPLAY -X kill 2>/dev/null
+screen -dmS fb$DISPLAY "/opt/${PROJECT}/plugins/fb/fb"
+while [[ ! $FB_STATUS == *"done"* ]]; do
+  FB_STATUS=$(cat /opt/${PROJECT}/tmp/fb$DISPLAY-status)
+  sleep 1
+done
+reset_status fb${DISPLAY}-status
+
+# echo "Start /opt/${PROJECT}/fb/fb-login..." | logline
+# screen -S fb-login$DISPLAY -X kill 2>/dev/null
+# screen -dmS fb-login$DISPLAY '/opt/${PROJECT}/fb/fb-login'
+# while [[ ! $fb_login_status == *"done"* ]]; do
+#   fb_login_status=$(cat /opt/busy/fb/fb-login$DISPLAY-status)
+#   sleep 1
+# done
+# reset_status fb-login$DISPLAY
+
+echo "Start /opt/${PROJECT}/plugins/fb/fb-scroll..." | logline
+screen -S fb-scroll$DISPLAY -X kill 2>/dev/null
+screen -dmS fb-scroll$DISPLAY "/opt/${PROJECT}/plugins/fb/fb-scroll"
+while [[ ! $FB_SCROLL_STATUS == *"done"* ]]; do
+  FB_SCROLL_STATUS=$(cat /opt/${PROJECT}/tmp/fb-scroll$DISPLAY-status)
+  sleep 1
+done
+reset_status fb-scroll${DISPLAY}-status
+
+#echo "Start /opt/${PROJECT}/fb/fb-save-my-groups..." | logline
+#/bin/bash /opt/${PROJECT}/fb/fb-save-my-groups
+echo "Start /opt/${PROJECT}/plugins/fb/fb-walking-around..." | logline
+# /bin/bash /opt/${PROJECT}/fb/fb-walking-around
+
+_TASK='fb-walking-around'
+echo "Continue /opt/${PROJECT}/plugins/fb/${_TASK} at the screen shell session..." | logline
+echo -e "...script run in DISPLAY $DISPLAY" | logline
+#_OPT_1='-V'
+#_OPT_2='-s'
+#_OPT_3='3'
+TASK_TO_DO="/opt/${PROJECT}/plugins/fb/$_TASK"
+echoinfo "=========================== task_to_do=$TASK_TO_DO"
+screen -dmS $_TASK$_OPT_1$_OPT_2$_OPT_3$DISPLAY $TASK_TO_DO
+screen -ls
+
+echo "Stop $SCRIPT..." | logline

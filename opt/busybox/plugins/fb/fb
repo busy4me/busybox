@@ -1,0 +1,241 @@
+#!/bin/bash
+# Autoupdate if changed...
+# Upgrade if needed...
+# curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
+source /opt/${PROJECT}/${PROJECT}.cfg
+source /opt/${PROJECT}/${PROJECT}.sh # global functions
+PROJECT="busybox"
+PLUGIN="fb"
+SCRIPT=$PLUGIN
+LOGFILE=/var/log/${PROJECT}.log
+SAVE_DIR=/opt/${PROJECT}/data/fb # with user permision 777
+PROJECT_DIR=/opt/${PROJECT}/fb # with root permision 755, read only for users
+
+echo "start" > /opt/${PROJECT}/tmp/$SCRIPT$DISPLAY-status
+mkdir -p $SAVE_DIR 2>/dev/null
+
+__wallpaper_change () {
+  INT=$(( $INT +1 ))
+  if [ $INT -eq 4 ]; then
+    INT=0
+  fi
+feh --bg-scale /opt/${PROJECT}/data/images/wall0$INT.png
+}
+
+logline() {
+  __wallpaper_change
+    while IFS= read -r line; do
+        echo -e "$(date +%F' '%T) $USER $SCRIPT - $line\e[0m" | tee -a $LOGFILE
+    done
+}
+
+shake() {
+  xdotool key --delay 200 Page_Down End Page_Up Home
+}
+
+echo "\e[95m$(date +%F' '%T) $USER $SCRIPT start.............................................." | logline
+echo "start..." | logline
+
+if [ $USER = "root" ]; then
+	echo "Do not run as root! exit..." | logline
+	exit
+fi
+
+if [ -f /opt/${PROJECT}/${PROJECT}.cfg ];then
+    . /opt/${PROJECT}/${PROJECT}.cfg
+	else
+	echo "There is no config file!... stop." | logline
+	exit 1
+fi
+
+# Clean google-chrome busybox data... just in case...
+echo -e "\e[91m *F:_clean_data, clean google-chrome busybox data...\e[0m" | logline
+	rm -rf /home/$BUSYUSER/.config/google-chrome/Default
+	rm -rf /home/$BUSYUSER/.cache/google-chrome
+	rm -rf /home/$BUSYUSER/.config/google-chrome/Singleton*
+
+__TRANSSET=0                                         ############################################################
+transset_blank () {                                  #  change __TRANSSET to 0 to set current window invisible  #
+  transset -a $__TRANSSET                            ############################################################
+}
+
+# open transparent xtrminal
+#echo "pkill xterm... cancelled temporary..." | logline
+#xdotool search --onlyvisible --class xterm windowkill | logline
+#echo "open transparent xterm...." | logline
+#xterm -maximize & 2>/dev/null
+#echo "wait for xterm and set window on top...." | logline
+#xdotool search --sync --onlyvisible --class xterm windowactivate | logline
+#echo "Always on top...." | logline
+# xdotool key Alt_L+space l t
+#wmctrl -i -r $(wmctrl -l | grep -i busybox@ | awk '{print $1}') -b add,above
+#echo "set transparent xterm...." | logline
+#transset_blank | logline
+
+xdotool mousemove 45 45
+echo "... * kill existing windows: BR01=$BR01 SPOT01=$SPOT01 PROC01=$PROC01..." | logline
+xdotool search --onlyvisible --class "$BR01" windowkill | logline
+xdotool search --onlyvisible --class "$SPOT01" windowkill | logline
+xdotool search --onlyvisible --class "$PROC01" windowkill | logline
+
+spot01_position_size() {
+  _WINDOW=$(xdotool search --onlyvisible --name "$SPOT01")
+  echo -e "\e[96m *F:spot01_position_size, move and resize window... _WINDOW=\e[0m$_WINDOW" | logline
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap| logline
+  transset_blank
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  transset_blank
+  for i in {1..10} ; do
+    __wallpaper_change
+    sleep 0.1
+  done
+  __wallpaper_change
+  echo "reset zoom...."
+  xdotool key --delay $kd Ctrl+0 | logline # reset zoom
+  for i in {1..10} ; do
+    __wallpaper_change
+    sleep 0.1
+  done
+  transset_blank
+  # zenity --info --title="zoom" --text="set zoom to 75%" --timeout $to
+  __wallpaper_change
+  echo "set zoom to 75%...."
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  # xdotool key --delay 200 Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowsize $BR01x $BR01y windowmove $POSITION_x $POSITION_y | logline
+  transset_blank
+  # zenity --info --title="zoom" --text="move window...." --timeout $to
+  __wallpaper_change
+  #echo "move window 5 steps below x=0...."
+  #xdotool key Alt_L+space m | logline
+  #xdotool keydown Ctrl key Left Left Left Left Left keyup Ctrl | logline
+  #xdotool key --delay 500 Return | logline
+  #xdotool search --sync --onlyvisible --name "$SPOT01" windowunmap windowmap | logline
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  # unhide browser window
+  wmctrl -i -r $(wmctrl -l | grep -i $_SPLASH | awk '{print $1}') -b add,below
+  pkill xli
+  feh --bg-scale /opt/${PROJECT}/data/images/wall-blue.png
+  transset -a 0.1; sleep 0.1
+  transset -a 0.2; sleep 0.1
+  transset -a 0.3; sleep 0.1
+  transset -a 0.4; sleep 0.1
+  transset -a 0.5; sleep 0.1
+  transset -a 0.6; sleep 0.1
+  transset -a 0.7; sleep 0.1
+  transset -a 0.8; sleep 0.1
+  transset -a 0.9; sleep 0.1
+  transset -a 1
+  echo "[DETECT] execute:/opt/${PROJECT}/locate script=${0}"
+  action="move" # available actions in 'locate' program: move, circle, click, squere, x-corner, x-edge
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb--post-frame--left-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--right-top-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-top-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--right-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-jobs--job-post-frame--left-bottom-edge.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-cross-icon-black-cross-grey-circle-on-white-background.png -a $action
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-cross-icon-black-cross-grey-circle-on-white-background.png -a click
+  /opt/venv/bin/python /opt/${PROJECT}/locate -i fb-button-allow-all-cookies.jpg -a click
+  # set fullscreen image below and kill it
+  echo "shake...."
+  #zenity --info --title="shake" --text="shake...." --timeout $to
+  xdotool search --sync --onlyvisible --name "$SPOT01" windowactivate | logline
+  xdotool key --delay $kd Ctrl+a Ctrl+c Ctrl+f | logline
+  xdotool key --delay $kd type "$project" | logline
+  xdotool key Escape | logline
+  shake
+}
+
+BR01_probe () {
+echo -e "\e[96m *F:BR01_probe, check \"$BR01\" window\e[0m" | logline
+if [ -z "$( xdotool search --onlyvisible --class google-chrome )" ]; then
+		echo "there is no \"$BR01\"... exit..." | logline
+	else
+		echo "\"$BR01\" is opened already... enter url and set zoom to 75%..." | logline
+		xdotool search --sync --onlyvisible --name "$PROC01" windowactivate | logline
+		xdotool key Ctrl+l | logline
+		xdotool type $SPOT01url | logline
+		xdotool key Return | logline
+		xdotool key --delay $kd Ctrl+0 | logline # reset zoom
+		# xdotool key --delay $kd Ctrl+minus Ctrl+minus Ctrl+minus | logline # set zoom to 75%
+    for i in {1..50} ; do
+      __wallpaper_change
+      sleep 0.1
+    done
+fi
+}
+
+SPOT01_probe () {
+  echo -e "\e[96m *F:SPOT01_probe, check \"$SPOT01\" window\e[0m" | logline
+while  [ 1 ]; do
+	if [ -z "$( xdotool search --onlyvisible --name "$SPOT01" )" ]; then
+    echo "$SPOT01 non exists... open  $SPOT01 page..." | logline
+    echo "$SPOT01 non exists... open  $SPOT01 page..."
+    BR01_run
+    BR01_probe
+	else
+		echo "$date Window with $SPOT01 opened successfuly...." | logline
+		echo "Move and resize window...." | logline
+		spot01_position_size
+		break
+	fi
+  for i in {1..50} ; do
+    __wallpaper_change
+    sleep 0.1
+  done
+done
+}
+
+BR01_run () {
+  $BR01 --window-size="900,768" \
+  --window-position="140,0" \
+  --incognito \
+  --disable-notifications \
+  --mute-audio \
+  --disable-device-discovery-notifications \
+  --no-first-run \
+  --no-default-browser-check \
+  --disable-translate \
+  --process-per-site \
+  --disable-sync-preferences \
+  --disable-gpu \
+  --disable-plugins \
+  --disable-plugins-discovery \
+  --disable-preconnect \
+  --dns-prefetch-disable \
+  --no-experiments \
+  --no-pings \
+  --no-referrers \
+  --disable-infobars \
+  --disable-session-crashed-bubble \
+  $SPOT01url & 2>/dev/null | logline
+}
+
+echo -e "\e[96m *F:BR01_run, first run \"$BR01\" \e[0m" | logline
+#( _PTH="/opt/${PROJECT}/data/images"; \
+#for i in {1..20}; do; feh --bg-scale $_PTH/wall00.png; sleep 1; \
+#feh --bg-scale $_PTH/wall01.png; sleep 1; \
+#feh --bg-scale /opt/${PROJECT}/data/images/wall02.png; sleep 1; \
+#feh --bg-scale /opt/${PROJECT}/data/images/wall03.png; sleep 1; \
+#done ) | logline
+feh --bg-scale /opt/${PROJECT}/data/images/wall00.png
+BR01_run
+for i in {1..20} ; do
+  xdotool search --sync --onlyvisible --class chrome windowactivate | logline
+  transset_blank
+  #  __wallpaper_change
+  sleep 0.25 | logline
+done
+for i in {1..50} ; do
+  __wallpaper_change
+  sleep 0.1
+done
+transset_blank
+SPOT01_probe
+xdotool search --sync --onlyvisible --class chrome windowactivate | logline
+transset -a 0.9
+feh --bg-scale /opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg
+while  [ 1 ]; do
+  echo "done" > /opt/${PROJECT}/tmp/$SCRIPT$DISPLAY-status
+  sleep 86400 # sleep 1 day
+done
