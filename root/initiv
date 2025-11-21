@@ -122,11 +122,13 @@ __update () { #help: /usr/bin/initiv update itself
 		echoconfirm "$_SCRIPT_FULL_NAME ... correct"
 	fi
 
-	echoinfo " ..download update on server $_SERVER"
-	__net_status $_SERVER
+	# Update from GitHub (official source)
+	_GITHUB_RAW="https://raw.githubusercontent.com/busy4me/busybox/main/root/initiv"
+	echoinfo " ..download update from GitHub: $_GITHUB_RAW"
+	__net_status github.com
 		echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
-	if ! wget -nv -O /usr/bin/initiv.new --no-check-certificate $_SERVER/initiv; then
-		echoerror "there is no file "$0" on the server or no response!..."
+	if ! wget -nv -O /usr/bin/initiv.new --no-check-certificate $_GITHUB_RAW; then
+		echoerror "there is no file "$0" on GitHub or no response!..."
 		exit 1
 	else
 		echoinfo " ... compare version"
