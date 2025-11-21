@@ -2,7 +2,7 @@ name: Trigger VM Tests
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:

@@ -2,30 +2,25 @@ name: Tests
 
 on:
   push:
-    branches: [ master, release/* ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: [self-hosted, github-runner1-lab1]
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
     - name: Check shell scripts syntax
       run: |
         find opt/busybox -type f -name "*.sh" -exec bash -n {} \;
-
     - name: Verify executable permissions
       run: |
         find opt/busybox -type f -name "*.sh" -exec test -x {} \; -print
-
     - name: Run basic tests
       run: |
         echo "✅ All tests passed"
-
     - name: Display version
       run: |
         cat VERSION
