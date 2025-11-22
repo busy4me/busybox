@@ -1043,6 +1043,14 @@ fdisk -l $_DEV$_PART >> /dev/null 2>&1 || (echo "could not find $_DEV$_PART - pl
 CURRENTSIZEB=`/sbin/fdisk -l $_DEV$_PART | grep "Disk $_DEV$_PART" | cut -d' ' -f5`
 CURRENTSIZE=`expr $CURRENTSIZEB / 1024 / 1024`
 #_EXT=`printf %s\\n 'unit MB print list' | parted | grep "Disk ${_DEV}" | cut -d' ' -f3 | tr -d MB`
+
+# Check if already at target size (10GB = 10000MB)
+_TARGET_SIZE=10000
+if [ ${CURRENTSIZE} -ge ${_TARGET_SIZE} ]; then
+	echoconfirm "Partition already at target size: ${CURRENTSIZE}MB >= ${_TARGET_SIZE}MB - skipping resize"
+	return 0
+fi
+
 echowarning "[ok] would/will resize to from ${CURRENTSIZE}MB to ${_EXT}"
 
 if [[ "$_APPLY" == "apply" ]] ; then
@@ -1062,6 +1070,77 @@ fi
 #(sleep 2; printf "\n") &
 /sbin/resize2fs $_DEV$_PART 2>/dev/null
 echoconfirm "${FUNCNAME[0]} done"
+}
+
+## -- Function -- __check_disk_space ------------------------------------------------------------------
+## |    Description: Check disk space and warn if low                                                |
+## ----------------------------------------------------------------------------------------------------
+__check_disk_space () {
+	local stage_name=${1:-"unknown"}
+	local threshold_percent=${2:-80}  # Warn at 80% by default
+
+	echofunc "${FUNCNAME[0]} stage: $stage_name"
+
+	# Get disk usage
+	local disk_info=$(df -h / | tail -1)
+	local size=$(echo $disk_info | awk '{print $2}')
+	local used=$(echo $disk_info | awk '{print $3}')
+	local avail=$(echo $disk_info | awk '{print $4}')
+	local percent=$(echo $disk_info | awk '{print $5}' | tr -d '%')
+
+	# Choose emoji based on usage
+	local emoji="💚"
+	if [ ${percent} -ge 90 ]; then
+		emoji="🔴"
+		echoerror "CRITICAL: Disk space at ${percent}% - Running cleanup..."
+		__cleanup_cache
+	elif [ ${percent} -ge ${threshold_percent} ]; then
+		emoji="🟡"
+		echowarning "WARNING: Disk space at ${percent}% - Consider cleanup"
+	fi
+
+	# Display compact format
+	echo -e "${emoji} DISK [$stage_name] Total:${size} Used:${used}(${percent}%) Avail:${avail}"
+
+	# Log to busybox log
+	echo "[$(date +'%H:%M:%S')] DISK [$stage_name] ${used}/${size} (${percent}%) avail:${avail}" >> $_LOGFILE
+}
+
+## -- Function -- __cleanup_cache ---------------------------------------------------------------------
+## |    Description: Cleanup apt cache, logs, and temporary files to free disk space                 |
+## ----------------------------------------------------------------------------------------------------
+__cleanup_cache () {
+	echofunc "${FUNCNAME[0]}"
+
+	local before=$(df / | tail -1 | awk '{print $3}')
+
+	echoinfo "Cleaning apt cache..."
+	apt-get clean
+	apt-get autoclean
+	apt-get autoremove -y
+
+	echoinfo "Cleaning old logs..."
+	find /var/log -type f -name "*.log" -exec truncate -s 0 {} \; 2>/dev/null || true
+	find /var/log -type f -name "*.old" -delete 2>/dev/null || true
+	find /var/log -type f -name "*.gz" -delete 2>/dev/null || true
+
+	echoinfo "Cleaning temporary files..."
+	rm -rf /tmp/* 2>/dev/null || true
+	rm -rf /var/tmp/* 2>/dev/null || true
+
+	# NOTE: Do NOT clean apt lists - causes "Unable to locate package" errors later
+	# echoinfo "Cleaning apt lists..."
+	# rm -rf /var/lib/apt/lists/* 2>/dev/null || true
+
+	echoinfo "Cleaning package cache..."
+	rm -rf /var/cache/apt/archives/*.deb 2>/dev/null || true
+
+	local after=$(df / | tail -1 | awk '{print $3}')
+	local freed=$((before - after))
+	local freed_mb=$((freed / 1024))
+
+	echoconfirm "Freed ${freed_mb}MB of disk space"
+	__check_disk_space "after-cleanup"
 }
 
 ## -- Function -- __tunning ---------------------------------------------------------------------------
@@ -2335,12 +2414,17 @@ case $1 in
 	__tunning
 	;;
 	"install" )
+		__check_disk_space "install-start"
 		__read_data
 		__net_status google.com
 		__update # use -k option to skip update
 		__remove_packages
+		__cleanup_cache
+		__check_disk_space "after-remove"
 		__update_apt_repos # default debian 12
 		__install
+		__cleanup_cache
+		__check_disk_space "after-install"
 		__change_hostname
 		__tunning
 		__service
@@ -2352,6 +2436,7 @@ case $1 in
 		/sbin/service $_BUSY_SERVICE start
 		systemctl disable $_BUSY_ANIME_SERVICE
 		systemctl enable $_BUSY_ANIME_SERVICE
+		__check_disk_space "install-end"
 #		sleep 1
 		(sleep 1; echo -e "\n\u2705 \e[32m READY! \n\
 		\u2B50... installation will start after reboot or reset tty1 console \n\
@@ -2364,6 +2449,7 @@ case $1 in
 ## install basic packages for splash and first boot
 ## - do it automatically just after first run (partiton will be expanded, and VM file will grow)
 	"0" )
+		__check_disk_space "stage0-start"
 		__read_data
 		__interface
 		__net_status # used for waitng for IP from DHCP
@@ -2371,9 +2457,14 @@ case $1 in
 		__update
 		__update_apt_repos
 		__install_stuff1
+		__cleanup_cache
+		__check_disk_space "after-stuff1"
 		__useradd
 		__parted
+		__check_disk_space "after-parted"
 		__install_x
+		__cleanup_cache
+		__check_disk_space "after-install-x"
 		__download_files
 		__autologin
 		__autostart
@@ -2385,6 +2476,7 @@ case $1 in
 		systemctl stop $_BUSY_ANIME_SERVICE
 		/sbin/service $_BUSY_ANIME_SERVICE stop
 		/sbin/service $_INITIV_1_SERVICE start
+		__check_disk_space "stage0-end"
 #		(sleep 2; __prepare) &
 		echo "... reset in 5s"
 		sleep 5
@@ -2392,14 +2484,25 @@ case $1 in
 	;;
 	"1" )
 ## 1	execute installation process just after download and first X run by user
+		__check_disk_space "stage1-start"
 		__fix
 		__change_hostname
 		__time_set UTC
 		__install_stuff2
+		__cleanup_cache
+		__check_disk_space "after-stuff2"
 		__install_stuff3
+		__cleanup_cache
+		__check_disk_space "after-stuff3"
 		__install_stuff4
+		__cleanup_cache
+		__check_disk_space "after-stuff4"
 		__install_stuff5
+		__cleanup_cache
+		__check_disk_space "after-stuff5"
 		__install_project
+		__cleanup_cache
+		__check_disk_space "stage1-end"
 		# __statistics_set
 		sudo systemctl disable $_BUSY_SERVICE
 		(sleep 6; sudo systemctl disable $_INITIV_1_SERVICE)
