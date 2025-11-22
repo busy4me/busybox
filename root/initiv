@@ -1120,7 +1120,8 @@ __cleanup_cache () {
 	apt-get autoremove -y
 
 	echoinfo "Cleaning old logs..."
-	find /var/log -type f -name "*.log" -exec truncate -s 0 {} \; 2>/dev/null || true
+	# Exclude busybox.log - we're writing to it!
+	find /var/log -type f -name "*.log" ! -name "busybox.log" -exec truncate -s 0 {} \; 2>/dev/null || true
 	find /var/log -type f -name "*.old" -delete 2>/dev/null || true
 	find /var/log -type f -name "*.gz" -delete 2>/dev/null || true
 
