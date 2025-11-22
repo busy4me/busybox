@@ -1088,15 +1088,12 @@ __check_disk_space () {
 	local avail=$(echo $disk_info | awk '{print $4}')
 	local percent=$(echo $disk_info | awk '{print $5}' | tr -d '%')
 
-	# Choose emoji based on usage
+	# Choose emoji based on usage (NO automatic cleanup - prevents infinite loop)
 	local emoji="💚"
 	if [ ${percent} -ge 90 ]; then
 		emoji="🔴"
-		echoerror "CRITICAL: Disk space at ${percent}% - Running cleanup..."
-		__cleanup_cache
 	elif [ ${percent} -ge ${threshold_percent} ]; then
 		emoji="🟡"
-		echowarning "WARNING: Disk space at ${percent}% - Consider cleanup"
 	fi
 
 	# Display compact format
@@ -1141,7 +1138,11 @@ __cleanup_cache () {
 	local freed_mb=$((freed / 1024))
 
 	echoconfirm "Freed ${freed_mb}MB of disk space"
-	__check_disk_space "after-cleanup"
+	# Show disk status without triggering another cleanup
+	local disk_after=$(df -h / | tail -1)
+	local avail_after=$(echo $disk_after | awk '{print $4}')
+	local percent_after=$(echo $disk_after | awk '{print $5}')
+	echo "💾 DISK after cleanup: Avail:${avail_after} (${percent_after} used)"
 }
 
 ## -- Function -- __tunning ---------------------------------------------------------------------------
