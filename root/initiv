@@ -31,12 +31,8 @@ _THEME=dark # default installation theme, used in __xt and __anime functions
 _BG=black # default background color, used by xterm option -bg
 _FG=grey # default foreground color, used by xterm option -fg
 # change hostname to present IP
-# Setup tee redirect only ONCE (prevent duplicate logging from child processes)
-if [ -z "$_LOGFILE_SETUP" ]; then
-    export _LOGFILE_SETUP=1
-    exec &> >(tee -ia $_LOGFILE)
-    exec 2>&1
-fi
+exec &> >(tee -ia $_LOGFILE)
+exec 2>&1
 echo -e "_EXECUTOR_PATH=$_EXECUTOR_PATH \r\t"
 
 # bashcolors test + UTF-8 characters, get from: unicodes.jessetane.com :)
