@@ -33,3 +33,4 @@ See [commands/](commands/) for individual command references.
 
 [Back to main docs](../README.md)
 # Test commit 1 - ndz 23 lis 19:55:30 2025 CET
+# Test commit 2 - ndz 23 lis 19:56:54 2025 CET
