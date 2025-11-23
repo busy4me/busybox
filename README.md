@@ -288,9 +288,15 @@ update -h                  # Display help
 
 ## 📚 Documentation
 
-For detailed documentation, visit the [BusyBox Wiki](https://github.com/busy4me/busybox/wiki).
+### Local Documentation
 
-### Quick Links
+- [Reference Documentation](reference/README.md) - Command and script references
+  - [initiv](reference/initiv.md) - Installation and bootstrap script
+  - [Commands](reference/commands/) - Individual command references
+
+### Online Resources
+
+For additional documentation, visit the [BusyBox Wiki](https://github.com/busy4me/busybox/wiki).
 
 - [Installation Guide](https://github.com/busy4me/busybox/wiki#install-on-linux-debian-10)
 - [Command Reference](https://github.com/busy4me/busybox/wiki#commands)
