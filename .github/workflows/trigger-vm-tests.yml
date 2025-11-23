@@ -2,7 +2,7 @@ name: Trigger VM Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   workflow_dispatch:
 
 jobs:
@@ -18,12 +18,23 @@ jobs:
           echo "Commit: ${{ github.sha }}"
           echo "Actor: ${{ github.actor }}"
 
+      - name: Determine event type
+        id: event
+        run: |
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            echo "type=busybox-install-request" >> $GITHUB_OUTPUT
+            echo "workflow=Busybox Install" >> $GITHUB_OUTPUT
+          else
+            echo "type=busybox-install-dev-request" >> $GITHUB_OUTPUT
+            echo "workflow=Busybox Install - dev" >> $GITHUB_OUTPUT
+          fi
+
       - name: Trigger repository_dispatch
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.DISPATCH_TOKEN }}
           repository: busy4me/dev
-          event-type: test-request
+          event-type: ${{ steps.event.outputs.type }}
           client-payload: |
             {
               "repo": "busy4me/busybox",
@@ -36,6 +47,8 @@ jobs:
       - name: Notify completion
         run: |
           echo "✓ Test request dispatched to busy4me/dev infrastructure"
+          echo "Workflow: ${{ steps.event.outputs.workflow }}"
+          echo "Event: ${{ steps.event.outputs.type }}"
           echo "Branch: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
           echo ""
