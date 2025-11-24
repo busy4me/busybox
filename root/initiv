@@ -2504,6 +2504,7 @@ case $1 in
 		(sleep 12; sudo systemctl stop $_INITIV_1_SERVICE) &
 		(sleep 24; sudo /sbin/service $_INITIV_1_SERVICE stop) &
 		(sleep 36; sudo systemctl reboot -i) &
+		wait  # Wait for all background processes to complete before exiting
 #		__reset
 		;;
 	"2" )
