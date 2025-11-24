@@ -4,7 +4,7 @@
 
 **Automated Virtual Assistant Platform for Linux**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/busy4me/busybox)
+[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/busy4me/busybox)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](https://github.com/busy4me/busybox)
 
