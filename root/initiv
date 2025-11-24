@@ -24,7 +24,7 @@ _BUSY_SERVICE=busybox # main service, watchdog, checks other busybox precesses
 _BUSY_ANIME_SERVICE=busy-anime # animation in framebuffer, durring 'initiv 0' installation process
 _INITIV_1_SERVICE=initiv-1 # trigger 'initiv -S 1' installation process, visible in xterm, first X run
 _SERVER="https://raw.githubusercontent.com/busy4me/busybox"
-_BRANCH="dev"
+_BRANCH="main"
 _ASSETS_URL="https://github.com/busy4me/busybox/releases/download"
 _ASSETS_TAG="assets-v1.0.0"
 _USER="busybox" # default user name
@@ -109,6 +109,11 @@ __update () { #help: /usr/bin/initiv update itself
 		return 0
 	else
 		echoinfo "_UPDATE=yes, continue update ..."
+	fi
+	# Skip auto-update if SKIP_AUTO_UPDATE environment variable is set
+	if [[ -n "$SKIP_AUTO_UPDATE" ]]; then
+		echoinfo "SKIP_AUTO_UPDATE is set, skipping auto-update"
+		return 0
 	fi
 	# initive should be always in /usr/bin directory, so even will be downloaded in different location
 	# will change itself
