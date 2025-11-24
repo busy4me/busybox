@@ -1350,7 +1350,11 @@ __download_files () {
 	__distro # check distro
 
 	# Download assets from GitHub Releases (branch-independent)
-	_ASSETS_ARCHIVE="assets-debian-$_VER-$_ARCH.tar.gz"
+	# Use $_VERSION_ID (e.g. "12") instead of $_VER (e.g. "12.8")
+	# Convert x86_64 to amd64 for Debian naming convention
+	_ASSETS_ARCH="$_ARCH"
+	[[ "$_ARCH" == "x86_64" ]] && _ASSETS_ARCH="amd64"
+	_ASSETS_ARCHIVE="assets-$_ID-$_VERSION_ID-$_ASSETS_ARCH.tar.gz"
 	_ASSETS_FULL_URL="$_ASSETS_URL/$_ASSETS_TAG/$_ASSETS_ARCHIVE"
 	_TMP_DIR="/tmp/busybox-assets"
 
@@ -1373,7 +1377,7 @@ __download_files () {
 	tar -xzf "$_TMP_DIR/$_ASSETS_ARCHIVE" -C "$_TMP_DIR"
 
 	# Copy files to system directories
-	_ASSETS_SRC="$_TMP_DIR/.initiv/debian/$_VER/$_ARCH"
+	_ASSETS_SRC="$_TMP_DIR/.initiv/$_ID/$_VERSION_ID/$_ASSETS_ARCH"
 	if [ -d "$_ASSETS_SRC" ]; then
 		echoinfo "Copying assets to system directories..."
 		cp -rv "$_ASSETS_SRC/usr/share/pixmaps/"* /usr/share/pixmaps/ 2>/dev/null || true
