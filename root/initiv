@@ -186,7 +186,7 @@ __change_hostname () { #help: change hostname mached IP address, also used for w
 
 __distro () { #help: check distro and set server
 echofunc ${FUNCNAME[0]}
-	# server structure /.initiv/debian/10.3/x86_64/
+	# server structure /.initiv/debian/12/amd64/
 	if [ -f /etc/os-release ]; then
 	. /etc/os-release
 		_ID=$ID
@@ -203,7 +203,10 @@ echofunc ${FUNCNAME[0]}
 	_ARCH=$(uname -m)
 	_KERNEL_RELEASE="$(uname -r)"
 	# CAUTION! there is "dot" in script name
-	echoinfo "server distribution path: $_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
+	# Use $_VERSION_ID for major version and convert x86_64 to amd64
+	_DISTRO_ARCH="$_ARCH"
+	[[ "$_ARCH" == "x86_64" ]] && _DISTRO_ARCH="amd64"
+	echoinfo "server distribution path: $_SERVER/.$_SCRIPT_NAME/$_ID/$_VERSION_ID/$_DISTRO_ARCH"
 }
 
 __fix () { #help: fix possible problems with filesystem, databeses, apt, dpkg etc.
@@ -1174,7 +1177,11 @@ __tunning () {
 	# make sure there is picture downloaded
 	# splash image 640x480, 800x600 etc. works OK,
 	__distro
-	_SERVER_PATH="$_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
+	# Use $_VERSION_ID (e.g. "12") instead of $_VER (e.g. "12.1" or "12.8")
+	# Convert x86_64 to amd64 for Debian naming convention
+	_SERVER_ARCH="$_ARCH"
+	[[ "$_ARCH" == "x86_64" ]] && _SERVER_ARCH="amd64"
+	_SERVER_PATH="$_SERVER/.$_SCRIPT_NAME/$_ID/$_VERSION_ID/$_SERVER_ARCH"
 	_SPLASH="/usr/share/images/grub/network-globe.tga"
 rm $_SPLASH.bak 1>&2 2>/dev/null
 cp $_SPLASH $_SPLASH.bak 1>&2 2>/dev/null
