@@ -23,8 +23,8 @@ _DATE_STAMP="$(date +%Y-%m-%d--%H-%M-%S)"
 _BUSY_SERVICE=busybox # main service, watchdog, checks other busybox precesses
 _BUSY_ANIME_SERVICE=busy-anime # animation in framebuffer, durring 'initiv 0' installation process
 _INITIV_1_SERVICE=initiv-1 # trigger 'initiv -S 1' installation process, visible in xterm, first X run
-_SERVER="http://busy4.me"
-_SERVER_DIR="/busy"
+_SERVER="https://raw.githubusercontent.com/busy4me/busybox"
+_BRANCH="main"
 _USER="busybox" # default user name
 #_PASS="busy" # default user password
 _THEME=dark # default installation theme, used in __xt and __anime functions
@@ -91,8 +91,8 @@ __bashcolor () {
 	echofunc ${FUNCNAME[0]}
 # set bashcolors ===============================================================
 # __net_status $_SERVER
-if ! wget -q -nv -O /usr/bin/bashcolors --no-check-certificate $_SERVER/bashcolors; then
-	echoerror "OFFLINE! ...can't connect to bashcolors in $_SERVER"
+if ! wget -q -nv -O /usr/bin/bashcolors --no-check-certificate $_SERVER/$_BRANCH/root/bashcolors; then
+	echoerror "OFFLINE! ...can't connect to bashcolors in $_SERVER/$_BRANCH"
 fi
 }
 
@@ -932,8 +932,9 @@ cat > /home/${_USER}/.profile  << EOF
 EOF
   chown ${_USER}:${_USER} /home/${_USER}/.profile
   # download big files
-  wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg
-  wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg
+  mkdir -p /opt/${PROJECT}/data/images
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/data/images/wallpaper.jpg -O /opt/${PROJECT}/data/images/wallpaper.jpg
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg -O /opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg
   rm -R /home/${_USER}/.config/openbox/
   mkdir -pv /home/${_USER}/.config/openbox/
   echo -e "\e[36m Copy openbox config files.....................\e[0m"
@@ -976,10 +977,10 @@ EOF
   ln -s /var/log/${PROJECT}.log /opt/${PROJECT}/${PROJECT}.log
   export PATH=$PATH:/opt/$PROJECT
   cd /opt/$PROJECT
-  echo "wget -q --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/*"
-  wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/update -O /opt/${PROJECT}/update
-  # wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/config -O /opt/${PROJECT}/config
-  # wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/windows-init -O /opt/${PROJECT}/windows-init
+  echo "wget -q --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/*"
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/update -O /opt/${PROJECT}/update
+  # wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/config -O /opt/${PROJECT}/config
+  # wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/windows-init -O /opt/${PROJECT}/windows-init
   chmod +x /opt/${PROJECT}/*
   ls -la /opt/$PROJECT
   echo "Start /opt/${PROJECT}/update..."
@@ -1421,7 +1422,7 @@ __download_files () {
 		rm $_FILE
 		echoinfo "download file: $_FILE .......... wait ..."
 		__net_status $_SERVER
-		wget -nv -O $_FILE --no-check-certificate $_SERVER$_SERVER_DIR$_FILE
+		wget -nv -O $_FILE --no-check-certificate $_SERVER/$_BRANCH$_FILE
 	done
 	echoconfirm "${FUNCNAME[0]} done"
 }
@@ -2514,7 +2515,7 @@ case $1 in
 #		__reset
 		;;
 	"2" )
-## 2	download and run init-1 script which next install busy4.me package and reboot
+## 2	download and run init-1 script which next install busybox package and reboot
 		__install_project
 		;;
 	"$1")

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SCRIPT=fb-walking-around
-LOGFILE=/var/log/busy4me.log
-source /opt/busy4me/fb/fb-config
+LOGFILE=/var/log/busybox.log
+source /opt/busybox/fb/fb-config
 
 logline() {
     while IFS= read -r line; do
@@ -15,7 +15,7 @@ echo 'login =' $login | logline
 login_string=$login
 login_string=$(echo $login_string | tr '@' '-')
 echo 'login_string =' $login_string | logline
-user_db="$HOME/busy4me/fb/db/fb_$login_string.db"
+user_db="$HOME/busybox/fb/db/fb_$login_string.db"
 echo 'Use database:' $user_db | logline
 
 

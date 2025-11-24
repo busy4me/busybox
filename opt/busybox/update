@@ -5,6 +5,8 @@ PROJECT="busybox"
 SCRIPT="update"
 VERSION="231109"
 BUSYUSER="busybox"
+_SERVER="https://raw.githubusercontent.com/busy4me/busybox"
+_BRANCH="main"
 LOGFILE=/var/log/${PROJECT}.log
 BACKUP=/var/backups/${PROJECT}
 BACKUP_2=/var/backups/${PROJECT}/data
@@ -64,17 +66,17 @@ ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBcFQAZ0l4kf+FBUbMJkTtA1kNjRQZ5Ud7aRITMdFDB/
   cat > /etc/profile.d/$BUSYUSER-preferences.sh  << `EOF`
 PATH=$PATH:/opt/$PROJECT:/opt/$PROJECT/plugins/fb:/opt/$PROJECT/plugins/yo
 `EOF`
-  echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/* \e[0m"
+  echo -e "\e[32m Download bash preferences files ... \n\ wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/* \e[0m"
   rm /root/.bash_aliases
-  wget -nv -O /root/.bash_aliases --no-check-certificate http://busy4.me/busy/root/.bash_aliases
+  wget -nv -O /root/.bash_aliases --no-check-certificate $_SERVER/$_BRANCH/root/.bash_aliases
   rm /root/.bashrc
-  wget -nv -O /root/.bashrc --no-check-certificate http://busy4.me/busy/root/.bashrc
+  wget -nv -O /root/.bashrc --no-check-certificate $_SERVER/$_BRANCH/root/.bashrc
   rm /root/.profile
-  wget -nv -O /root/.profile --no-check-certificate http://busy4.me/busy/root/.profile
+  wget -nv -O /root/.profile --no-check-certificate $_SERVER/$_BRANCH/root/.profile
   rm -rf /home/$BUSYUSER/.bash_aliases
-  wget -nv -O /home/${BUSYUSER}/.bash_aliases --no-check-certificate http://busy4.me/busy/home/${BUSYUSER}/.bash_aliases
+  wget -nv -O /home/${BUSYUSER}/.bash_aliases --no-check-certificate $_SERVER/$_BRANCH/home/${BUSYUSER}/.bash_aliases
   rm -rf /home/$BUSYUSER/.bashrc
-  wget -nv -O /home/${BUSYUSER}/.bashrc --no-check-certificate http://busy4.me/busy/home/${BUSYUSER}/.bashrc
+  wget -nv -O /home/${BUSYUSER}/.bashrc --no-check-certificate $_SERVER/$_BRANCH/home/${BUSYUSER}/.bashrc
   chown ${BUSYUSER}:${BUSYUSER} /home/$BUSYUSER/.*
 }
 
@@ -123,16 +125,16 @@ download_big_files() { # download big files
   mkdir /opt/${PROJECT}/data/{sound,images,files,videos} 2>/dev/null
   rm -rf /opt/$PROJECT/data/{sound,images,files,videos}/*
   for _FILE in ${_FILES[@]}; do
-    wget -nv --no-check-certificate http://busy4.me/busy/$_FILE -O $_FILE | logline
+    wget -nv --no-check-certificate $_SERVER/$_BRANCH/$_FILE -O $_FILE | logline
   done
   chmod +x /opt/${PROJECT}/data/files/chromedriver
 }
 
 download_binaries() { # download binaries
   # update tint2 binaries
-  wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2 -O /usr/bin/tint2 | logline
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/usr/bin/tint2 -O /usr/bin/tint2 | logline
   chmod +x /usr/bin/tint2
-  wget -nv --no-check-certificate http://busy4.me/busy/usr/bin/tint2conf -O /usr/bin/tint2conf | logline
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/usr/bin/tint2conf -O /usr/bin/tint2conf | logline
   chmod +x /usr/bin/tint2conf
 }
 
@@ -142,9 +144,9 @@ tint2() {
   sleep 2
   mkdir /home/busybox/.config/tint2 > /dev/null
   chown busybox:busybox /home/busybox/.config/tint2
-  wget -q -nv --no-check-certificate http://busy4.me/busy/home/busybox/.config/tint2/mask01 -O /home/busybox/.config/tint2/mask01 | logline
-  # wget -q -nv --no-check-certificate http://busy4.me/busy/home/busybox/.config/tint2/tint2rc -O /home/busybox/.config/tint2/tint2rc | logline
-  wget -q -nv --no-check-certificate http://busy4.me/busy/home/busybox/.config/tint2/panel01 -O /home/busybox/.config/tint2/panel01 | logline
+  wget -q -nv --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/tint2/mask01 -O /home/busybox/.config/tint2/mask01 | logline
+  # wget -q -nv --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/tint2/tint2rc -O /home/busybox/.config/tint2/tint2rc | logline
+  wget -q -nv --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/tint2/panel01 -O /home/busybox/.config/tint2/panel01 | logline
   chown busybox:busybox /home/busybox/.config/tint2/*
   # killall -SIGUSR1 tint2 # reload tint2
   if [[ "$_EXCLUDE" == "tint2" ]]; then
@@ -171,7 +173,7 @@ tint2() {
 }
 
 openbox_config() {
-  wget -nv --no-check-certificate http://busy4.me/busy/home/busybox/.config/openbox/rc.xml -O /home/busybox/.config/openbox/rc.xml | logline
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/openbox/rc.xml -O /home/busybox/.config/openbox/rc.xml | logline
   chown busybox:busybox /home/busybox/.config/openbox/rc.xml
   export DISPLAY=:0
   export XAUTHORITY=/home/${PROJECT}/.Xauthority
@@ -215,11 +217,11 @@ download_busybox_files() { # download busybox files
   ln -s ${BCK_DIR} /opt/var-backups/${PROJECT}
   cd /opt/$PROJECT
   rm /opt/$PROJECT/* 2>/dev/null
-  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate http://busy4.me/busy/opt/busybox/* \e[0m"
+  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/busybox/* \e[0m"
   for _FILE in ${_FILES[@]}; do
-    wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/$_FILE -O /opt/${PROJECT}/$_FILE | logline
+    wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/$_FILE -O /opt/${PROJECT}/$_FILE | logline
   done
-  wget -nv --no-check-certificate http://busy4.me/var/www/html/index.html -O /var/www/html/index.html
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/var/www/html/index.html -O /var/www/html/index.html
   ln -s ./${PROJECT}.sh ./bm 2>/dev/null
   ln -s ./${PROJECT}.sh ./busy 2>/dev/null
   ln -s ./${PROJECT}.sh ./${PROJECT} 2>/dev/null
@@ -247,7 +249,7 @@ download_yo_plugin() {
   "img/yo-red-logo.png"
   )
   for _FILE in ${_FILES[@]}; do
-    wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline
+    wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline
   done
   chmod +x /opt/${PROJECT}/plugins/${PLUGIN}/*
   rm /opt/${PROJECT}/${PLUGIN}
@@ -296,7 +298,7 @@ download_fb_files() { # download fb files
   "img/fb-cross-icon-black-cross-grey-circle-on-white-background.png"
   )
   for _FILE in ${_FILES[@]}; do
-    wget -nv --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline
+    wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/plugins/${PLUGIN}/$_FILE -O /opt/${PROJECT}/plugins/${PLUGIN}/$_FILE | logline
   done
   chmod +x /opt/${PROJECT}/plugins/${PLUGIN}/*
   ln -s /opt/${PROJECT}/plugins/${PLUGIN}/${PLUGIN} /opt/${PROJECT}/${PLUGIN} 2>/dev/null
@@ -305,7 +307,7 @@ download_fb_files() { # download fb files
 # update openbox autostart
 openbox_autostart() {
   echo -e "\e[44m ................... update Openbox autostart file \e[0m"
-  if wget -nv -O /home/busybox/.config/openbox/autostart.new --no-check-certificate http://busy4.me/busy/home/busybox/.config/openbox/autostart; then
+  if wget -nv -O /home/busybox/.config/openbox/autostart.new --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/openbox/autostart; then
     rm /home/busybox/.config/openbox/autostart
     mv /home/busybox/.config/openbox/autostart.new /home/busybox/.config/openbox/autostart
     chown busybox:busybox /home/busybox/.config/openbox/*
@@ -434,7 +436,7 @@ case $1 in
   --update|update)
     root_check
     echo -e "\e[44m start update file: "update" ...\e[0m\e[31m CAUTION! update itself...  \e[0m"
-    if ! wget -nv -O /opt/${PROJECT}/update.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/update; then
+    if ! wget -nv -O /opt/${PROJECT}/update.new --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/update; then
       echo -e "\e[101m\e[30m ERROR: there is no file "update" on the server or no response!...\e[0m"
       exit 1
     else
@@ -456,7 +458,7 @@ case $1 in
   "--busy"|"busy")
     root_check
     echo -e "\e[44m start update files in busy directory \e[0m"
-    if ! wget -nv -O /opt/${PROJECT}/data/$UPDATE_FILE_2.new --no-check-certificate http://busy4.me/busy/opt/busy/$UPDATE_FILE_2; then
+    if ! wget -nv -O /opt/${PROJECT}/data/$UPDATE_FILE_2.new --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/data/$UPDATE_FILE_2; then
       echo -e "\e[101m\e[30m ERROR: there is no file $2 on the server or no response!...\e[0m"
       echo -e "\e[32m Usage: update --busy file \n\ e[0m"
       exit 1
@@ -480,7 +482,7 @@ case $1 in
       exit 1
     else
       echo -e '\e[44m start update file: '$UPDATE_FILE' ...\e[0m'
-      if ! wget -nv -O /opt/${PROJECT}/$UPDATE_FILE.new --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/$UPDATE_FILE; then
+      if ! wget -nv -O /opt/${PROJECT}/$UPDATE_FILE.new --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/$UPDATE_FILE; then
         echo -e '\e[101m\e[30m ERROR: there is no file "'$UPDATE_FILE'" on the server...\e[0m'
         rm -rf /opt/${PROJECT}/$UPDATE_FILE.new
       else
@@ -500,11 +502,11 @@ case $1 in
           ;;
           *)
             echo -e "OK, add file $1 to 'update-list' ..."
-            echo "http://busy4.me/busy/opt/${PROJECT}/"$1 >> /opt/${PROJECT}/data/update-list
+            echo "$_SERVER/$_BRANCH/opt/${PROJECT}/"$1 >> /opt/${PROJECT}/data/update-list
           ;;
         esac
       fi
-      # wget -nv -O /opt/${PROJECT}/fb/$UPDATE_FILE --no-check-certificate http://busy4.me/busy/opt/${PROJECT}/fb/$UPDATE_FILE
+      # wget -nv -O /opt/${PROJECT}/fb/$UPDATE_FILE --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/fb/$UPDATE_FILE
       exit 0
     fi
   ;;

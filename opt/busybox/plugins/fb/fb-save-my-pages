@@ -1,7 +1,7 @@
 #!/bin/bash
 # Desciption: script saves user's fanpages sqlite local database.
 SCRIPT=fb-save-my-pages
-source /opt/busy4me/fb/fb-config
+source /opt/busybox/fb/fb-config
 echo -e "\e[34m login=$login login_string=$login_string \e[0m database: $user_db" | logline
 
 clean_windows () {
@@ -83,7 +83,7 @@ save_my_pages () {
 	echo -e " \e[44m\e[30mINFO->\e[0m\e[96m ... save my pages ... \e[0m"
 	xclip -selection clipboard /opt/busy/files/blank
 	xdotool key --delay $kdl Ctrl+a Ctrl+c Ctrl+Shift+a
-	/bin/bash /opt/busy4me/fb/fb-save-my-pages --open-my-pages
+	/bin/bash /opt/busybox/fb/fb-save-my-pages --open-my-pages
 	rm /opt/busy/files/clip-$SCRIPT
 	xclip -out -selection clipboard >> /opt/busy/files/clip-$SCRIPT
 	clip=$( xclip -out -selection clipboard )

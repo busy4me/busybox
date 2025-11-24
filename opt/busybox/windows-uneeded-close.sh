@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SCRIPT=windows-uneeded-close.sh
-LOGFILE=/var/log/busy4me_cron.log
-source /opt/busy4me/fb/fb-config
+LOGFILE=/var/log/busybox_cron.log
+source /opt/busybox/fb/fb-config
 
 # close uneeded windows every 1s
 window02="open file"

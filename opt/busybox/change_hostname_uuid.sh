@@ -4,9 +4,9 @@
 # change hostname and minion_id match to UUID
 
 SCRIPT=change_hostname_uuid.sh
-LOGFILE=/var/log/busy4me.log
-LOGFILE_CRON=/var/log/busy4me_cron.log
-source /opt/busy4me/fb/fb-config
+LOGFILE=/var/log/busybox.log
+LOGFILE_CRON=/var/log/busybox_cron.log
+source /opt/busybox/fb/fb-config
 
 logline() {
 	while IFS= read -r line; do

@@ -1,7 +1,7 @@
 #!/bin/bash
 SCRIPT=xterm.sh
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/busy-config # global variables
+source /opt/busybox/busy-functions # global functions
+source /opt/busybox/busy-config # global variables
 echo -e "\e[35m start script ... ... \e[0m"
 
 xterm_start () {

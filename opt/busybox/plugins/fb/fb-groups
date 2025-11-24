@@ -4,7 +4,7 @@
 #Bug: Script doesn't seve groups if the name of group is in two lines in browser.
 
 SCRIPT=fb-groups
-source /opt/busy4me/fb/fb-config
+source /opt/busybox/fb/fb-config
 
 xdotool search --class zenity windowkill
 xdotool search --onlyvisible --name Settings windowkill

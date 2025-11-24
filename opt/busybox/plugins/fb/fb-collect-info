@@ -1,7 +1,7 @@
 #!/bin/bash
 #collect profile data, name, about etc.
 SCRIPT=fb-collect-info
-. /opt/busy4me/fb/fb-config
+. /opt/busybox/fb/fb-config
 
 DbSelect_group_url () {
 echo -e "\e[104mfunc: DbSelect_group_url \e[0m\e[96m - SCRIPT=$SCRIPT JOB=$JOB ... group_url=$group_url\e[0m" | logline

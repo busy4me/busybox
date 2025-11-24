@@ -4,9 +4,9 @@
 #Bug: Script doesn't seve friends if the name of group is in two lines in browser.
 
 SCRIPT=fb-save-my-friends
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 #config file
-source /opt/busy4me/fb/fb-config
+source /opt/busybox/fb/fb-config
 
 
 logline() {
@@ -144,7 +144,7 @@ mark06_i=0
 while (( mark06_i == 0 ))
 do
 	position=$((position+1))
-	/bin/bash /opt/busy4me/busy SYSTEM --clip-clear
+	/bin/bash /opt/busybox/busy SYSTEM --clip-clear
 	xdotool search --onlyvisible --class chrome windowactivate
 	xdotool key Escape Tab Tab Tab Tab Shift+Tab Shift+Tab Shift+Tab Shift+Tab
 	xdotool key --delay $kd Tab

@@ -3,9 +3,9 @@
 #
 
 SCRIPT=sql-change
-LOGFILE=/var/log/busy4me.log
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/fb/fb-config # fb variables from there
+LOGFILE=/var/log/busybox.log
+source /opt/busybox/busy-functions # global functions
+source /opt/busybox/fb/fb-config # fb variables from there
 
 JOB=$((RANDOM%8999+1000))
 

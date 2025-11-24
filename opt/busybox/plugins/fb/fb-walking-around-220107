@@ -2,9 +2,9 @@
 set -x
 
 SCRIPT=fb-walking-around
-LOGFILE=/var/log/busy4me.log
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/fb/fb-config # fb variables from there
+LOGFILE=/var/log/busybox.log
+source /opt/busybox/busy-functions # global functions
+source /opt/busybox/fb/fb-config # fb variables from there
 
 if [[ "$1" == "--debug" ]]; then
   exec &> >(tee -ia $LOGFILE)
@@ -13,7 +13,7 @@ fi
 echo "DISPLAY=$DISPLAY"
 # export DISPLAY=:0
 screen_name="xterm-"$DISPLAY
-screen_task="/opt/busy4me/xterm.sh --screen fb-walking-around"$DISPLAY
+screen_task="/opt/busybox/xterm.sh --screen fb-walking-around"$DISPLAY
 screen -S $screen_name -X kill # kill screen on this display
 screen -dmS $screen_name $screen_task
 
@@ -174,16 +174,16 @@ mark04="Accept All" # fb question: Accept cookies from Facebook...
 		screen -S windows-uneeded-close -X kill
 		screen -S windows-uneeded-close$DISPLAY -X kill
 		sleep 1
-		screen -dmS windows-uneeded-close$DISPLAY '/opt/busy4me/windows-uneeded-close.sh'
+		screen -dmS windows-uneeded-close$DISPLAY '/opt/busybox/windows-uneeded-close.sh'
 #		echo -e '.. ... ... ... .... .... ... ..\e[35m\e[7m python start \e[0m ...'
 
 		echo -e "\e[32m ...... \e[92m \e[5m Start screen fb-chat-detect-activity...\e[0m" | logline
 		screen -S fb-chat-detect-activity -X kill
 		screen -S fb-chat-detect-activity$DISPLAY -X kill
-#		screen -dmS fb-chat-detect-activity '/opt/busy4me/fb/fb-chat-detect-activity.py'
-#		python /opt/busy4me/fb/fb-chat-detect-activity.py
+#		screen -dmS fb-chat-detect-activity '/opt/busybox/fb/fb-chat-detect-activity.py'
+#		python /opt/busybox/fb/fb-chat-detect-activity.py
 #		echo -e '.. ... ... ... .... .... ... ..\e[5m python stop \e[0m ...'
-		/bin/bash /opt/busy4me/windows-check.sh
+		/bin/bash /opt/busybox/windows-check.sh
 		sleep 1
 		# start move mouse with python
 		echo -e '.. ... ... ... .... .... ... ..\e[35m\e[7m python start \e[0m ...'
@@ -194,22 +194,22 @@ mark04="Accept All" # fb question: Accept cookies from Facebook...
 			1)
 			echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
 			screen -S mouse-move-01 -X kill
-			screen -dmS mouse-move-01$DISPLAY '/opt/busy4me/fb/mouse-move-01.py'
-#			python /opt/busy4me/fb/mouse-move-01.py &
+			screen -dmS mouse-move-01$DISPLAY '/opt/busybox/fb/mouse-move-01.py'
+#			python /opt/busybox/fb/mouse-move-01.py &
 			;;
 			2)
 			echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-02...\e[0m" | logline
 			screen -S mouse-move-02 -X kill
 			screen -S mouse-move-02$DISPLAY -X kill
-			screen -dmS mouse-move-02$DISPLAY '/opt/busy4me/fb/mouse-move-02.py'
-#			python /opt/busy4me/fb/mouse-move-02.py &
+			screen -dmS mouse-move-02$DISPLAY '/opt/busybox/fb/mouse-move-02.py'
+#			python /opt/busybox/fb/mouse-move-02.py &
 			;;
 			*)
 			echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-01...\e[0m" | logline
 			screen -S mouse-move-01 -X kill
 			screen -S mouse-move-01$DISPLAY -X kill
-#			screen -dmS mouse-move-01 '/opt/busy4me/fb/mouse-move-01.py'
-#			python /opt/busy4me/fb/mouse-move-01.py &
+#			screen -dmS mouse-move-01 '/opt/busybox/fb/mouse-move-01.py'
+#			python /opt/busybox/fb/mouse-move-01.py &
 			;;
 		esac
 echo -e '\e[35m\e[7m'
@@ -262,11 +262,11 @@ echo -e '\e[0m'
 #			zenity --info --title="Looks good... \n\ page_probe... keep going" --text="ok, keep going..." --timeout 5
 		;;
 		esac
-  /bin/bash /opt/busy4me/windows-check.sh
+  /bin/bash /opt/busybox/windows-check.sh
   xdotool key --delay $kd_2 Down Down Down Page_Down Page_Up Down Down Down
-  /bin/bash /opt/busy4me/windows-check.sh
+  /bin/bash /opt/busybox/windows-check.sh
   xdotool key --delay $kd Up Up Up Up Up Up Up Up
-  /bin/bash /opt/busy4me/windows-check.sh
+  /bin/bash /opt/busybox/windows-check.sh
   xdotool key --delay $kd_2 Escape Escape
   xdotool key --delay $kd Escape Escape
 }
@@ -355,8 +355,8 @@ loop () {
                         echo -e "\e[32m ...... \e[92m \e[5m Start screen mouse-move-around...\e[0m" | logline
                         screen -S mouse-move-around -X kill
                         screen -S mouse-move-around$DISPLAY -X kill
-                        screen -dmS mouse-move-around$DISPLAY '/opt/busy4me/fb/mouse-move-around.py'
-#               python /opt/busy4me/fb/mouse-move-around.py &
+                        screen -dmS mouse-move-around$DISPLAY '/opt/busybox/fb/mouse-move-around.py'
+#               python /opt/busybox/fb/mouse-move-around.py &
         echo -e '\e[35m\e[7m'
         screen -ls
         echo -e '\e[0m'

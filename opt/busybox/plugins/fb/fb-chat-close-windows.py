@@ -7,7 +7,7 @@ import imutils
 import cv2
 
 # list of pictures to find on the screen
-list = ['/opt/busy4me/fb/img/cross_chat.png', '/opt/busy4me/fb/img/cross_chat2.png', '/opt/busy4me/fb/img/cross_chat3.png', '/opt/busy4me/fb/img/chat_icon.png']
+list = ['/opt/busybox/fb/img/cross_chat.png', '/opt/busybox/fb/img/cross_chat2.png', '/opt/busybox/fb/img/cross_chat3.png', '/opt/busybox/fb/img/chat_icon.png']
 
 # click on the first chat person
 def click_chat_icon ():

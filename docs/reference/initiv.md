@@ -1,6 +1,6 @@
 # initiv - Installation and Bootstrap Script
 
-Main installation and bootstrap script for BusyBox project.
+Main installation and bootstrap script for BusyBox 🤖 by busy4me ™️ project.
 
 ## Synopsis
 
@@ -10,7 +10,7 @@ initiv [-options] <action>
 
 ## Description
 
-The `initiv` script is used to slim Linux distributions, remove unnecessary packages, files, and prepare the system for specific tasks. It manages the multi-stage installation process from a base Debian system to a fully configured BusyBox environment.
+The `initiv` script is used to slim Linux distributions, remove unnecessary packages, files, and prepare the system for specific tasks. It manages the multi-stage installation process from a base Debian system to a fully configured Busybox environment.
 
 ## Installation Stages
 
@@ -130,7 +130,8 @@ All output is logged to `/var/log/busybox.log`
 | `_LOGFILE` | `/var/log/busybox.log` | Log file path |
 | `_USER` | `busybox` | Default username |
 | `_THEME` | `dark` | Installation theme |
-| `_SERVER` | `http://busy4.me` | Download server |
+| `_SERVER` | `https://raw.githubusercontent.com/busy4me/busybox` | Download server |
+| `_BRANCH` | `main` | Repository branch |
 
 ## Files
 

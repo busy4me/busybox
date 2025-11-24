@@ -1,7 +1,7 @@
 #!/bin/bash
 # Menu html local based....
 SCRIPT=menu-init
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 
 if [ $USER = "root" ]
 	then

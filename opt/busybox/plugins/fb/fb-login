@@ -1,9 +1,9 @@
 #!/bin/bash
 
 SCRIPT=fb-login
-LOGFILE=/var/log/busy4me.log
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/fb/fb-config # fb variables from there
+LOGFILE=/var/log/busybox.log
+source /opt/busybox/busy-functions # global functions
+source /opt/busybox/fb/fb-config # fb variables from there
 
 if [[ "$1" == "--debug" ]]; then
   exec &> >(tee -ia $LOGFILE)
@@ -127,7 +127,7 @@ while [[ ! $_valid == "OK" ]]; do
 	accepted=$?
 	if ((accepted != 0)); then
 		echo -e "\e[32m Start again...\e[0m" | logline
-		zenity --info --title="Prepare to login" --text="Social Media Assistant:\n You must be logged before using busy4.me platform ... try again ... " --width 350 --timeout 7
+		zenity --info --title="Prepare to login" --text="Social Media Assistant:\n You must be logged before using Busybox platform ... try again ... " --width 350 --timeout 7
 		login_start
 	fi
 
@@ -229,7 +229,7 @@ else
 	mkdir -p /opt/busy/fb/db
 	# create sqlite3 local user database
 	sqlite3 /opt/busy/fb/db/fb_$login_string.db "SELECT 1;"
-	/bin/bash /opt/busy4me/busy.sh DB --create all
+	/bin/bash /opt/busybox/busy.sh DB --create all
 	sqlite3 $user_db "SELECT COUNT (*) FROM fb_groups";
 fi
 }
@@ -294,7 +294,7 @@ for i in {1..1000} ; do
 						zenity --info --title="Webpage content" --text="Error, is this entry field? ..." --timeout $to
 					fi
 			fi
-#			/bin/bash /opt/busy4me/fb/fb-scroll &
+#			/bin/bash /opt/busybox/fb/fb-scroll &
 #			exit 0
 		;;
 		*"$mark09"*)
@@ -305,7 +305,7 @@ for i in {1..1000} ; do
       xdotool type --delay $kds $SPOT01url
       xdotool key Return
 			sleep 2
-#			/bin/bash /opt/busy4me/fb/fb-scroll &
+#			/bin/bash /opt/busybox/fb/fb-scroll &
       report_fb_login_done
 			exit 0
 		;;
@@ -317,7 +317,7 @@ for i in {1..1000} ; do
       xdotool type --delay $kds $SPOT01url
       xdotool key Return
 			sleep 2
-#			/bin/bash /opt/busy4me/fb/fb-scroll &
+#			/bin/bash /opt/busybox/fb/fb-scroll &
 			report_fb_login_done
 #      exit 0
 		;;
@@ -329,7 +329,7 @@ for i in {1..1000} ; do
       xdotool type --delay $kds $SPOT01url
       xdotool key Return
 			sleep 2
-#			/bin/bash /opt/busy4me/fb/fb-scroll &
+#			/bin/bash /opt/busybox/fb/fb-scroll &
       report_fb_login_done
 #			exit 0
 		;;
@@ -447,7 +447,7 @@ while [ $entry01 -lt 2 ]; do
 			xdotool key --delay $kd Ctrl+l
 			xdotool type $SPOT01url
 			xdotool key --delay $kd Return
-#			/bin/bash /opt/busy4me/fb/fb-scroll &
+#			/bin/bash /opt/busybox/fb/fb-scroll &
 			report_fb_login_done
 #      exit 0
 		;;

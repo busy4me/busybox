@@ -1,5 +1,5 @@
 #!/bin/bash
-# Setup busy4.me in user "busybox" home directory or opt directory
+# Setup busybox in user "busybox" home directory or opt directory
 #
 google-chrome --window-size=800,600 --window-position=0,0 --no-first-run --incognito --no-default-browser-check --disable-translate http://fb.com &&
 #google-chrome --window-size=800,600 --window-position=0,0 http://fb.com

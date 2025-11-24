@@ -1,6 +1,6 @@
 #!/bin/sh
 SCRIPT=fb-fanpage-post-share
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 
 logline() {
     while IFS= read -r line; do

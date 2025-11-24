@@ -20,7 +20,7 @@ fb_db=/opt/busy/fb/db/fb.db
 profile_id=""
 profile_name="me"
 
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 BR01="google-chrome" # Browser 01
 PROC01="chrome" # process 01
 SPOT01="facebook" # spot 01
