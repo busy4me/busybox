@@ -140,7 +140,7 @@ battery_background_id = 0
 
 # log
 execp = log
-execp_command = echo "LOG:"; wc -l /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//'; wc -m /var/log/busy4me.log | sed 's/\/var\/log\/busy4me.log//'
+execp_command = echo "LOG:"; wc -l /var/log/busybox.log | sed 's/\/var\/log\/busybox.log//'; wc -m /var/log/busybox.log | sed 's/\/var\/log\/busybox.log//'
 execp_interval = 5
 execp_font = sans 7
 execp_markup = 1
@@ -199,7 +199,7 @@ button_background_id = 3
 button_padding = 1 1
 button_centered = 0
 button_max_icon_size = 20
-button_lclick_command = /opt/busy4me/update --all
+button_lclick_command = /opt/busybox/update --all
 button_rclick_command = echo "Will update busy4 software in background"
 button_tooltip = Click to update busy4 software in background
 
@@ -211,7 +211,7 @@ button_background_id = 3
 button_padding = 1 1
 button_centered = 0
 button_max_icon_size = 30
-button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
+button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busybox/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = Click to reset and login again
 
@@ -223,7 +223,7 @@ button_background_id = 3
 button_padding = 1 1
 button_centered = 0
 button_max_icon_size = 30
-#button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busy4me/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
+#button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 & /opt/busybox/stratum -r :98 & (sleep 3 & /usr/bin/initiv -u no reset)
 button_lclick_command = zenity --info "--text=reset in progress..." --width 550 --height 150 --timeout 4 && $HOME/.vncserver restart && (sleep 5 && export DISPLAY=:0 && vncviewer -fullscreen -passwd $HOME/.vnc/passwd localhost:5998 &)
 button_rclick_command = echo "Will reset what you see and login again."
 button_tooltip = Click to reset and login again

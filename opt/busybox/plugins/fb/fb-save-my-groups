@@ -4,9 +4,9 @@
 #Bug: Script doesn't seve groups if the name of group is in two lines in browser.
 
 SCRIPT=fb-save-my-groups
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 #config file
-source /opt/busy4me/fb/fb-config
+source /opt/busybox/fb/fb-config
 
 
 logline() {

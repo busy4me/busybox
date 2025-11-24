@@ -23,8 +23,10 @@ _DATE_STAMP="$(date +%Y-%m-%d--%H-%M-%S)"
 _BUSY_SERVICE=busybox # main service, watchdog, checks other busybox precesses
 _BUSY_ANIME_SERVICE=busy-anime # animation in framebuffer, durring 'initiv 0' installation process
 _INITIV_1_SERVICE=initiv-1 # trigger 'initiv -S 1' installation process, visible in xterm, first X run
-_SERVER="http://busy4.me"
-_SERVER_DIR="/busy"
+_SERVER="https://raw.githubusercontent.com/busy4me/busybox"
+_BRANCH="main"
+_ASSETS_URL="https://github.com/busy4me/busybox/releases/download"
+_ASSETS_TAG="assets-v1.0.0"
 _USER="busybox" # default user name
 #_PASS="busy" # default user password
 _THEME=dark # default installation theme, used in __xt and __anime functions
@@ -68,7 +70,7 @@ if [ ! -z $_HOST ]; then
 			_HOST_STATUS="OK"
 	    echook "$_HOST online response with 0 error code :) _HOST_STATUS=OK"
 	else
-			"$_HOST"_STATUS="no response"
+			_HOST_STATUS="no response"
 	    echoerror "$_HOST offline? response with 0 error code :("
 	fi
 fi
@@ -91,8 +93,8 @@ __bashcolor () {
 	echofunc ${FUNCNAME[0]}
 # set bashcolors ===============================================================
 # __net_status $_SERVER
-if ! wget -q -nv -O /usr/bin/bashcolors --no-check-certificate $_SERVER/bashcolors; then
-	echoerror "OFFLINE! ...can't connect to bashcolors in $_SERVER"
+if ! wget -q -nv -O /usr/bin/bashcolors --no-check-certificate $_SERVER/$_BRANCH/root/bashcolors; then
+	echoerror "OFFLINE! ...can't connect to bashcolors in $_SERVER/$_BRANCH"
 fi
 }
 
@@ -123,7 +125,7 @@ __update () { #help: /usr/bin/initiv update itself
 	fi
 
 	# Update from GitHub (official source)
-	_GITHUB_RAW="https://raw.githubusercontent.com/busy4me/busybox/main/root/initiv"
+	_GITHUB_RAW="$_SERVER/$_BRANCH/root/initiv"
 	echoinfo " ..download update from GitHub: $_GITHUB_RAW"
 	__net_status github.com
 		echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
@@ -932,8 +934,9 @@ cat > /home/${_USER}/.profile  << EOF
 EOF
   chown ${_USER}:${_USER} /home/${_USER}/.profile
   # download big files
-  wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wallpaper.jpg -O /opt/busy/images/wallpaper.jpg
-  wget -nv --no-check-certificate https://busy4.me/busy/opt/busy/images/wall_black_with_vertical_logo.jpg -O /opt/busy/images/wall_black_with_vertical_logo.jpg
+  mkdir -p /opt/${PROJECT}/data/images
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/data/images/wallpaper.jpg -O /opt/${PROJECT}/data/images/wallpaper.jpg
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg -O /opt/${PROJECT}/data/images/wall_black_with_vertical_logo.jpg
   rm -R /home/${_USER}/.config/openbox/
   mkdir -pv /home/${_USER}/.config/openbox/
   echo -e "\e[36m Copy openbox config files.....................\e[0m"
@@ -976,10 +979,10 @@ EOF
   ln -s /var/log/${PROJECT}.log /opt/${PROJECT}/${PROJECT}.log
   export PATH=$PATH:/opt/$PROJECT
   cd /opt/$PROJECT
-  echo "wget -q --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/*"
-  wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/update -O /opt/${PROJECT}/update
-  # wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/config -O /opt/${PROJECT}/config
-  # wget -nv --no-check-certificate https://busy4.me/busy/opt/${PROJECT}/windows-init -O /opt/${PROJECT}/windows-init
+  echo "wget -q --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/*"
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/update -O /opt/${PROJECT}/update
+  # wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/config -O /opt/${PROJECT}/config
+  # wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/windows-init -O /opt/${PROJECT}/windows-init
   chmod +x /opt/${PROJECT}/*
   ls -la /opt/$PROJECT
   echo "Start /opt/${PROJECT}/update..."
@@ -1340,72 +1343,50 @@ echoconfirm "${FUNCNAME[0]} done"
 ## ----------------------------------------------------------------------------------------------------
 ## |
 __download_files () {
-	# download file "package.tar.gz" and unpack to "archive" directory in declared "/full/path/package"
-	# help = usage ========================
-	# /usr/bin/initiv -d /full/path/package.tar.gz
-	# all files from package.tar.gz will be extracted to "/full/path/package" directory
-	#	__file=$__file
+	# download assets from GitHub Releases and extract to system directories
 	[[ $_SHOW == "true" ]] && __output ${FUNCNAME[0]} && return
 	echofunc ${FUNCNAME[0]}
 
 	__distro # check distro
 
-	echoinfo "server distribution path: $_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
-	_SERVER_PATH="$_SERVER/.$_SCRIPT_NAME/$_ID/$_VER/$_ARCH"
-	# help = usage ============================
-	# /usr/bin/initiv download
-	# will download all files from declared default list
-	# declare list of full names of files with full paths
-	if [ -z "$__file" ]; then
-		echoinfo "declare list of files ......... wait ..."
-		declare -a __files=(
-	#	"/usr/lib/modules/$_KERNEL_RELEASE.tar.gz" \
-		"/usr/share/pixmaps/spin/spin.tar.gz"\
-		"/usr/share/pixmaps/dots-mouse/dots-mouse.tar.gz"\
-		"/usr/share/pixmaps/red-dots-black/red-dots-black.tar.gz"\
-		"/usr/share/pixmaps/busy4me-black/busy4me-black.tar.gz"\
-		)
+	# Download assets from GitHub Releases (branch-independent)
+	_ASSETS_ARCHIVE="assets-debian-$_VER-$_ARCH.tar.gz"
+	_ASSETS_FULL_URL="$_ASSETS_URL/$_ASSETS_TAG/$_ASSETS_ARCHIVE"
+	_TMP_DIR="/tmp/busybox-assets"
+
+	echoinfo "Downloading assets from GitHub Releases..."
+	echoinfo "URL: $_ASSETS_FULL_URL"
+
+	rm -rf $_TMP_DIR 2>/dev/null
+	mkdir -p $_TMP_DIR
+
+	__net_status github.com
+	if wget -nv -O "$_TMP_DIR/$_ASSETS_ARCHIVE" --no-check-certificate "$_ASSETS_FULL_URL"; then
+		echook "Assets downloaded successfully"
 	else
-		echoinfo "full file name with path $__file"
-		__f=$(echo "${__file##*/}") # extract file name without path
-		__p=$(echo "${__file%/*}") # extract path only
-		echoinfo "file: $__f"
-		echoinfo "path: $__p"
-		echoinfo "download file: $__p/$__f ... wait ..."
-		rm -R $__p 2>/dev/null# delete old package files and directory
-		mkdir $__p
-		__net_status $_SERVER
-		wget -nv -O $__file --no-check-certificate $_SERVER_PATH/$__path/$__file
-		tar -C $__p -zxf $__file
-		rm -R $__file 2>/dev/null # clean up
-		echoinfo "tar -C $__p -zxvf $__file"; echoinfo "... done"
+		echoerror "Failed to download assets from $_ASSETS_FULL_URL"
+		return 1
 	fi
-	# __filex=$(echo $__file | sed 's/.*\//') # extract file without path
-	# __file_path=$(echo $__file | sed 's/$__filex//g') # extract path only, not working with variable
-	# easy way:
-	# __file=$(echo "${__file##*/}") # extract file name without path
-	# __path=$(echo "${__file%/*}") # extract path only
-	# source: https://stackoverflow.com/questions/4168371/how-can-i-remove-all-text-after-a-character-in-bash
-	# create archive
-	# tar -zcvf spin.tar.gz /usr/bin/spin
-	# tar -zcvf $_KERNEL_RELEASE.tar.gz /usr/lib/modules/$_KERNEL_RELEASE
-	# download file:
-	for __file in ${__files[@]}; do
-		__f=$(echo "${__file##*/}") # file name without path
-		__p=$(echo "${__file%/*}") # path only
-		echoinfo "file: $__f"
-		echoinfo "path: $__p"
-		echoinfo "download file: $__file .......... wait ..."
-		rm -R $__p 2>/dev/null # delete old package files and directory
-		mkdir $__p
-		__net_status $_SERVER
-		wget -nv -O $__file --no-check-certificate $_SERVER/.initiv/$_ID/$_VER/$_ARCH/$__path/$__file
-		# unpack archive
-		tar -C $__p -zxf $__file
-		rm -R $__file # clean up
-		echoinfo "tar -C $__p -zxvf $__file"
-		echoinfo "... done"
-		done
+
+	# Extract archive
+	echoinfo "Extracting assets..."
+	tar -xzf "$_TMP_DIR/$_ASSETS_ARCHIVE" -C "$_TMP_DIR"
+
+	# Copy files to system directories
+	_ASSETS_SRC="$_TMP_DIR/.initiv/debian/$_VER/$_ARCH"
+	if [ -d "$_ASSETS_SRC" ]; then
+		echoinfo "Copying assets to system directories..."
+		cp -rv "$_ASSETS_SRC/usr/share/pixmaps/"* /usr/share/pixmaps/ 2>/dev/null || true
+		cp -rv "$_ASSETS_SRC/usr/share/images/"* /usr/share/images/ 2>/dev/null || true
+		echook "Assets installed successfully"
+	else
+		echoerror "Assets directory not found: $_ASSETS_SRC"
+		return 1
+	fi
+
+	# Cleanup
+	rm -rf $_TMP_DIR
+	echoinfo "Temporary files cleaned up"
 
 	echoinfo "download system files .......................... wait ..."
 	###############################################################
@@ -1421,7 +1402,7 @@ __download_files () {
 		rm $_FILE
 		echoinfo "download file: $_FILE .......... wait ..."
 		__net_status $_SERVER
-		wget -nv -O $_FILE --no-check-certificate $_SERVER$_SERVER_DIR$_FILE
+		wget -nv -O $_FILE --no-check-certificate $_SERVER/$_BRANCH$_FILE
 	done
 	echoconfirm "${FUNCNAME[0]} done"
 }
@@ -2514,7 +2495,7 @@ case $1 in
 #		__reset
 		;;
 	"2" )
-## 2	download and run init-1 script which next install busy4.me package and reboot
+## 2	download and run init-1 script which next install busybox package and reboot
 		__install_project
 		;;
 	"$1")

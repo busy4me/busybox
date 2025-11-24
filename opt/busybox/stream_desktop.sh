@@ -3,9 +3,9 @@
 # change hostname and minion_id from fb-login
 
 SCRIPT=stream_desktop.sh
-LOGFILE=/var/log/busy4me.log
-LOGFILE_CRON=/var/log/busy4me_cron.log
-source /opt/busy4me/fb/fb-config
+LOGFILE=/var/log/busybox.log
+LOGFILE_CRON=/var/log/busybox_cron.log
+source /opt/busybox/fb/fb-config
 
 logline_cron() {
 	while IFS= read -r line; do
@@ -13,13 +13,13 @@ logline_cron() {
 	done
 }
 
-echo "fb_login: " $(cat /home/busybox/busy4me/fb/fb-login)
+echo "fb_login: " $(cat /home/busybox/busybox/fb/fb-login)
 	old_hostname=$(cat /etc/hostname)
-	old_hostname=$(cat /home/busybox/busy4me/fb/fb-login | tr '@.' '-')
+	old_hostname=$(cat /home/busybox/busybox/fb/fb-login | tr '@.' '-')
 
 if [ "$old_hostname" == "$old_hostname" ]
 then
-	echo "   \e[32m...hostname is OK\e[0m, match to fb-login \"$(cat /home/busybox/busy4me/fb/fb-login)\"...exit"
+	echo "   \e[32m...hostname is OK\e[0m, match to fb-login \"$(cat /home/busybox/busybox/fb/fb-login)\"...exit"
 	echo "."
 	exit
 fi

@@ -81,7 +81,7 @@ FRAME=$(echo "frame"$DISPLAY | tr -d \:)
 echo -e "\e[43m   \e[0m\e[33m stop:\e[33m FRAME=\e[0m$FRAME"
 pkill $FRAME
 echo -e "\e[42m   \e[0m\e[32m start:\e[33m FRAME=\e[0m$FRAME"
-export DISPLAY=$DSP && /opt/busy4me/$FRAME
+export DISPLAY=$DSP && /opt/busybox/$FRAME
 }
 
 restart_vncserver() {

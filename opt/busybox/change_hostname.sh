@@ -9,9 +9,9 @@
 # ============================================================
 
 SCRIPT=change_hostname.sh
-LOGFILE=/var/log/busy4me.log
-LOGFILE_CRON=/var/log/busy4me_cron.log
-source /opt/busy4me/fb/fb-config
+LOGFILE=/var/log/busybox.log
+LOGFILE_CRON=/var/log/busybox_cron.log
+source /opt/busybox/fb/fb-config
 
 # for checking
 # echo "bleble" > /etc/salt/minion_id

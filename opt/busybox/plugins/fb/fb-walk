@@ -8,7 +8,7 @@ from time import sleep
 from datetime import datetime
 from fbconfig import *
 pyautogui.FAILSAFE = False # disables the fail-safe
-logfile = '/var/log/busy4me.log'
+logfile = '/var/log/busybox.log'
 element = 'fb-left-edge-of-post-frame.png'
 # returncode = 1
 

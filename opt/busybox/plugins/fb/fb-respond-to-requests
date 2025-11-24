@@ -3,9 +3,9 @@
 #Script responds to friend requests
 
 SCRIPT=fb-respond-to-requests
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 #config file
-source /opt/busy4me/fb/fb-config
+source /opt/busybox/fb/fb-config
 
 
 logline() {
@@ -21,7 +21,7 @@ echo 'login =' $login | logline
 login_string=$login
 login_string=$(echo $login_string | tr '@' '-')
 echo 'login_string =' $login_string | logline
-user_db="$HOME/busy4me/fb/db/fb_$login_string.db"
+user_db="$HOME/busybox/fb/db/fb_$login_string.db"
 echo 'Use database:' $user_db | logline
 
 feh --bg-scale /home/busybox/wall_black_with_vertical_logo.jpg | logline

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Autoupdate if changed...
 # Upgrade if needed...
-# curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
+# curl -s -v -X HEAD https://raw.githubusercontent.com/busy4me/busybox/main/opt/busybox/windows-init 2>&1 | grep '^< Last-Modified:'
 source /opt/${PROJECT}/${PROJECT}.cfg
 source /opt/${PROJECT}/${PROJECT}.sh # global functions
 PROJECT="busybox"

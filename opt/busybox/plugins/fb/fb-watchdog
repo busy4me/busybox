@@ -3,7 +3,7 @@
 set -x
 
 SCRIPT=fb-watchdog
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 
 logline() {
     while IFS= read -r line; do

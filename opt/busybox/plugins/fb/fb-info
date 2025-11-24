@@ -2,7 +2,7 @@
 # check informations about session
 
 SCRIPT=fb-info
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 
 logline() {
     while IFS= read -r line; do
@@ -23,7 +23,7 @@ xdotool key Escape Escape
 
 start () {
 echo -e "start fb-walking-around in screen $DISPLAY..."
-screen -dmS fb-walking-around$DISPLAY '/opt/busy4me/fb/fb-walking-around'
+screen -dmS fb-walking-around$DISPLAY '/opt/busybox/fb/fb-walking-around'
 }
 
 status () {

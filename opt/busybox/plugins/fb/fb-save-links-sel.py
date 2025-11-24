@@ -20,8 +20,8 @@ zoom = "75 %"
 
 system_meminfo_before = ""
 #subprocess.call([free -m | awk 'NR==2{printf "Memory Usage: %s/%sMB (%.2f%%)\n", $3,$2,$3*100/$2 }')])
-print("subprocess... /opt/busy4me/system-meminfo.sh")
-subprocess.call(["/opt/busy4me/system-meminfo.sh"])
+print("subprocess... /opt/busybox/system-meminfo.sh")
+subprocess.call(["/opt/busybox/system-meminfo.sh"])
 
 # read username and password from files
 usr_file=open("/opt/busy/fb/fb-login", "r")
@@ -97,5 +97,5 @@ time.sleep(3)
 #print my_groups_url
 driver.get(my_groups_url)
 
-print("subprocess... /opt/busy4me/system-meminfo.sh")
-subprocess.call(["/opt/busy4me/system-meminfo.sh"])
+print("subprocess... /opt/busybox/system-meminfo.sh")
+subprocess.call(["/opt/busybox/system-meminfo.sh"])

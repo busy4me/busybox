@@ -1,6 +1,6 @@
 #!/bin/bash
 SCRIPT=google-chrome-transparent
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 logline() {
     while IFS= read -r line; do
         echo "$(date +%F' '%T) $USER $SCRIPT - $line" >> $LOGFILE 

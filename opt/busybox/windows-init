@@ -1,9 +1,9 @@
 #!/bin/sh
 # Autoupdate if changed...
 # Upgrade if needed...
-# curl -s -v -X HEAD http://busy4.me/opt/busy4me/windows-init 2>&1 | grep '^< Last-Modified:'
+# curl -s -v -X HEAD https://raw.githubusercontent.com/busy4me/busybox/main/opt/busybox/windows-init 2>&1 | grep '^< Last-Modified:'
 SCRIPT=windows-init
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 
 logline() {
     while IFS= read -r line; do
@@ -19,8 +19,8 @@ if [ $USER = "root" ]
 	echo "Start $SCRIPT script..." | logline
 fi
 
-if [ -f /opt/busy4me/config ];then
-    . /opt/busy4me/config
+if [ -f /opt/busybox/config ];then
+    . /opt/busybox/config
 	else
 	echo "There is no config file!... stop." | logline
 	exit 0

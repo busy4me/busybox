@@ -3,9 +3,9 @@
 #Script update "Groups You're In" in sqlite local database.
 
 SCRIPT=fb-update-my-groups-01
-LOGFILE=/var/log/busy4me.log
+LOGFILE=/var/log/busybox.log
 #config file
-source /opt/busy4me/fb/fb-config
+source /opt/busybox/fb/fb-config
 
 
 logline() {

@@ -3,9 +3,9 @@
 # change hostname and minion_id from fb-login
 
 SCRIPT=stream_to_twich.sh
-LOGFILE=/var/log/busy4me.log
-LOGFILE_CRON=/var/log/busy4me_cron.log
-source /opt/busy4me/twitch
+LOGFILE=/var/log/busybox.log
+LOGFILE_CRON=/var/log/busybox_cron.log
+source /opt/busybox/twitch
 
 logline() {
 	while IFS= read -r line; do

@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 BusyBox
+# BusyBox 🤖 by busy4me ™️
 
 **Automated Virtual Assistant Platform for Linux**
 
@@ -16,9 +16,9 @@
 
 ## 📋 Overview
 
-**BusyBox** is an open-source automation platform that runs continuously on Linux machines, handling routine online tasks through a virtual assistant. It provides internet-based control via web, smartphone, and tablet interfaces, operating securely behind firewalls without exposed ports.
+**BusyBox 🤖 by busy4me ™️** is an open-source automation platform that runs continuously on Linux machines, handling routine online tasks through a virtual assistant. It provides internet-based control via web, smartphone, and tablet interfaces, operating securely behind firewalls without exposed ports.
 
-Built on clean Linux architecture with minimalist code, BusyBox offers:
+Built on clean Linux architecture with minimalist code, Busybox offers:
 - 🔐 Encrypted local data storage with firewall protection
 - 🌐 Remote access without port forwarding
 - ⚡ Low resource consumption (minimal storage and memory)
@@ -55,19 +55,19 @@ Built on clean Linux architecture with minimalist code, BusyBox offers:
 
 2. Run the installation script:
    ```bash
-   wget busy4.me/initiv && bash ./initiv install
+   wget https://raw.githubusercontent.com/busy4me/busybox/main/root/initiv && bash ./initiv install
    ```
 
 3. Wait for browser and login window to appear (several minutes)
 
 4. Enter your credentials - the system will simulate natural user behavior
 
-5. Your host becomes operational via busy4.me
+5. Your host becomes operational
 
 #### Option 2: Debian 8 Jessie (Legacy)
 
 ```bash
-wget busy4.me/init-0 && bash ./init-0
+wget https://raw.githubusercontent.com/busy4me/busybox/main/root/init-0 && bash ./init-0
 ```
 
 ## 📖 Usage
@@ -207,7 +207,7 @@ busy --login --url="https://socialportal.com" :1
 
 ## 🗄️ Database Tables
 
-BusyBox manages various database tables for different platforms:
+Busybox manages various database tables for different platforms:
 
 - `socialmedia` - General social media data
 - `fb_user` - Facebook user profiles
@@ -224,7 +224,7 @@ BusyBox manages various database tables for different platforms:
 
 ## 🔐 Remote Access
 
-Access your BusyBox instance via SSH:
+Access your Busybox instance via SSH:
 
 ```bash
 ssh 192.168.1.23 -p 22
@@ -240,9 +240,9 @@ su busybox
 User → Social Media → Advertisement → Control
 ```
 
-**With BusyBox:**
+**With Busybox:**
 ```
-User (iPhone/Android/Web) → BusyBox Host → Social Media
+User (iPhone/Android/Web) → Busybox Host → Social Media
                           ↓
                     Status Reporting
 ```
@@ -272,7 +272,7 @@ User (iPhone/Android/Web) → BusyBox Host → Social Media
 
 ## 🛠️ Update System
 
-Update BusyBox components:
+Update Busybox components:
 
 ```bash
 update --full              # Update all files
@@ -288,9 +288,15 @@ update -h                  # Display help
 
 ## 📚 Documentation
 
-For detailed documentation, visit the [BusyBox Wiki](https://github.com/busy4me/busybox/wiki).
+### Local Documentation
 
-### Quick Links
+- [Reference Documentation](reference/README.md) - Command and script references
+  - [initiv](reference/initiv.md) - Installation and bootstrap script
+  - [Commands](reference/commands/) - Individual command references
+
+### Online Resources
+
+For additional documentation, visit the [Busybox Wiki](https://github.com/busy4me/busybox/wiki).
 
 - [Installation Guide](https://github.com/busy4me/busybox/wiki#install-on-linux-debian-10)
 - [Command Reference](https://github.com/busy4me/busybox/wiki#commands)
@@ -303,10 +309,10 @@ Contributions are welcome! Please feel free to submit pull requests or open issu
 
 ## 📄 License
 
-BusyBox is open-source software licensed under the **Apache License 2.0**.
+BusyBox 🤖 by busy4me ™️ is open-source software licensed under the **Apache License 2.0**.
 
 ```
-Copyright © busy4.me
+Copyright © busy4me ™️
 Licensed under Apache License v.2
 ```
 
@@ -314,7 +320,6 @@ See [LICENSE](LICENSE) file for details.
 
 ## 🌐 Links
 
-- **Website**: [busy4.me](https://busy4.me)
 - **Repository**: [github.com/busy4me/busybox](https://github.com/busy4me/busybox)
 - **Wiki**: [Documentation](https://github.com/busy4me/busybox/wiki)
 - **Issues**: [Bug Reports](https://github.com/busy4me/busybox/issues)
@@ -323,7 +328,7 @@ See [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-**Made with ❤️ by the busy4.me team**
+**Made with ❤️ by BusyBox 🤖 by busy4me ™️**
 
 ⭐ Star us on GitHub if you find this project useful!
 

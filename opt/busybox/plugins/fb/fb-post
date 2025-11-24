@@ -2,9 +2,9 @@
 # Create post, comment post and other operations on the post
 #
 SCRIPT=fb-post
-LOGFILE=/var/log/busy4me.log
-source /opt/busy4me/busy-functions # global functions
-source /opt/busy4me/fb/fb-config # fb variables from there
+LOGFILE=/var/log/busybox.log
+source /opt/busybox/busy-functions # global functions
+source /opt/busybox/fb/fb-config # fb variables from there
 
 JOB=$((RANDOM%8999+1000))
 
@@ -506,7 +506,7 @@ while [ "$scroll_count" -lt "$scroll_repeat" ]; do
 		echo -e "\e[93m Page contains *$mark21* or *$mark22* or *$mark23* ... continue ... \e[0m" | logline
 		while [ "$mouse_low" -gt "$mouse_high" ]; do
 			mouse_low=$((mouse_low-9))
-			/bin/bash /opt/busy4me/busy SYSTEM --clip-clear
+			/bin/bash /opt/busybox/busy SYSTEM --clip-clear
 			#xclip -selection clipboard /opt/busy/files/blank; sleep 1
 			xdotool mousemove $mouse_x $mouse_low; sleep 0.3
 			xdotool click 3; sleep 0.5
@@ -540,7 +540,7 @@ while [ "$scroll_count" -lt "$scroll_repeat" ]; do
 	;;
 	esac
 	scroll_count=$((scroll_count+1))
-	/bin/bash /opt/busy4me/busy SYSTEM --clip-clear
+	/bin/bash /opt/busybox/busy SYSTEM --clip-clear
 	xdotool mousemove 5 $mouse_low
 	xdotool key Down; sleep 0.5
 	xdotool key Escape; sleep 0.5
