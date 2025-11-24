@@ -110,11 +110,6 @@ __update () { #help: /usr/bin/initiv update itself
 	else
 		echoinfo "_UPDATE=yes, continue update ..."
 	fi
-	# Skip auto-update if SKIP_AUTO_UPDATE environment variable is set
-	if [[ -n "$SKIP_AUTO_UPDATE" ]]; then
-		echoinfo "SKIP_AUTO_UPDATE is set, skipping auto-update"
-		return 0
-	fi
 	# initive should be always in /usr/bin directory, so even will be downloaded in different location
 	# will change itself
 	if [ ! "$_SCRIPT_FULL_NAME" == "/usr/bin/initiv" ]; then
@@ -127,6 +122,12 @@ __update () { #help: /usr/bin/initiv update itself
 		exit 0
 	else
 		echoconfirm "$_SCRIPT_FULL_NAME ... correct"
+	fi
+
+	# Skip GitHub update if SKIP_AUTO_UPDATE environment variable is set
+	if [[ -n "$SKIP_AUTO_UPDATE" ]]; then
+		echoinfo "SKIP_AUTO_UPDATE is set, skipping GitHub update check"
+		return 0
 	fi
 
 	# Update from GitHub (official source)
