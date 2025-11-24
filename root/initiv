@@ -2498,11 +2498,12 @@ case $1 in
 		__cleanup_cache
 		__check_disk_space "stage1-end"
 		# __statistics_set
-		sudo systemctl disable $_BUSY_SERVICE
-		(sleep 6; sudo systemctl disable $_INITIV_1_SERVICE)
-		(sleep 12; sudo systemctl stop $_INITIV_1_SERVICE)
-		(sleep 24; sudo /sbin/service $_INITIV_1_SERVICE stop)
-		(sleep 36; sudo systemctl reboot -i)
+		# Disable services in background to avoid blocking
+		(sleep 3; sudo systemctl disable $_BUSY_SERVICE) &
+		(sleep 6; sudo systemctl disable $_INITIV_1_SERVICE) &
+		(sleep 12; sudo systemctl stop $_INITIV_1_SERVICE) &
+		(sleep 24; sudo /sbin/service $_INITIV_1_SERVICE stop) &
+		(sleep 36; sudo systemctl reboot -i) &
 #		__reset
 		;;
 	"2" )
