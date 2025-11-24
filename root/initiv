@@ -123,7 +123,7 @@ __update () { #help: /usr/bin/initiv update itself
 	fi
 
 	# Update from GitHub (official source)
-	_GITHUB_RAW="https://raw.githubusercontent.com/busy4me/busybox/main/root/initiv"
+	_GITHUB_RAW="$_SERVER/$_BRANCH/root/initiv"
 	echoinfo " ..download update from GitHub: $_GITHUB_RAW"
 	__net_status github.com
 		echo -e "$0 \e[32m -- Update $_SCRIPT_VERSION $_DATE_STAMP\e[0m"
