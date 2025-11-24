@@ -68,7 +68,7 @@ if [ ! -z $_HOST ]; then
 			_HOST_STATUS="OK"
 	    echook "$_HOST online response with 0 error code :) _HOST_STATUS=OK"
 	else
-			"$_HOST"_STATUS="no response"
+			_HOST_STATUS="no response"
 	    echoerror "$_HOST offline? response with 0 error code :("
 	fi
 fi
