@@ -44,25 +44,61 @@ logline() {
 }
 
 update_preferences() { # update root and busyuser bash preference files
+  # Preserve existing SSH keys by backing up and restoring
   SSH_DIR="/root/.ssh"
-  rm -R $SSH_DIR
-  install -d -m 0755 -o $USER -g $USER $SSH_DIR
+  BACKUP_KEYS="/tmp/authorized_keys.backup.root"
+
+  # Backup existing authorized_keys if it exists
+  if [ -f "$SSH_DIR/authorized_keys" ]; then
+    cp "$SSH_DIR/authorized_keys" "$BACKUP_KEYS"
+  fi
+
+  # Ensure .ssh directory exists with proper permissions (don't delete it!)
+  install -d -m 0700 -o $USER -g $USER $SSH_DIR
+
+  # Add busybox default keys (overwrite to ensure they're present)
   cat > $SSH_DIR/authorized_keys  << `EOF`
 ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdHSHHO1PAnapODFUQJWIJwgG44fob3HcicgurDl0UaCsIEX3aYAclr1yk+NmsZSjlK8PJ4mJUxD61JDBpwrOdzokmj4JSl2KQEDMySYZ1zyrmjsGZabyW69DsZVaKktdy8tueqr4hrJwD5CqNB/o4KaYqtgGb4CT0nEFPH0nZ8lp1tWVAX5bxsEJxr/LpAAfYK3dHTb4H9HLgx7p8+Tdior8TPUtBvrRRfOYBzfxxKvDOFIPEiYl3eDUd1EN1C7Okxe/0bSPPcwzAV/CfF+jF07iDFRw//mrAAX63fqY+DRQ==
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDoX8atC+hMNSfAi2Jkwfvu+uzj/f3ZdcjjfEg+Zvjcw
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBcFQAZ0l4kf+FBUbMJkTtA1kNjRQZ5Ud7aRITMdFDB/
 `EOF`
+
+  # Restore backed up keys (append unique keys only)
+  if [ -f "$BACKUP_KEYS" ]; then
+    # Append backed up keys, removing duplicates
+    grep -vxFf "$SSH_DIR/authorized_keys" "$BACKUP_KEYS" >> "$SSH_DIR/authorized_keys" 2>/dev/null || true
+    rm -f "$BACKUP_KEYS"
+  fi
+
+  # Set proper permissions
+  chmod 600 "$SSH_DIR/authorized_keys"
+
+  # Do the same for busyuser
   SSH_DIR="/home/$BUSYUSER/.ssh"
-  rm -R $SSH_DIR
-  install -d -m 0755 -o $BUSYUSER -g $BUSYUSER $SSH_DIR
+  BACKUP_KEYS="/tmp/authorized_keys.backup.user"
+
+  if [ -f "$SSH_DIR/authorized_keys" ]; then
+    cp "$SSH_DIR/authorized_keys" "$BACKUP_KEYS"
+  fi
+
+  install -d -m 0700 -o $BUSYUSER -g $BUSYUSER $SSH_DIR
   echo "[INFO] install $SSH_DIR dir for $BUSYUSER"
+
   cat > $SSH_DIR/authorized_keys  << `EOF`
 ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAQEAy2JDwyJ8nqxtBo1Cg64cDLJYhdTINsBVQsf/q/zwAHdHSHHO1PAnapODFUQJWIJwgG44fob3HcicgurDl0UaCsIEX3aYAclr1yk+NmsZSjlK8PJ4mJUxD61JDBpwrOdzokmj4JSl2KQEDMySYZ1zyrmjsGZabyW69DsZVaKktdy8tueqr4hrJwD5CqNB/o4KaYqtgGb4CT0nEFPH0nZ8lp1tWVAX5bxsEJxr/LpAAfYK3dHTb4H9HLgx7p8+Tdior8TPUtBvrRRfOYBzfxxKvDOFIPEiYl3eDUd1EN1C7Okxe/0bSPPcwzAV/CfF+jF07iDFRw//mrAAX63fqY+DRQ==
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/0W6gMxoRADUYItWcA9CKG7Ra57TkYpQYVkvSyEUth
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDoX8atC+hMNSfAi2Jkwfvu+uzj/f3ZdcjjfEg+Zvjcw
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBcFQAZ0l4kf+FBUbMJkTtA1kNjRQZ5Ud7aRITMdFDB/
 `EOF`
+
+  if [ -f "$BACKUP_KEYS" ]; then
+    grep -vxFf "$SSH_DIR/authorized_keys" "$BACKUP_KEYS" >> "$SSH_DIR/authorized_keys" 2>/dev/null || true
+    rm -f "$BACKUP_KEYS"
+  fi
+
+  chmod 600 "$SSH_DIR/authorized_keys"
+  chown $BUSYUSER:$BUSYUSER "$SSH_DIR/authorized_keys"
   cat > /etc/profile.d/$BUSYUSER-preferences.sh  << `EOF`
 PATH=$PATH:/opt/$PROJECT:/opt/$PROJECT/plugins/fb:/opt/$PROJECT/plugins/yo
 `EOF`
