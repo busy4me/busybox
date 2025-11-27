@@ -2504,12 +2504,21 @@ case $1 in
 		__cleanup_cache
 		__check_disk_space "stage1-end"
 		# __statistics_set
-		# Disable services in background to avoid blocking
-		(sleep 3; sudo systemctl disable $_BUSY_SERVICE) &
-		(sleep 6; sudo systemctl disable $_INITIV_1_SERVICE) &
-		(sleep 12; sudo systemctl stop $_INITIV_1_SERVICE) &
-		(sleep 24; sudo /sbin/service $_INITIV_1_SERVICE stop) &
-		(sleep 36; sudo systemctl reboot -i) &
+
+		# Log stage completion
+		echoinfo "Stage 1 installation completed successfully"
+		echo "$(date '+%Y-%m-%d %H:%M:%S') - Stage 1 completed" >> /var/log/busybox-stages.log
+
+		# Schedule reboot FIRST (before stopping services)
+		echoinfo "Scheduling system reboot in 10 seconds..."
+		echo "$(date '+%Y-%m-%d %H:%M:%S') - Scheduling reboot" >> /var/log/busybox-stages.log
+		(sleep 10; echo "$(date '+%Y-%m-%d %H:%M:%S') - Executing reboot" >> /var/log/busybox-stages.log; /sbin/shutdown -r now "Stage 1 complete - rebooting") &
+
+		# Then disable and stop services in background
+		echoinfo "Disabling services before reboot..."
+		(sleep 3; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_BUSY_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_BUSY_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) &
+		(sleep 6; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_INITIV_1_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_INITIV_1_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) &
+
 		wait  # Wait for all background processes to complete before exiting
 #		__reset
 		;;
