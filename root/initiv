@@ -779,7 +779,7 @@ cat > /home/$_USER/.vncserver  << 'EOF'
 PATH="$PATH:/usr/bin/"
 DISPLAY="98"
 DEPTH="16"
-GEOMETRY="1024x768"
+GEOMETRY="800x600"
 NAME="vncserver"
 
 while getopts ':d: :g:' opt
@@ -1209,7 +1209,7 @@ GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR="${PROJECT}"
 GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"
 GRUB_CMDLINE_LINUX=""
-GRUB_GFXMODE=1024x768
+GRUB_GFXMODE=800x600
 GRUB_GFXPAYLOAD_LINUX=keep
 GRUB_BACKGROUND="$_SPLASH"
 GRUB_COLOR_NORMAL="black/black"
