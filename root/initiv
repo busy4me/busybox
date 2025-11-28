@@ -988,8 +988,8 @@ EOF
   ln -s /var/log/${PROJECT}.log /opt/${PROJECT}/${PROJECT}.log
   export PATH=$PATH:/opt/$PROJECT
   cd /opt/$PROJECT
-  echo "wget -q --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/*"
-  wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/update -O /opt/${PROJECT}/update
+  echo "Copying /opt/${PROJECT}/* from /root/busybox/opt/${PROJECT}/ (local files)"
+  cp -v /root/busybox/opt/${PROJECT}/update /opt/${PROJECT}/update 2>/dev/null || wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/update -O /opt/${PROJECT}/update
   # wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/config -O /opt/${PROJECT}/config
   # wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/windows-init -O /opt/${PROJECT}/windows-init
   chmod +x /opt/${PROJECT}/*
