@@ -6,7 +6,12 @@ SCRIPT="update"
 VERSION="231109"
 BUSYUSER="busybox"
 _SERVER="https://raw.githubusercontent.com/busy4me/busybox"
-_BRANCH="main"
+__detect_branch() { # detect branch: env var > marker file > default main
+  local branch="$BUSYBOX_BRANCH"
+  [ -z "$branch" ] && [ -f "/opt/busybox/.branch" ] && branch=$(cat "/opt/busybox/.branch" 2>/dev/null)
+  echo "${branch:-main}"
+}
+_BRANCH=$(__detect_branch)
 LOGFILE=/var/log/${PROJECT}.log
 BACKUP=/var/backups/${PROJECT}
 BACKUP_2=/var/backups/${PROJECT}/data
