@@ -2525,6 +2525,7 @@ case $1 in
 		echoinfo "Scheduling system reboot in 5 seconds..."
 		echo "$(date '+%Y-%m-%d %H:%M:%S') - Scheduling reboot via systemd-run" >> /var/log/busybox-stages.log
 		systemd-run --on-active=5s --timer-property=AccuracySec=100ms /sbin/shutdown -r now "Stage 1 complete - rebooting"
+# should be restarted here
 #		__reset
 		;;
 	"2" )
