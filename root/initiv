@@ -2509,22 +2509,21 @@ case $1 in
 		__cleanup_cache
 		__check_disk_space "stage1-end"
 		# __statistics_set
-
 		# Log stage completion
 		echoinfo "Stage 1 installation completed successfully"
 		echo "$(date '+%Y-%m-%d %H:%M:%S') - Stage 1 completed" >> /var/log/busybox-stages.log
-
 		# Disable services in background
 		echoinfo "Disabling services before reboot..."
 		(sleep 3; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_BUSY_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_BUSY_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) &
 		(sleep 6; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_INITIV_1_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_INITIV_1_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) &
-
 		wait  # Wait for service disable jobs to complete
-
 		# Schedule reboot using systemd-run (independent of this script)
 		echoinfo "Scheduling system reboot in 5 seconds..."
 		echo "$(date '+%Y-%m-%d %H:%M:%S') - Scheduling reboot via systemd-run" >> /var/log/busybox-stages.log
-		systemd-run --on-active=5s --timer-property=AccuracySec=100ms /sbin/shutdown -r now "Stage 1 complete - rebooting"
+		sudo shutdown -r +1 "Stage 1 complete - rebooting" &
+		#sudo nohup systemd-run --on-active=5s --timer-property=AccuracySec=100ms /usr/bin/sudo /sbin/shutdown -r now "Stage 1 complete - rebooting" &
+		#systemd-run --on-active=5s --timer-property=AccuracySec=100ms /sbin/shutdown -r now "Stage 1 complete - rebooting"
+	# should be restarted here
 #		__reset
 		;;
 	"2" )
