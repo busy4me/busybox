@@ -2524,6 +2524,8 @@ case $1 in
 		#sudo nohup systemd-run --on-active=5s --timer-property=AccuracySec=100ms /usr/bin/sudo /sbin/shutdown -r now "Stage 1 complete - rebooting" &
 		#systemd-run --on-active=5s --timer-property=AccuracySec=100ms /sbin/shutdown -r now "Stage 1 complete - rebooting"
 	# should be restarted here
+		systemd-run --on-active=5s --timer-property=AccuracySec=100ms /sbin/shutdown -r now "Stage 1 complete - rebooting"
+# should be restarted here
 #		__reset
 		;;
 	"2" )
