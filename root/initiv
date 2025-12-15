@@ -2520,13 +2520,10 @@ case $1 in
 		# Schedule reboot using systemd-run (independent of this script)
 		echoinfo "Scheduling system reboot in 5 seconds..."
 		echo "$(date '+%Y-%m-%d %H:%M:%S') - Scheduling reboot via systemd-run" >> /var/log/busybox-stages.log
-		sudo shutdown -r +1 "Stage 1 complete - rebooting" &
-		#sudo nohup systemd-run --on-active=5s --timer-property=AccuracySec=100ms /usr/bin/sudo /sbin/shutdown -r now "Stage 1 complete - rebooting" &
+		#sudo shutdown -r +1 "Stage 1 complete - rebooting" &
+		sudo nohup systemd-run --on-active=5s --timer-property=AccuracySec=100ms /usr/bin/sudo /sbin/shutdown -r now "Stage 1 complete - rebooting" &
 		#systemd-run --on-active=5s --timer-property=AccuracySec=100ms /sbin/shutdown -r now "Stage 1 complete - rebooting"
-	# should be restarted here
-		systemd-run --on-active=5s --timer-property=AccuracySec=100ms /sbin/shutdown -r now "Stage 1 complete - rebooting"
-# should be restarted here
-#		__reset
+	    # should be restarted here
 		;;
 	"2" )
 ## 2	download and run init-1 script which next install busybox package and reboot
