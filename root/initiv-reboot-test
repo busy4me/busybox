@@ -1,0 +1,211 @@
+#!/bin/bash
+# Simplified reboot test script - tests reboot mechanism 50 times
+# Author: Claude Code for testing Stage 1 reboot issue
+
+set -euo pipefail
+
+PROJECT="busybox-reboot-test"
+_LOGFILE=/var/log/${PROJECT}.log
+_USER="busybox"
+_COUNTER_FILE="/var/reboot-test-count"
+_MAX_ITERATIONS=50
+
+# Load bash colors for consistent output
+. /usr/bin/bashcolors 2>/dev/null || true
+
+# Helper functions
+echoinfo() {
+    echo -e "\e[32m[INFO]\e[0m $*" | tee -a $_LOGFILE
+}
+
+echoerror() {
+    echo -e "\e[31m[ERROR]\e[0m $*" | tee -a $_LOGFILE
+}
+
+echosuccess() {
+    echo -e "\e[32m[SUCCESS]\e[0m $*" | tee -a $_LOGFILE
+}
+
+# Function: Create user
+create_test_user() {
+    echoinfo "Creating user: $_USER"
+
+    # Create group and user
+    /usr/sbin/groupadd $_USER 2>/dev/null || echoinfo "Group $_USER already exists"
+    /usr/sbin/useradd -r -s /bin/bash -m -g $_USER $_USER 2>/dev/null || echoinfo "User $_USER already exists"
+
+    # Add to groups
+    /usr/sbin/usermod -a -G "sudo" $_USER
+    echo "$_USER	ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers 2>/dev/null || true
+
+    # Add to cron.allow
+    _CAF="/etc/cron.allow"
+    if ! grep -q $_USER $_CAF 2>/dev/null; then
+        echo "$_USER" >> $_CAF
+    fi
+
+    echosuccess "User $_USER created successfully"
+}
+
+# Function: Setup autologin for user
+setup_autologin() {
+    echoinfo "Setting up autologin for $_USER on tty1"
+
+    # Configure getty for autologin
+    rm -rf /etc/systemd/system/getty@tty1.service.d 2>/dev/null
+    mkdir -pv /etc/systemd/system/getty@tty1.service.d
+
+    cat > /etc/systemd/system/getty@tty1.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin $_USER --noclear %I \$TERM
+EOF
+
+    # Configure tty2 for root
+    rm -rf /etc/systemd/system/getty@tty2.service.d 2>/dev/null
+    mkdir -pv /etc/systemd/system/getty@tty2.service.d
+
+    cat > /etc/systemd/system/getty@tty2.service.d/autologin.conf << EOF
+[Service]
+ExecStart=
+ExecStart=-/sbin/agetty --autologin root --noclear %I \$TERM
+EOF
+
+    systemctl daemon-reload
+    echosuccess "Autologin configured for $_USER"
+}
+
+# Function: Setup autostart script with countdown and reboot
+setup_autostart_with_reboot() {
+    echoinfo "Setting up autostart script with reboot countdown"
+
+    # Create .profile for user that runs reboot test
+    cat > /home/$_USER/.profile << 'EOFPROFILE'
+#!/bin/bash
+
+# Only run on tty1
+[[ $(tty) != /dev/tty1 ]] && exit 0
+
+COUNTER_FILE="/var/reboot-test-count"
+MAX_ITERATIONS=50
+COUNTDOWN=30
+
+# Initialize or read counter
+if [ ! -f "$COUNTER_FILE" ]; then
+    echo "1" > "$COUNTER_FILE"
+fi
+
+CURRENT_COUNT=$(cat "$COUNTER_FILE")
+
+# Check if we've reached max iterations
+if [ "$CURRENT_COUNT" -gt "$MAX_ITERATIONS" ]; then
+    clear
+    echo "========================================"
+    echo "  REBOOT TEST COMPLETED!"
+    echo "========================================"
+    echo ""
+    echo "Completed $MAX_ITERATIONS successful reboots"
+    echo ""
+    echo "Test results logged to /var/log/busybox-reboot-test.log"
+    echo ""
+    echo "========================================"
+    exit 0
+fi
+
+# Display current iteration
+clear
+echo "========================================"
+echo "  BUSYBOX REBOOT TEST"
+echo "========================================"
+echo ""
+echo "Iteration: $CURRENT_COUNT / $MAX_ITERATIONS"
+echo ""
+echo "Testing reboot mechanism from line 2524:"
+echo "sudo nohup systemd-run --on-active=5s ..."
+echo ""
+echo "Countdown to reboot:"
+
+# Countdown
+for i in $(seq $COUNTDOWN -1 1); do
+    printf "\r  Rebooting in %2d seconds... " $i
+    sleep 1
+done
+
+echo ""
+echo ""
+echo "Incrementing counter and triggering reboot..."
+
+# Increment counter
+NEXT_COUNT=$((CURRENT_COUNT + 1))
+echo "$NEXT_COUNT" > "$COUNTER_FILE"
+
+# Log the reboot
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Iteration $CURRENT_COUNT: Executing reboot" >> /var/log/busybox-reboot-test.log
+
+# Execute reboot using the EXACT same method as line 2524
+sudo nohup systemd-run --on-active=5s --timer-property=AccuracySec=100ms /usr/bin/sudo /sbin/shutdown -r now "Reboot test iteration $CURRENT_COUNT" &
+
+# Wait a bit to ensure the reboot command is processed
+sleep 10
+EOFPROFILE
+
+    chown $_USER:$_USER /home/$_USER/.profile
+    chmod +x /home/$_USER/.profile
+
+    echosuccess "Autostart script configured"
+}
+
+# Function: Initialize test
+initialize_test() {
+    echoinfo "Initializing reboot test"
+
+    # Reset counter
+    echo "1" > $_COUNTER_FILE
+
+    # Create log file
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Reboot test initialized" > /var/log/busybox-reboot-test.log
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Target: $MAX_ITERATIONS iterations" >> /var/log/busybox-reboot-test.log
+
+    echosuccess "Test initialized - counter set to 1"
+}
+
+# Main execution
+main() {
+    echo "========================================" | tee -a $_LOGFILE
+    echo "  BUSYBOX REBOOT TEST SETUP" | tee -a $_LOGFILE
+    echo "========================================" | tee -a $_LOGFILE
+    echo "" | tee -a $_LOGFILE
+
+    echoinfo "Starting reboot test setup..."
+
+    # Step 1: Create user
+    create_test_user
+
+    # Step 2: Setup autologin
+    setup_autologin
+
+    # Step 3: Setup autostart with reboot mechanism
+    setup_autostart_with_reboot
+
+    # Step 4: Initialize test
+    initialize_test
+
+    echo "" | tee -a $_LOGFILE
+    echosuccess "Setup complete!"
+    echo "" | tee -a $_LOGFILE
+    echo "========================================" | tee -a $_LOGFILE
+    echo "  READY TO START TEST" | tee -a $_LOGFILE
+    echo "========================================" | tee -a $_LOGFILE
+    echo "" | tee -a $_LOGFILE
+    echo "  Test will run automatically on next reboot" | tee -a $_LOGFILE
+    echo "  User 'busybox' will auto-login on tty1" | tee -a $_LOGFILE
+    echo "  Reboot countdown: 30 seconds" | tee -a $_LOGFILE
+    echo "  Total iterations: $MAX_ITERATIONS" | tee -a $_LOGFILE
+    echo "" | tee -a $_LOGFILE
+    echo "  Type 'reboot' to start the test" | tee -a $_LOGFILE
+    echo "" | tee -a $_LOGFILE
+    echo "========================================" | tee -a $_LOGFILE
+}
+
+# Run main function
+main
