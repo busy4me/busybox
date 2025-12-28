@@ -3,9 +3,10 @@
 # Author: Claude Code for testing Stage 1 reboot issue
 set -euo pipefail
 PROJECT="busybox-reboot-test"
-_LOGFILE=/var/log/${PROJECT}.log
 _USER="busybox"
-_COUNTER_FILE="/var/reboot-test-count"
+_USER_HOME="/home/$_USER"
+_LOGFILE=${_USER_HOME}/${PROJECT}.log
+_COUNTER_FILE="${_USER_HOME}/reboot-test-count"
 _MAX_ITERATIONS=50
 . /usr/bin/bashcolors 2>/dev/null || true  # Load bash colors
 
@@ -17,6 +18,17 @@ echoerror() {  # Log error message
 }
 echosuccess() {  # Log success message
     echo -e "\e[32m[SUCCESS]\e[0m $*" | tee -a $_LOGFILE
+}
+
+install_sudo() {  # Install sudo package if not present
+    if ! command -v sudo &> /dev/null; then
+        echoinfo "Installing sudo package..."
+        apt-get update -qq
+        apt-get install -y -qq sudo
+        echosuccess "sudo installed successfully"
+    else
+        echoinfo "sudo already installed"
+    fi
 }
 
 create_test_user() {  # Create busybox user with sudo privileges
@@ -57,7 +69,9 @@ setup_autostart_with_reboot() {  # Create .profile with reboot test countdown
     cat > /home/$_USER/.profile << 'EOFPROFILE'  # Create user .profile
 #!/bin/bash
 [[ $(tty) != /dev/tty1 ]] && exit 0  # Only run on tty1
-COUNTER_FILE="/var/reboot-test-count"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"  # Ensure sudo in PATH
+COUNTER_FILE="/home/busybox/reboot-test-count"
+LOG_FILE="/home/busybox/busybox-reboot-test.log"
 MAX_ITERATIONS=50
 COUNTDOWN=30
 if [ ! -f "$COUNTER_FILE" ]; then  # Initialize counter if not exists
@@ -72,7 +86,7 @@ if [ "$CURRENT_COUNT" -gt "$MAX_ITERATIONS" ]; then  # Check if test completed
     echo ""
     echo "Completed $MAX_ITERATIONS successful reboots"
     echo ""
-    echo "Test results logged to /var/log/busybox-reboot-test.log"
+    echo "Test results logged to $LOG_FILE"
     echo ""
     echo "========================================"
     exit 0
@@ -97,7 +111,7 @@ echo ""
 echo "Incrementing counter and triggering reboot..."
 NEXT_COUNT=$((CURRENT_COUNT + 1))  # Increment counter
 echo "$NEXT_COUNT" > "$COUNTER_FILE"
-echo "$(date '+%Y-%m-%d %H:%M:%S') - Iteration $CURRENT_COUNT: Executing reboot" >> /var/log/busybox-reboot-test.log  # Log the reboot
+echo "$(date '+%Y-%m-%d %H:%M:%S') - Iteration $CURRENT_COUNT: Executing reboot" >> "$LOG_FILE"  # Log the reboot
 sudo nohup systemd-run --on-active=5s --timer-property=AccuracySec=100ms /usr/bin/sudo /sbin/shutdown -r now "Reboot test iteration $CURRENT_COUNT" &  # Execute reboot (EXACT line 2524 method)
 sleep 10  # Wait to ensure reboot command is processed
 EOFPROFILE
@@ -109,8 +123,10 @@ EOFPROFILE
 initialize_test() {  # Reset counter and create log file
     echoinfo "Initializing reboot test"
     echo "1" > $_COUNTER_FILE  # Reset counter to 1
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Reboot test initialized" > /var/log/busybox-reboot-test.log  # Create log
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Target: $_MAX_ITERATIONS iterations" >> /var/log/busybox-reboot-test.log
+    chown $_USER:$_USER $_COUNTER_FILE  # Set ownership to busybox user
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Reboot test initialized" > $_LOGFILE  # Create log
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Target: $_MAX_ITERATIONS iterations" >> $_LOGFILE
+    chown $_USER:$_USER $_LOGFILE  # Set ownership to busybox user
     echosuccess "Test initialized - counter set to 1"
 }
 
@@ -120,10 +136,11 @@ main() {  # Main setup execution
     echo "========================================" | tee -a $_LOGFILE
     echo "" | tee -a $_LOGFILE
     echoinfo "Starting reboot test setup..."
-    create_test_user  # Step 1: Create user
-    setup_autologin  # Step 2: Setup autologin
-    setup_autostart_with_reboot  # Step 3: Setup autostart with reboot
-    initialize_test  # Step 4: Initialize test
+    install_sudo  # Step 1: Install sudo package
+    create_test_user  # Step 2: Create user and add to sudoers
+    setup_autologin  # Step 3: Setup autologin
+    setup_autostart_with_reboot  # Step 4: Setup autostart with reboot
+    initialize_test  # Step 5: Initialize test
     echo "" | tee -a $_LOGFILE
     echosuccess "Setup complete!"
     echo "" | tee -a $_LOGFILE
