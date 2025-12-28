@@ -110,7 +110,7 @@ initialize_test() {  # Reset counter and create log file
     echoinfo "Initializing reboot test"
     echo "1" > $_COUNTER_FILE  # Reset counter to 1
     echo "$(date '+%Y-%m-%d %H:%M:%S') - Reboot test initialized" > /var/log/busybox-reboot-test.log  # Create log
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - Target: $MAX_ITERATIONS iterations" >> /var/log/busybox-reboot-test.log
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - Target: $_MAX_ITERATIONS iterations" >> /var/log/busybox-reboot-test.log
     echosuccess "Test initialized - counter set to 1"
 }
 
@@ -134,7 +134,7 @@ main() {  # Main setup execution
     echo "  Test will run automatically on next reboot" | tee -a $_LOGFILE
     echo "  User 'busybox' will auto-login on tty1" | tee -a $_LOGFILE
     echo "  Reboot countdown: 30 seconds" | tee -a $_LOGFILE
-    echo "  Total iterations: $MAX_ITERATIONS" | tee -a $_LOGFILE
+    echo "  Total iterations: $_MAX_ITERATIONS" | tee -a $_LOGFILE
     echo "" | tee -a $_LOGFILE
     echo "  Type 'reboot' to start the test" | tee -a $_LOGFILE
     echo "" | tee -a $_LOGFILE
