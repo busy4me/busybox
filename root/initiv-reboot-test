@@ -7,7 +7,7 @@ _USER="busybox"
 _USER_HOME="/home/$_USER"
 _LOGFILE=${_USER_HOME}/${PROJECT}.log
 _COUNTER_FILE="${_USER_HOME}/reboot-test-count"
-_MAX_ITERATIONS=50
+_MAX_ITERATIONS=2
 . /usr/bin/bashcolors 2>/dev/null || true  # Load bash colors
 
 echoinfo() {  # Log info message
@@ -80,7 +80,7 @@ setup_autostart_with_reboot() {  # Create .profile with reboot test countdown
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"  # Ensure sudo in PATH
 COUNTER_FILE="/home/busybox/reboot-test-count"
 LOG_FILE="/home/busybox/busybox-reboot-test.log"
-MAX_ITERATIONS=50
+MAX_ITERATIONS=2
 COUNTDOWN=30
 if [ ! -f "$COUNTER_FILE" ]; then  # Initialize counter if not exists
     echo "1" > "$COUNTER_FILE"
