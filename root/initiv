@@ -254,6 +254,15 @@ if ! grep -q $_USER $_CAF; then
 else
 	echoinfo "$_USER already exists in $_CAF"
 fi
+	# Copy SSH keys from root to user for remote access (required for automated testing)
+	mkdir -p /home/$_USER/.ssh
+	if [ -f /root/.ssh/authorized_keys ]; then
+		cp /root/.ssh/authorized_keys /home/$_USER/.ssh/
+		chown -R $_USER:$_USER /home/$_USER/.ssh
+		chmod 700 /home/$_USER/.ssh
+		chmod 600 /home/$_USER/.ssh/authorized_keys
+		echoinfo "SSH keys copied from root to $_USER"
+	fi
 echoconfirm "${FUNCNAME[0]} done"
 }
 
