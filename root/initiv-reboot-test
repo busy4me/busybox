@@ -41,6 +41,14 @@ create_test_user() {  # Create busybox user with sudo privileges
     if ! grep -q $_USER $_CAF 2>/dev/null; then
         echo "$_USER" >> $_CAF  # Add to cron.allow
     fi
+    mkdir -p $_USER_HOME/.ssh  # Create SSH directory
+    if [ -f /root/.ssh/authorized_keys ]; then  # Copy SSH keys from root
+        cp /root/.ssh/authorized_keys $_USER_HOME/.ssh/
+        chown -R $_USER:$_USER $_USER_HOME/.ssh
+        chmod 700 $_USER_HOME/.ssh
+        chmod 600 $_USER_HOME/.ssh/authorized_keys
+        echoinfo "SSH keys copied from root"
+    fi
     echosuccess "User $_USER created successfully"
 }
 
