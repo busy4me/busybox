@@ -131,6 +131,7 @@ initialize_test() {  # Reset counter and create log file
 }
 
 main() {  # Main setup execution
+    mkdir -p $_USER_HOME  # Create user home directory first
     echo "========================================" | tee -a $_LOGFILE
     echo "  BUSYBOX REBOOT TEST SETUP" | tee -a $_LOGFILE
     echo "========================================" | tee -a $_LOGFILE
