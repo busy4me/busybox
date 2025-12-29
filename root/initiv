@@ -2523,9 +2523,9 @@ case $1 in
 		echo "$(date '+%Y-%m-%d %H:%M:%S') - Stage 1 completed" >> /var/log/busybox-stages.log
 		# Disable services in background
 		echoinfo "Disabling services before reboot..."
-		(sleep 3; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_BUSY_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_BUSY_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) &
-		(sleep 6; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_INITIV_1_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_INITIV_1_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) &
-		wait  # Wait for service disable jobs to complete
+		(sleep 3; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_BUSY_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_BUSY_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) & _DISABLE_JOB1=$!
+		(sleep 6; echo "$(date '+%Y-%m-%d %H:%M:%S') - Disabling $_INITIV_1_SERVICE" >> /var/log/busybox-stages.log; sudo systemctl disable $_INITIV_1_SERVICE 2>&1 | tee -a /var/log/busybox-stages.log) & _DISABLE_JOB2=$!
+		wait $_DISABLE_JOB1 $_DISABLE_JOB2  # Wait only for specific service disable jobs (not all background processes)
 		# Schedule reboot using systemd-run (independent of this script)
 		echoinfo "Scheduling system reboot in 5 seconds..."
 		echo "$(date '+%Y-%m-%d %H:%M:%S') - Scheduling reboot via systemd-run" >> /var/log/busybox-stages.log
