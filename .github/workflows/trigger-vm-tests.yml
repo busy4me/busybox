@@ -33,7 +33,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.DISPATCH_TOKEN }}
-          repository: busy4me/dev
+          repository: busy4me/DevOps
           event-type: ${{ steps.event.outputs.type }}
           client-payload: |
             {
@@ -46,11 +46,11 @@ jobs:
 
       - name: Notify completion
         run: |
-          echo "✓ Test request dispatched to busy4me/dev infrastructure"
+          echo "✓ Test request dispatched to busy4me/DevOps infrastructure"
           echo "Workflow: ${{ steps.event.outputs.workflow }}"
           echo "Event: ${{ steps.event.outputs.type }}"
           echo "Branch: ${{ github.ref_name }}"
           echo "Commit: ${{ github.sha }}"
           echo ""
           echo "Monitor test execution at:"
-          echo "https://github.com/busy4me/dev/actions"
+          echo "https://github.com/busy4me/DevOps/actions"
