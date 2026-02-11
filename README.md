@@ -4,7 +4,8 @@
 
 **Automated Virtual Assistant Platform for Linux**
 
-[![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)](https://github.com/busy4me/busybox)
+[![Version](https://img.shields.io/badge/version-1.1.23--beta-blue.svg)](https://github.com/busy4me/busybox/releases)
+[![Status](https://img.shields.io/badge/status-Beta-orange.svg)](https://github.com/busy4me/busybox)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)](https://github.com/busy4me/busybox)
 
@@ -72,155 +73,47 @@ wget https://raw.githubusercontent.com/busy4me/busybox/main/root/init-0 && bash 
 
 ## 📖 Usage
 
-### Basic Syntax
+### Quick Examples
 
+**Social Media Operations:**
 ```bash
-busy [--option=value]... [:place]
+busy --like="https://socialportal.com/fanpage/post" :0  # Like a post
+busy --follow="https://socialportal.com/profile" :2     # Follow profile
+busy --comment="Great!" --url="socialportal.com/post"   # Comment
 ```
 
-or
-
+**Content Publishing:**
 ```bash
-busy [sub_command] [--option=value]... [:place]
+busy --post="database.table.record" :5  # Publish from database
+busy --share="https://example.com" :1   # Share content
 ```
 
-### Command Examples
-
-#### Social Media Operations
-
-**Like a post:**
+**Database Operations:**
 ```bash
-busy --like="https://socialportal.com/fanpage/post" :0
+busy --db=show                          # Show all tables
+busy --db=show --table="fb_posts"       # Show table records
+busy --db=add --table="fb_posts" --data="content"  # Add record
 ```
 
-**Follow a profile:**
+**System Operations:**
 ```bash
-busy --follow="https://socialportal.com/profile" :2
+busy --restart :5       # Restart display :5
+busy --cron=status      # Check cron status
+busy --clip-clear       # Clear clipboard
 ```
 
-**Share content:**
-```bash
-busy --share="https://example.com" --url="https://socialportal.com/group_name" :1
-```
-
-**Comment on a post:**
-```bash
-busy --comment="Great content!" --url="socialportal.com/groups/example/post/123456"
-```
-
-**Join a group:**
-```bash
-busy --join="https://socialportal.com/group_name" :1
-```
-
-#### Content Publishing
-
-**Publish a post:**
-```bash
-busy --post="database.table.record" :5
-```
-> Posts are fetched from database. Without value, uses oldest post from default table.
-
-**Subscribe to a channel:**
-```bash
-busy --subscribe="https://example.com" :1
-```
-
-#### Live Streaming
-
-**Start streaming:**
-```bash
-busy --live=start --url="rtmp://live-api.platform.com:80/api=1&key=YOUR_KEY" :0
-```
-
-**Stop streaming:**
-```bash
-busy --live=stop :0
-```
-
-**Check stream status:**
-```bash
-busy --live=status :0
-```
-
-#### Database Operations
-
-**Show all tables:**
-```bash
-busy --db=show
-```
-
-**Show table records:**
-```bash
-busy --db=show --table="database.table"
-```
-
-**Add record:**
-```bash
-busy --db=add --table="database.table" --data="field1,field2,field3"
-```
-
-**Update record:**
-```bash
-busy --db=update --table="database.table.record_id" --data="new_data"
-```
-
-**Drop table:**
-```bash
-busy --db=drop --table="database.table"
-```
-
-#### System Operations
-
-**Clear clipboard:**
-```bash
-busy --clip-clear
-# or
-busy -cc
-```
-
-**Restart display:**
-```bash
-busy --restart :5        # restart DISPLAY:5
-busy --restart=all       # restart all displays
-```
-
-**Screen management:**
-```bash
-busy --screen=status                    # show screen sessions
-busy --screen=on --cmd="htop"          # run htop in screen
-```
-
-**Cron management:**
-```bash
-busy --cron=on           # enable cron
-busy --cron=off          # disable cron
-busy --cron=status       # check cron status
-```
-
-### Authentication
-
-**Login to a portal:**
-```bash
-busy --login --url="https://socialportal.com" :1
-```
+📚 **Full documentation**: See [Usage Guide](docs/usage.md) for complete command reference.
 
 ## 🗄️ Database Tables
 
-Busybox manages various database tables for different platforms:
+Busybox uses local databases to manage content and platform interactions:
 
-- `socialmedia` - General social media data
-- `fb_user` - Facebook user profiles
-- `fb_posts` - Facebook posts queue
-- `fb_groups` - Facebook groups
-- `fb_group__metadata` - Group metadata
-- `fb_people` - People database
-- `fb_friends` - Friends list
-- `fb_pages` - Facebook pages
-- `fb_page__metadata` - Page metadata
-- `fb_plan` - Scheduling plans
-- `yo_user` - YouTube user data
-- `in_user` - Instagram user data
+- **Facebook**: `fb_user`, `fb_posts`, `fb_groups`, `fb_pages`, `fb_plan`
+- **YouTube**: `yo_user`
+- **Instagram**: `in_user`
+- **General**: `socialmedia` (shared data)
+
+📚 **Full documentation**: See [Database Tables](docs/database-tables.md) for detailed schema and operations.
 
 ## 🔐 Remote Access
 
@@ -230,6 +123,8 @@ Access your Busybox instance via SSH:
 ssh 192.168.1.23 -p 22
 su busybox
 ```
+
+📚 **Documentation**: See [Usage Guide](docs/usage.md#remote-access) for advanced access methods.
 
 ## 🏗️ Architecture
 
@@ -278,13 +173,10 @@ Update Busybox components:
 update --full              # Update all files
 update --binaries          # Update binary files only
 update --busy              # Update busy executable
-update --cron_task         # Update cron tasks
-update --logrotate         # Update log rotation config
-update --tint2rc           # Update tint2 configuration
-update --openbox           # Update OpenBox config
-update [path/]file         # Update specific file
 update -h                  # Display help
 ```
+
+📚 **Full documentation**: See [Usage Guide](docs/usage.md#update-system) for all update options.
 
 ## 📚 Documentation
 

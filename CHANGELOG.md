@@ -5,6 +5,23 @@ All notable changes to BusyBox project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.23-beta] - 2026-02-10
+
+### Fixed
+- **CRITICAL**: Fixed deadlock in Stage 1 installation where `wait` command hung on background `tee` process (commit fa89a02)
+- Fixed Stage 1 reboot reliability - now waits only for specific background jobs instead of all processes
+- Fixed SSH key propagation - keys are now correctly copied from root to busybox user for remote access
+
+### Changed
+- Reorganized documentation structure - moved USAGE and Database Tables to separate files in `docs/`
+- Updated version badges to reflect Beta status
+- Improved CI/CD infrastructure naming (dev → DevOps repository)
+
+### Added
+- Comprehensive troubleshooting documentation in `docs/troubleshooting/`
+- Detailed analysis of deadlock issue with root cause and resolution steps
+- Documentation for known issues and workarounds
+
 ## [1.0.1] - 2025-11-24
 
 ### Fixed
