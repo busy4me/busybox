@@ -158,6 +158,23 @@ BusyBox repository requires the following GitHub secret:
 
 ---
 
-**Last Updated**: 2026-02-10  
+**Last Updated**: 2026-02-11  
 **Author**: Dariusz Porczyński
-# Test automatic workflow trigger - 2026-02-11 16:31:46
+
+---
+
+## Verification Log
+
+### 2026-02-11: Automatic Trigger Test ✅
+
+**Test**: Verify automatic workflow trigger after repository rename (dev → DevOps)
+
+**Action**: Pushed commit 8004be7 to busybox main branch
+
+**Result**: 
+- ✅ Workflow `Trigger VM Tests` started automatically in busybox repo
+- ✅ `repository_dispatch` event sent to busy4me/DevOps
+- ✅ Workflow `Busybox Install` started in DevOps repo (Run 21911429617)
+- ✅ VM created successfully (deb12-ci-20260211T153213 on port 2201)
+
+**Conclusion**: Repository rename successful. All automatic triggers working correctly.
