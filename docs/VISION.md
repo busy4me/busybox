@@ -51,6 +51,15 @@ See [AUTH-FLOW.md](architecture/AUTH-FLOW.md) and [ARCHITECTURE.md](architecture
 ### 6. Minimal Footprint
 BusyBox is designed to run on minimal hardware: <2GB RAM, <2GB disk, sub-60s boot. It installs on top of a minimal Debian 12 base with no unnecessary packages.
 
+### 7. The Asset Economy (Win-Win)
+BusyBox operates on an **exchange economy** model. You get assets (e.g. 1000 likes) for free by participating in the network.
+
+- **You need**: 1000 likes for your fanpage.
+- **Network needs**: 2000 watch minutes for someone else's YouTube channel.
+- **Action**: Your BusyBox watches videos in the background (helping others), while 1000 other BusyBoxes click like on your page (helping you).
+
+This decentralized cooperation allows everyone to grow organically without spending money on ads.
+
 ---
 
 ## Target Users
