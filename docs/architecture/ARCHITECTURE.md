@@ -4,6 +4,31 @@
 
 ---
 
+## ⚠️ Fundamental Design Constraint — No Platform APIs
+
+**BusyBox does NOT use any social media or third-party platform APIs.**
+
+```
+❌ FORBIDDEN                          ✅ ALLOWED
+─────────────────────────────────     ─────────────────────────────────────
+Facebook Graph API                    Chrome rendering facebook.com
+Google OAuth / YouTube Data API       Chrome rendering youtube.com
+Instagram API / Meta for Developers   CV reading pixels from Chrome screen
+TikTok API, Twitter API, etc.         xdotool/pyautogui simulating input
+Any platform SDK or token             Screenshot analysis via OpenCV
+```
+
+All platform interaction happens through:
+1. **Chrome browser** — renders the real website as a human would see it
+2. **Computer Vision** (`locate` / `busyman`) — reads what is on screen
+3. **Input simulation** (`xdotool`, `pyautogui`) — clicks and types like a human
+
+BusyBox's own **Busyman API** is the internal translation layer between
+high-level plugin intents and low-level CV + input operations.
+See [AUTH-FLOW.md](AUTH-FLOW.md) for full Busyman specification.
+
+---
+
 ## Table of Contents
 
 1. [System Users & Roles](#1-system-users--roles)
@@ -11,7 +36,7 @@
 3. [Process Map](#3-process-map)
 4. [Screen Sessions](#4-screen-sessions)
 5. [Plugin Architecture](#5-plugin-architecture)
-6. [Computer Vision Engine](#6-computer-vision-engine)
+6. [Computer Vision Engine — Busyman](#6-computer-vision-engine--busyman)
 7. [Configuration System](#7-configuration-system)
 8. [Database Layer](#8-database-layer)
 9. [Network Architecture](#9-network-architecture)
@@ -227,11 +252,25 @@ screen -dmS myplatform:98 /opt/busybox/plugins/myplatform/myplatform
 
 ---
 
-## 6. Computer Vision Engine
+## 6. Computer Vision Engine — Busyman
 
-The `locate` script is the CV engine. It uses Python + OpenCV + PyAutoGUI to find UI elements on screen.
+BusyBox reads all information from the browser screen using Computer Vision.
+It never calls any platform API. The **Busyman API** is the internal translation
+layer between plugin intents and CV + input operations.
 
-### Location: `/opt/busybox/locate`
+```
+Plugin intent: "accept cookies"
+      │
+      ▼
+Busyman: locate fb-button-allow-all-cookies.jpg → found at (320, 450)
+      │
+      ▼
+xdotool mousemove 320 450 && xdotool click 1
+```
+
+### The `locate` script — low-level CV primitive
+
+Location: `/opt/busybox/locate`
 
 ```
 /opt/venv/bin/python /opt/busybox/locate -i <image.png> -a <action>

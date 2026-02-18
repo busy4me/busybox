@@ -1,364 +1,226 @@
 # BusyBox — Authentication & Pairing Flow
 
-> **6-digit code on phone → VM starts and logs into social media automatically.**
->
-> Based on: **OAuth 2.0 Device Authorization Grant** (RFC 8628)  
-> Used by: Google TV, Apple TV, GitHub CLI, Sony PlayStation — same proven pattern.
+> **6-digit code on phone → VM starts → Chrome opens → user logs in visually.**
+
+---
+
+## ⚠️ Core Design Constraint
+
+**BusyBox does NOT use any social media platform APIs.**
+
+This is a fundamental, non-negotiable design principle:
+
+- ❌ No Facebook API / Graph API
+- ❌ No Google OAuth for YouTube
+- ❌ No Instagram API
+- ❌ No platform SDK of any kind
+- ❌ No cookies imported from external services
+
+**Why**: Platform APIs require app registration, terms of service compliance, approval
+processes, and can be revoked at any time. BusyBox operates independently of all platforms.
+
+**How BusyBox works instead**:
+> BusyBox opens a real browser (Google Chrome), renders the actual platform website,
+> reads the screen using Computer Vision, and performs actions by simulating
+> keyboard and mouse input — exactly like a human would.
+
+The browser IS the interface. No API needed.
 
 ---
 
 ## Design Principles
 
-1. **Zero password entry on VM** — passwords never touch the VM directly
-2. **Zero password entry on keyboard** — user only taps on phone
-3. **First run only** — pair once, run forever
-4. **busybox.cc as stateless relay** — no persistent storage of credentials
-5. **Social OAuth** — platform tokens (not passwords) flow to VM
+1. **Screen-only** — all information comes from reading the browser screen (CV)
+2. **Input-only** — all actions are keyboard/mouse simulation (xdotool, pyautogui)
+3. **Zero API calls** — BusyBox never calls any platform API endpoint
+4. **Zero password storage** — credentials are entered by the user once, visually
+5. **Pair once** — after first setup, VM runs fully automatically
+6. **busybox.cc as relay only** — relay pairs phone with VM, never touches platform credentials
 
 ---
 
-## Complete Flow Diagram
+## How Login Actually Works
+
+BusyBox logs into social media platforms the same way a human does:
+
+```
+1. Chrome opens facebook.com (or youtube.com, instagram.com...)
+2. BusyBox detects the login form via Computer Vision (locate script)
+3. BusyBox fills in credentials using keyboard simulation (xdotool type)
+4. BusyBox clicks the login button via CV detection + mouse click
+5. Chrome session is saved to disk profile
+6. On next boot: Chrome loads saved session → already logged in
+```
+
+No API. No tokens. No OAuth. Just a browser and a camera.
+
+---
+
+## The Busyman API — BusyBox's Own Translation Layer
+
+> **"Busyman translates human-readable actions into CV-detected screen operations."**
+
+BusyBox has its **own internal API** called **Busyman**. It is the bridge between
+high-level intent ("scroll down", "click like", "check if blocked") and low-level
+screen operations (CV detection + keyboard/mouse events).
+
+### What Busyman Does
+
+```
+High-level action (intent)
+        │
+        ▼
+  ┌─────────────────────────────────────────┐
+  │              BUSYMAN API                │
+  │                                         │
+  │  1. Take screenshot of current screen   │
+  │  2. Run CV detection (locate script)    │
+  │  3. Identify UI elements on screen      │
+  │  4. Map intent → detected element       │
+  │  5. Execute: xdotool / pyautogui        │
+  └─────────────────────────────────────────┘
+        │
+        ▼
+Low-level execution (keyboard/mouse on DISPLAY :98)
+```
+
+### Busyman Action Examples
+
+| Intent | CV Detection | Action Executed |
+|--------|-------------|-----------------|
+| `accept_cookies` | find `fb-button-allow-all-cookies.jpg` | mouse click on found coords |
+| `scroll_feed` | window is active | `xdotool key Down` × N |
+| `detect_blocked` | find `fb--message-you-are-temporarily-blocked.png` | pause + wait |
+| `close_popup` | find `fb-cross-icon-black-cross-grey-circle.png` | click |
+| `navigate_to` url | Chrome address bar | `Ctrl+L` → type url → `Return` |
+| `detect_login_form` | find login input field | type credentials |
+| `watch_video` | find play button or LIVE indicator | click + wait |
+| `check_language` | clipboard analysis + CV | switch to English if needed |
+
+### Busyman is Platform-Agnostic
+
+The same Busyman interface works for any platform — Facebook, YouTube, Instagram, TikTok —
+because it only reads pixels and sends keystrokes. The platform-specific knowledge
+(what buttons look like, what text to search for) lives in **plugin image templates**.
+
+---
+
+## Complete Pairing Flow (6-digit code)
 
 ```
 VM (BusyBox)                busybox.cc (relay)           User's Phone
      │                             │                           │
      │──── POST /device/register ──→                           │
-     │     {vm_id, mesh_ip, caps}  │                           │
+     │     {vm_id, mesh_ip}        │                           │
      │←─── {code:"847 293",        │                           │
-     │      expires:300s} ─────────│                           │
+     │      expires:300s}          │                           │
      │                             │                           │
      │  [Welcome Screen on :98]    │                           │
-     │  ┌──────────────────────┐   │                           │
-     │  │ busybox.cc/pair      │   │   opens busybox.cc/pair ──│
-     │  │ code: 847 293        │   │←── POST {code:"847293"} ──│
-     │  │ [QR CODE]            │   │                           │
-     │  │ [████░░░] 4:32       │   │──→ {valid: true}          │
-     │  └──────────────────────┘   │    show platform picker ──│→
-     │                             │                           │  [Phone shows:]
-     │                             │                           │  ┌───────────────┐
-     │                             │                           │  │ Connect to:   │
-     │                             │                           │  │ [f] Facebook  │
-     │                             │                           │  │ [▶] YouTube   │
-     │                             │                           │  │ [📸] Instagram│
-     │                             │                           │  └───────────────┘
+     │  ┌──────────────────────┐   │   opens busybox.cc/pair ──│
+     │  │ busybox.cc/pair      │   │←── POST {code:"847293"} ──│
+     │  │ code: 847 293        │   │──→ {valid: true}          │
+     │  │ [QR CODE]            │   │    show platform picker ──│→
+     │  │ [████░░░] 4:32       │   │                           │
+     │  └──────────────────────┘   │                           │
      │                             │                           │
-     │                             │         [User taps FB]    │
-     │                             │←── OAuth: open            │
-     │                             │    facebook.com/oauth  ───│→
-     │                             │                           │  [Facebook OAuth]
-     │                             │                           │  "Allow BusyBox
-     │                             │                           │   to access your
-     │                             │                           │   account?"
-     │                             │                           │  [Allow]
-     │                             │←── FB returns token ──────│
-     │                             │    {access_token,         │
-     │                             │     cookies_b64,          │
-     │                             │     profile_name}         │
+     │                             │    [Phone shows:]         │
+     │                             │    ┌───────────────┐      │
+     │                             │    │ Start for:    │      │
+     │                             │    │ [f] Facebook  │      │
+     │                             │    │ [▶] YouTube   │      │
+     │                             │    │ [📸] Instagram│      │
+     │                             │    └───────────────┘      │
+     │                             │                           │
+     │                             │    [User selects FB]      │
+     │                             │←── POST {platform:"fb"}───│
+     │                             │──→ {status:"ok"}    ──────│→
+     │                             │                           │  [Phone shows:]
+     │                             │                           │  "✅ BusyBox starting
+     │                             │                           │   for Facebook.
+     │                             │                           │   You can close this."
      │                             │                           │
      │──── GET /device/status ─────→                           │
-     │←─── {paired: true,          │                           │
-     │      platform: "facebook",  │                           │
-     │      cookies_b64: "...",    │                           │
-     │      profile: "Jan K."} ────│                           │
-     │                             │  [relay clears data]      │
+     │←─── {paired:true,           │                           │
+     │      platform:"facebook",   │  [relay forgets           │
+     │      start:true}            │   everything]             │
      │                             │                           │
-     │  [VM injects cookies        │                           │
-     │   into Chrome profile]      │                           │
-     │  [Chrome opens FB           │                           │
-     │   → already logged in]      │                           │
-     │  [busybox plugins start]    │                           │
+     │  [Chrome opens              │                           │
+     │   facebook.com]             │                           │
+     │  [CV detects login form]    │                           │
+     │  [Busyman fills login]      │                           │
+     │  [Logged in visually]       │                           │
+     │  [Session saved to disk]    │                           │
+     │  [Plugins start]            │                           │
      │                             │                           │
-     │  [saves: ~/.busybox/        │                           │
-     │   pairing.done]             │                           │
-     │  [next boot: skips flow]    │                           │
+     │  [saves pairing.done]       │                           │
+     │  [next boot: auto]          │                           │
 ```
 
----
+### What the relay passes to VM
 
-## Component Specifications
-
-### 1. VM — `welcome-screen` (first-run daemon)
-
-**Trigger**: runs on first boot if `~/.busybox/pairing.done` does NOT exist.
-
-**Script**: `/opt/busybox/welcome-screen` (Bash + Python)
-
-```bash
-#!/bin/bash
-# Welcome screen — runs only on first boot
-PROJECT="busybox"
-PAIRING_DONE="/home/$PROJECT/.busybox/pairing.done"
-RELAY="https://busybox.cc/api"
-VM_ID=$(cat /etc/machine-id)
-MESH_IP=$(zerotier-cli listnetworks 2>/dev/null | grep 932df01efb1ebd71 | awk '{print $NF}' | head -1)
-
-[[ -f "$PAIRING_DONE" ]] && exit 0  # already paired, skip
-
-# Step 1: Register VM with relay
-response=$(curl -sf -X POST "$RELAY/device/register" \
-  -H "Content-Type: application/json" \
-  -d "{\"vm_id\":\"$VM_ID\",\"mesh_ip\":\"$MESH_IP\"}" )
-CODE=$(echo "$response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['code'])")
-EXPIRES=$(echo "$response" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['expires'])")
-
-# Step 2: Show welcome screen with code
-/opt/busybox/welcome-screen-ui "$CODE" "$EXPIRES" &
-
-# Step 3: Poll relay for pairing confirmation
-while true; do
-  status=$(curl -sf "$RELAY/device/status?vm_id=$VM_ID")
-  paired=$(echo "$status" | python3 -c "import sys,json; print(json.load(sys.stdin).get('paired','false'))")
-  [[ "$paired" == "true" ]] && break
-  sleep 3
-done
-
-# Step 4: Extract received data
-COOKIES=$(echo "$status" | python3 -c "import sys,json; print(json.load(sys.stdin)['cookies_b64'])")
-PLATFORM=$(echo "$status" | python3 -c "import sys,json; print(json.load(sys.stdin)['platform'])")
-PROFILE=$(echo "$status" | python3 -c "import sys,json; print(json.load(sys.stdin)['profile'])")
-
-# Step 5: Inject cookies into Chrome profile
-/opt/busybox/auth-inject-cookies "$PLATFORM" "$COOKIES"
-
-# Step 6: Mark as paired and start busybox
-mkdir -p /home/$PROJECT/.busybox
-echo "{\"platform\":\"$PLATFORM\",\"profile\":\"$PROFILE\",\"paired_at\":\"$(date -Iseconds)\"}" \
-  > "$PAIRING_DONE"
-kill %1  # close welcome screen UI
-
-# Step 7: Start plugins
-screen -dmS fb:98 /opt/busybox/plugins/fb/fb
-```
-
----
-
-### 2. VM — `welcome-screen-ui` (visual display on :98)
-
-Full-screen welcome window shown on DISPLAY :98 (visible via VNC on physical screen):
-
-```
-┌────────────────────────────────────────────────────────┐
-│                                                        │
-│                🤖 BusyBox — First Run                 │
-│                                                        │
-│  ┌──────────────────────────────────────────────────┐  │
-│  │                                                  │  │
-│  │   Step 1: Open on your phone                    │  │
-│  │                                                  │  │
-│  │            busybox.cc/pair                       │  │
-│  │                                                  │  │
-│  │   Step 2: Enter this code                       │  │
-│  │                                                  │  │
-│  │         ┌───┬───┬───┐   ┌───┬───┬───┐          │  │
-│  │         │ 8 │ 4 │ 7 │   │ 2 │ 9 │ 3 │          │  │
-│  │         └───┴───┴───┘   └───┴───┴───┘          │  │
-│  │                                                  │  │
-│  │   [████████████░░░░░░░░░░░░░] expires in 4:32  │  │
-│  │                                                  │  │
-│  │              ┌─────────────┐                    │  │
-│  │              │  [QR CODE]  │                    │  │
-│  │              │             │                    │  │
-│  │              └─────────────┘                    │  │
-│  │         scan to open busybox.cc/pair            │  │
-│  │                                                  │  │
-│  └──────────────────────────────────────────────────┘  │
-│                                                        │
-│  Waiting for pairing... ⠋                             │
-│                                                        │
-└────────────────────────────────────────────────────────┘
-```
-
-**Implementation options** (choose one):
-- `zenity` — simplest, already installed, limited styling
-- `python3 tkinter` — available in venv, full control
-- `HTML + python3 http.server + xdg-open` — modern, mobile-friendly preview
-
----
-
-### 3. busybox.cc — Relay API
-
-**Stateless relay** — Redis with 5-minute TTL. No persistent storage.
-
-#### Endpoints
-
-```
-POST /api/device/register
-  Body:  { vm_id, mesh_ip }
-  Returns: { code: "847 293", expires: 300, qr_url: "https://busybox.cc/pair?c=847293" }
-
-GET  /api/pair?code=847293                          ← phone opens this
-  Returns: HTML page (platform picker)
-
-POST /api/pair/confirm
-  Body:  { code, platform, cookies_b64, profile }  ← after OAuth on phone
-  Returns: { status: "ok" }
-
-GET  /api/device/status?vm_id=<id>                 ← VM polls this
-  Returns: { paired: false }
-        OR { paired: true, platform, cookies_b64, profile }
-  Note: data is deleted from Redis immediately after first successful read
-```
-
-#### Code Generation
-
-```
-6-digit code = random, human-friendly
-Format: "NNN NNN" (3+3 with space for readability)
-Collision avoidance: check Redis before issuing
-Expiry: 300 seconds (5 minutes)
-No sequential codes (random only)
-```
-
-#### Security
-
-```
-- HTTPS only (TLS 1.3)
-- Rate limiting: 10 register attempts per IP per hour
-- Code is single-use (deleted after pairing)
-- cookies_b64 deleted from Redis after VM reads them (one-time access)
-- No logging of cookies or tokens
-- busybox.cc never stores account credentials persistently
-```
-
----
-
-### 4. busybox.cc — Mobile Pair Page (`/pair`)
-
-Progressive Web App (works in any mobile browser):
-
-```
-busybox.cc/pair
-
-┌─────────────────────────┐
-│  🤖 BusyBox Pair        │
-│─────────────────────────│
-│                         │
-│  [8][4][7] - [2][9][3] │  ← 6 numeric inputs, auto-focus
-│                         │
-│       [Pair Device]     │
-│                         │
-└─────────────────────────┘
-
-After code verified:
-
-┌─────────────────────────┐
-│  ✅ Code accepted!      │
-│                         │
-│  Connect your account:  │
-│                         │
-│  [f] Continue with      │
-│      Facebook           │
-│                         │
-│  [▶] Continue with      │
-│      YouTube            │
-│                         │
-│  [📸] Continue with     │
-│       Instagram         │
-└─────────────────────────┘
-
-After platform OAuth:
-
-┌─────────────────────────┐
-│  ✅ Connected!           │
-│                         │
-│  Account: Jan Kowalski  │
-│  Platform: Facebook     │
-│                         │
-│  Your BusyBox is now    │
-│  starting...            │
-│                         │
-│  You can close this tab │
-└─────────────────────────┘
-```
-
----
-
-### 5. VM — `auth-inject-cookies` (cookie injection)
-
-After receiving `cookies_b64` from relay, inject into Chrome:
-
-```python
-#!/opt/venv/bin/python
-# auth-inject-cookies: injects platform session cookies into Chrome profile
-import sys, json, base64, sqlite3, os, time
-
-platform = sys.argv[1]   # "facebook", "youtube", "instagram"
-cookies_b64 = sys.argv[2]
-cookies = json.loads(base64.b64decode(cookies_b64))
-
-# Chrome cookies database location
-chrome_profile = "/home/busybox/.config/google-chrome/Default"
-cookies_db = f"{chrome_profile}/Cookies"
-
-# Platform domain mapping
-domains = {
-    "facebook": [".facebook.com", ".meta.com"],
-    "youtube":  [".youtube.com", ".google.com"],
-    "instagram": [".instagram.com"],
+```json
+{
+  "paired": true,
+  "platform": "facebook",
+  "start": true
 }
-
-conn = sqlite3.connect(cookies_db)
-cursor = conn.cursor()
-
-for cookie in cookies:
-    cursor.execute("""
-        INSERT OR REPLACE INTO cookies
-        (creation_utc, host_key, top_frame_site_key, name, value,
-         encrypted_value, path, expires_utc, is_secure, is_httponly,
-         last_access_utc, has_expires, is_persistent, priority,
-         samesite, source_scheme, source_port, is_same_party)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        int(time.time() * 1000000),  # creation_utc (microseconds)
-        cookie['domain'],
-        "",
-        cookie['name'],
-        cookie['value'],
-        b"",          # encrypted_value (Chrome will re-encrypt on next start)
-        cookie['path'],
-        int(cookie.get('expiry', 0) * 1000000),
-        cookie.get('secure', True),
-        cookie.get('httpOnly', False),
-        int(time.time() * 1000000),
-        1, 1, 1, 0, 1, 443, 0
-    ))
-
-conn.commit()
-conn.close()
-print(f"[AUTH] Injected {len(cookies)} cookies for {platform}")
 ```
+
+**That's all.** No credentials. No tokens. No cookies.
+The relay only tells the VM **which platform to open**. The VM does the rest visually.
 
 ---
 
-## How Social OAuth Works on Phone
+## Credential Flow — Visual Only
 
-When user taps "Continue with Facebook" on busybox.cc/pair:
+After VM receives `{platform: "facebook"}`:
 
 ```
-1. busybox.cc redirects → facebook.com/dialog/oauth
-   params: client_id=BUSYBOX_APP_ID
-           redirect_uri=https://busybox.cc/oauth/callback/facebook
-           scope=public_profile,email
-           response_type=code
-
-2. User sees Facebook's own login/consent screen on phone
-   (standard Facebook OAuth — user sees and trusts Facebook UI)
-
-3. Facebook redirects → busybox.cc/oauth/callback/facebook?code=XYZ
-
-4. busybox.cc exchanges code for access_token (server-side)
-
-5. busybox.cc uses token to get session cookies via Graph API
-   OR fetches cookies from Facebook's cookie endpoint
-
-6. busybox.cc stores {cookies_b64, profile_name} in Redis (TTL 60s)
-   linked to the pairing code
-
-7. VM reads cookies via /api/device/status
+Step 1: Chrome opens https://www.facebook.com
+Step 2: locate -i fb-login-form-email-field.png → found
+Step 3: xdotool click <coords> && xdotool type <email>
+Step 4: locate -i fb-login-form-password-field.png → found
+Step 5: xdotool click <coords> && xdotool type <password>
+Step 6: locate -i fb-login-button.png → found
+Step 7: xdotool click <coords>
+Step 8: wait for page load (CV detects home feed elements)
+Step 9: Chrome profile saved to disk with active session
+Step 10: On next boot → Chrome loads profile → already logged in
 ```
 
-**Important**: busybox.cc needs **Facebook App registration** (free, developer.facebook.com).  
-Same for YouTube (Google OAuth) and Instagram (Meta for Developers).
+### Where are credentials stored?
+
+Credentials are stored **locally on the VM only**, in encrypted files:
+
+```
+/opt/busy/<platform>/fb-login        ← email (read by busybox.cfg)
+/opt/busy/<platform>/fb-password     ← password (file permission 600)
+```
+
+These files are:
+- **Never sent to busybox.cc** (relay has zero knowledge of credentials)
+- **Never committed to git** (in .gitignore)
+- **Readable only by busybox user** (chmod 600)
+- **Set once** during first-run setup
+
+### First-Run Credential Entry
+
+On first run, after pairing, the VM shows a simple credential entry form:
+
+```
+[Welcome Screen — Step 2 of 2]
+
+Enter your Facebook credentials:
+(stored locally on this VM only, never sent anywhere)
+
+Email:    [________________________]
+Password: [________________________]
+
+              [Start BusyBox →]
+```
+
+This form is displayed on DISPLAY :98 (visible via VNC/NoVNC).
+After submission, credentials are saved locally and Chrome performs visual login.
 
 ---
 
@@ -367,102 +229,86 @@ Same for YouTube (Google OAuth) and Instagram (Meta for Developers).
 ```
 VM Boot
   │
-  ├─ [pairing.done exists?] ──YES──→ Skip to: Start Plugins
-  │
+  ├─ [pairing.done exists?] ──YES──→ [credentials exist?] ──YES──→ Start Plugins
+  │                                          │
+  │                                          NO
+  │                                          │
+  │                                   Show credential form
+  │                                   → save → Start Plugins
   NO
   │
   ├─→ Register with relay → Get code
-  │
-  ├─→ Show welcome screen (code + QR)
-  │
+  ├─→ Show welcome screen (code + QR + countdown)
   ├─→ Poll relay (every 3s, timeout 300s)
   │        │
-  │    [paired?] ──NO──→ sleep 3s → poll again
+  │    [paired?] ──NO──→ sleep 3s → poll
   │        │
-  │       YES
+  │       YES → receive: {platform: "facebook"}
   │        │
-  ├─→ Inject cookies into Chrome
-  │
+  ├─→ Show credential entry form
+  ├─→ Save credentials locally (chmod 600)
+  ├─→ Chrome opens platform URL
+  ├─→ Busyman: CV login flow
+  ├─→ Session saved to Chrome profile
   ├─→ Write pairing.done
-  │
-  └─→ Start Plugins (screen sessions)
-          │
-          └─→ fb:98 / fb-scroll:98 / fb-walking-around:98
+  └─→ Start Plugins
 ```
 
 ---
 
-## Security Summary
+## Security Model
 
-| Risk | Mitigation |
-|------|------------|
-| Code brute-force | Rate limiting (10/h/IP) + 5min expiry |
-| Cookies in transit | HTTPS only, one-time read |
-| Credentials on relay | Never stored — relay only brokers OAuth tokens |
-| Credentials on VM | Not stored — only session cookies (expire naturally) |
-| VM impersonation | vm_id = /etc/machine-id (unique per VM) |
-| Replay attack | Code deleted after use |
-| Long-term access | Chrome session expires naturally (platform-enforced) |
-| VM stolen/lost | User revokes access on Facebook/Google directly |
+| Item | Approach |
+|------|---------|
+| Credentials | Stored locally on VM only, chmod 600, never transmitted |
+| Relay knowledge | Only knows: vm_id, platform choice — zero credentials |
+| Platform access | Via real browser session, same as human user |
+| Session persistence | Chrome profile on disk, standard browser session |
+| Session expiry | If platform logs out: Busyman detects login form → re-login automatically |
+| VM compromise | Only local credentials at risk — revoke platform session from phone |
+| Code brute-force | Rate limiting (10/h/IP) + 5min expiry + single-use |
 
 ---
 
-## Implementation Roadmap
+## What Needs to be Built
 
-### Phase 1 — MVP (minimum viable pairing)
-
-```
-Week 1-2:
-  ✅ busybox.cc relay API (Go/Node.js, Redis, basic endpoints)
-  ✅ welcome-screen bash script (zenity dialog with code)
-  ✅ Cookie injection script (Python + SQLite)
-
-Week 3-4:
-  ✅ Mobile pair page (HTML/JS, code input)
-  ✅ Facebook OAuth integration
-  ✅ End-to-end test: code → pair → cookies → Chrome logged in
-```
-
-### Phase 2 — Full Product
+### busybox.cc relay (minimal)
 
 ```
-Week 5-6:
-  ✅ YouTube OAuth
-  ✅ Instagram OAuth
-  ✅ QR code generation on welcome screen
-  ✅ Progress bar + countdown on welcome screen
-  ✅ "Already paired" detection + skip logic
-
-Week 7-8:
-  ✅ Session expiry detection (auto re-pair when FB logs out)
-  ✅ Multiple accounts per VM (multiple platforms)
-  ✅ NoVNC integration (phone sees VM screen after pairing)
+POST /api/device/register  → returns {code, expires}
+GET  /api/pair?code=NNN    → returns HTML (platform picker)
+POST /api/pair/confirm     → receives {code, platform} → stores in Redis TTL 60s
+GET  /api/device/status    → returns {paired, platform} — deletes from Redis after read
 ```
 
-### Phase 3 — Production
+No OAuth integration. No platform credentials. Pure pairing relay.
 
-```
-  ✅ busybox.cc production deployment (NETOL infrastructure)
-  ✅ busybox.cc/pair PWA (installable on phone homescreen)
-  ✅ Analytics: how many VMs paired, platforms, success rate
-  ✅ Admin panel: monitor VM fleet
+### VM components
+
+| Component | Description | Language |
+|-----------|-------------|---------|
+| `welcome-screen` | Shows code + QR + countdown on DISPLAY :98 | Bash + Python tkinter |
+| `credential-form` | Simple form to enter login/password locally | Python tkinter |
+| `busyman` | CV → action translation API (core engine) | Python |
+| `login-flow/<platform>` | Platform-specific CV login sequence | Bash + Python |
+
+### Busyman — CV Action API
+
+```python
+# busyman: translate intent → CV detection → keyboard/mouse
+# Usage: /opt/venv/bin/python /opt/busybox/busyman <action> [args]
+
+busyman detect fb-login-form        # returns: found|not_found + coords
+busyman click  fb-login-button      # CV detect + mouse click
+busyman type   "email@example.com"  # keyboard input at cursor
+busyman scroll down 20              # xdotool key Down × 20
+busyman wait   fb-home-feed         # wait until element appears (timeout)
+busyman read   clipboard            # return current clipboard content
 ```
 
 ---
 
-## Technology Stack Recommendation
-
-| Component | Language | Why |
-|-----------|----------|-----|
-| Relay API | **Go** | Fast, low memory, single binary, easy deploy |
-| Redis | Redis 7 | Ephemeral storage, TTL built-in, fast |
-| Mobile page | **Vanilla JS + Alpine.js** | No build step, fast mobile load |
-| Welcome screen UI | **Python tkinter** | Already in venv, full control, no extra deps |
-| Cookie injector | **Python** | sqlite3 built-in, same venv |
-
----
-
-**Author**: Dariusz Porczyński  
-**Last Updated**: 2026-02-18  
-**Status**: Design Proposal — awaiting implementation  
+**Author**: Dariusz Porczyński
+**Last Updated**: 2026-02-18
+**Status**: Design Proposal — awaiting implementation
 **Version**: 1.1.23-beta

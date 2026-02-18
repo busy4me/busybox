@@ -28,7 +28,27 @@ Each BusyBox instance is a **self-contained VM** distributed to end users as an 
 ### 4. Plugin Architecture
 All platform-specific behavior is encapsulated in **plugins** (`/opt/busybox/plugins/<name>/`). A plugin can be written in any language — Bash, Python, Go, Ruby — and even powered by an AI agent. The system auto-detects the plugin type and runs it accordingly.
 
-### 5. Minimal Footprint
+### 5. Zero Platform API Dependency
+
+**BusyBox does NOT use any social media platform APIs.**
+
+> ❌ No Facebook API / Graph API  
+> ❌ No Google OAuth / YouTube Data API  
+> ❌ No Instagram API  
+> ❌ No TikTok API, Twitter API, or any other platform SDK  
+
+BusyBox interacts with platforms exclusively through a **real browser rendering real web pages**. All information is obtained by reading the screen (Computer Vision). All actions are performed by simulating keyboard and mouse input — exactly as a human would.
+
+This makes BusyBox:
+- **Platform-independent** — no app registrations, no API keys, no terms-of-service traps
+- **Resilient** — platform UI changes are handled by updating CV templates, not code
+- **Universal** — any website accessible in Chrome is automatable with BusyBox
+
+BusyBox's own internal translation layer — **Busyman API** — maps high-level intents
+("scroll feed", "detect blocked", "click like") to CV detections and input events.
+See [AUTH-FLOW.md](architecture/AUTH-FLOW.md) and [ARCHITECTURE.md](architecture/ARCHITECTURE.md) for details.
+
+### 6. Minimal Footprint
 BusyBox is designed to run on minimal hardware: <2GB RAM, <2GB disk, sub-60s boot. It installs on top of a minimal Debian 12 base with no unnecessary packages.
 
 ---

@@ -26,34 +26,39 @@
 **Design**: [docs/architecture/AUTH-FLOW.md](architecture/AUTH-FLOW.md)  
 **Pattern**: OAuth 2.0 Device Authorization Grant (RFC 8628) — same as Google TV, GitHub CLI
 
+> ⚠️ **No platform APIs used.** BusyBox does NOT use Facebook API, Google OAuth,
+> Instagram API or any other platform API. Login is performed visually by Chrome +
+> Computer Vision — the same way a human would log in.
+
 ### How it works (30 seconds)
 
 ```
 VM boots → shows code "847 293" on screen
-User opens busybox.cc/pair on phone → types code → taps "Facebook"
-Facebook OAuth on phone → user clicks Allow
-VM gets session cookies → Chrome logged in → plugins start
-Next boot: automatic, no code needed
+User opens busybox.cc/pair on phone → types code → selects platform
+busybox.cc relay tells VM: "start for Facebook"
+VM opens Chrome → CV detects login form → fills credentials locally → logged in
+Next boot: Chrome session already active → automatic
 ```
 
 ### What needs to be built
 
 | Component | Language | Size | Priority |
 |-----------|----------|------|---------|
-| `busybox.cc` relay API | Go + Redis | ~500 lines | 🔥 |
+| `busybox.cc` relay API | Go + Redis | ~300 lines | 🔥 |
 | `busybox.cc/pair` mobile page | HTML/JS | ~200 lines | 🔥 |
-| `welcome-screen` daemon (VM) | Bash + Python | ~150 lines | 🔥 |
-| `auth-inject-cookies` (VM) | Python | ~60 lines | 🔥 |
-| Facebook App registration | — | 30 min setup | 🔥 |
-| YouTube (Google) OAuth | Go | +100 lines | High |
-| Instagram OAuth | Go | +100 lines | High |
+| `welcome-screen` daemon (VM) | Bash + Python tkinter | ~150 lines | 🔥 |
+| `credential-form` (VM) | Python tkinter | ~80 lines | 🔥 |
+| `busyman` CV action API (VM) | Python | ~300 lines | 🔥 |
+| `login-flow/facebook` (VM) | Bash + busyman | ~100 lines | 🔥 |
+| `login-flow/youtube` (VM) | Bash + busyman | ~100 lines | High |
+| `login-flow/instagram` (VM) | Bash + busyman | ~100 lines | High |
 
 ### Open decisions
 
 - [ ] Where to host `busybox.cc` relay? (NETOL infra → Docker Swarm?)
 - [ ] Redis or SQLite for relay state? (Redis preferred — TTL built-in)
-- [ ] Facebook App ID — needs registration at developer.facebook.com
-- [ ] What happens when Chrome session expires? (auto re-pair or manual?)
+- [ ] What happens when Chrome session expires? (Busyman auto-detects login form → re-login)
+- [ ] Credential encryption at rest on VM? (currently chmod 600 plain text)
 
 ---
 
