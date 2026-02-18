@@ -215,6 +215,8 @@ For additional documentation, visit the [Busybox Wiki](https://github.com/busy4m
 
 Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
 
+See [docs/TEAMS.md](docs/TEAMS.md) for team structure and active tasks.
+
 ## 📄 License
 
 BusyBox 🤖 by busy4me ™️ is open-source software licensed under the **Apache License 2.0**.
@@ -231,7 +233,7 @@ See [LICENSE](LICENSE) file for details.
 - **Repository**: [github.com/busy4me/busybox](https://github.com/busy4me/busybox)
 - **Wiki**: [Documentation](https://github.com/busy4me/busybox/wiki)
 - **Issues**: [Bug Reports](https://github.com/busy4me/busybox/issues)
-test
+
 ---
 
 <div align="center">

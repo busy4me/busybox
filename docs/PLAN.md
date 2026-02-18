@@ -42,16 +42,27 @@ Next boot: Chrome session already active → automatic
 
 ### What needs to be built
 
-| Component | Language | Size | Priority |
-|-----------|----------|------|---------|
-| `busybox.cc` relay API | Go + Redis | ~300 lines | 🔥 |
-| `busybox.cc/pair` mobile page | HTML/JS | ~200 lines | 🔥 |
-| `welcome-screen` daemon (VM) | Bash + Python tkinter | ~150 lines | 🔥 |
-| `credential-form` (VM) | Python tkinter | ~80 lines | 🔥 |
-| `busyman` CV action API (VM) | Python | ~300 lines | 🔥 |
-| `login-flow/facebook` (VM) | Bash + busyman | ~100 lines | 🔥 |
-| `login-flow/youtube` (VM) | Bash + busyman | ~100 lines | High |
-| `login-flow/instagram` (VM) | Bash + busyman | ~100 lines | High |
+| Component | Team | Language | Size | Priority |
+|-----------|------|----------|------|---------|
+| `busybox.cc` relay API | 🟠 CLOUD | Go + Redis | ~300 lines | 🔥 |
+| `busybox.cc/pair` mobile page | 🟠 CLOUD | HTML/JS | ~200 lines | 🔥 |
+| `welcome-screen` daemon (VM) | 🟣 PRODUCT | Bash + Python tkinter | ~150 lines | 🔥 |
+| `credential-form` (VM) | 🟣 PRODUCT | Python tkinter | ~80 lines | 🔥 |
+| `busyman` CV action API (VM) | 🔵 VISION | Python | ~300 lines | 🔥 |
+| `login-flow/facebook` (VM) | 🔵 VISION | Bash + busyman | ~100 lines | 🔥 |
+| `login-flow/youtube` (VM) | 🔵 VISION | Bash + busyman | ~100 lines | High |
+| `login-flow/instagram` (VM) | 🔵 VISION | Bash + busyman | ~100 lines | High |
+| Fix `initiv` deadlock | 🟢 CORE OS | Bash | ~10 lines | 🔥 |
+| Enable `busybox.service` | 🟢 CORE OS | systemd | ~20 lines | 🔥 |
+
+### Team Structure
+
+See [TEAMS.md](TEAMS.md) for detailed responsibilities.
+
+- 🟢 **CORE OS** (System, Install, Boot)
+- 🔵 **VISION** (CV, Busyman, Logic)
+- 🟠 **CLOUD** (Auth, Relay, Network)
+- 🟣 **PRODUCT** (UX, Docs, i18n)
 
 ### Open decisions
 

@@ -1,68 +1,68 @@
-# BusyBox White Paper (PL)
+# BusyBox — White Paper
 
-> **Oprogramowanie do wspomagania konta w mediach społecznościowych.**
-> Wersja polska (zgodna z oryginałem dokumentu wizyjnego).
-
----
-
-## 1. OPIS
-
-BusyBox to oprogramowanie, które nie wymaga od użytkownika wiedzy informatycznej – oferuje ekstremalnie prostą instalację Plug&Play. Jest to specjalnie przygotowany system z oprogramowaniem Open Source do automatyzacji czynności, połączony z globalną siecią prywatną.
-
-## 2. IDEA
-
-1. **Automatyzacja**: BusyBox wykonuje zadania w internecie, głównie w portalach społecznościowych (YouTube, Facebook, Instagram, TikTok, Snapchat).
-2. **Niewykrywalność**: System jest przezroczysty dla portali. Wykonuje naturalne ruchy (jak człowiek), korzysta z prawdziwej przeglądarki. Wszystko widać na ekranie: ruchy myszą, przewijanie, klikanie.
-3. **Ekonomia Wymiany (Assety)**:
-   - Za darmo zdobywasz "assety" (np. 1000 lajków, 1000 subskrypcji).
-   - Mechanizm jest automatyczny. BusyBox klika u innych, inni klikają u Ciebie.
-
-### 📖 Przykład: Karolina i Adam
-
-- **Karolina** potrzebuje 1000 lajków na fanpage "Kolorowe Kwiatki Karoliny".
-- **Adam** potrzebuje 2000 minut oglądania na kanale "To Gry Adama".
-
-**Jak to działa?**
-1. BusyBox Karoliny "ogłasza" w prywatnej sieci: "Potrzebuję 1000 lajków".
-2. Zgłasza się 1000 innych BusyBoxów (z odpowiednią geolokalizacją) i klika.
-3. W międzyczasie BusyBox Karoliny (i inne) oglądają w tle kanał Adama.
-4. **Wynik**: Karolina ma lajki, Adam ma czas oglądania (monetyzację), a wszyscy zyskują assety. **Win-Win.**
-
-### Kluczowe zasady
-
-- **Dostępność**: BusyBox z Indonezji nie będzie klikał polskiego fanpage'a (chyba że pasuje językowo).
-- **Wydajność**: Jeden BusyBox może wykonać pracę dla 100 innych użytkowników dziennie i się nie zmęczy.
-- **Bezpieczeństwo**: Pełne szyfrowanie, podwójny firewall, brak API (działanie na interfejsie graficznym).
-
-## 3. ZASADY DZIAŁANIA
-
-### Niezależność (Zero API)
-Program **nie używa API** platform społecznościowych. To kluczowe dla przetrwania projektu.
-> *"Kiedyś stworzyłem oprogramowanie, które umarło, bo było oparte o API Facebooka. Facebook zmienił API i program przestał działać."*
-BusyBox używa normalnej strony internetowej i przeglądarki (Chrome/Chromium), widząc to samo, co użytkownik.
-
-### Widoczność
-Użytkownik widzi na żywo akcje wykonywane przez BusyBoxa. Wszystko dzieje się na ekranie (lokalnie lub zdalnie przez przeglądarkę).
-
-### Profilowanie
-System rozpoznaje tekst i obrazy, reagując na treści tak, aby odpowiednio "profilować" konto pod algorytmy mediów społecznościowych.
-
-## 4. INSTALACJA
-
-1. **VirtualBox / VMware**: Pobierz i zaimportuj gotowy obraz maszyny.
-2. **Docker**: Kontener dla zaawansowanych.
-3. **Hardware**: Możliwość instalacji na Raspberry Pi (24/7, niski pobór prądu).
-
-## 5. GLOSARIUSZ
-
-- **Asset**: Wartość w systemie wymiany (Lajk, Wyświetlenie, Subskrypcja, Obserwujący).
-- **Cel automatyzacji**: Portal lub platforma (FB, YT, TT, itp.).
-- **Karolina / Adam**: Persony reprezentujące typowych użytkowników systemu.
+> **Automated Social Media Assistant Platform.**
+> (English Version)
 
 ---
 
-**Kontakt i Społeczność**:
-- [Discord](https://discord.gg/USeAcPxEBY)
-- [Strona projektu](http://busybox.cc)
+## 1. DESCRIPTION
 
-Copyright © 2025 Busy Box Custom Computer
+BusyBox is software designed to support social media accounts without requiring technical knowledge from the user. It offers an extremely simple Plug&Play installation. It is a specially prepared system with Open Source software for task automation, connected to a global private network.
+
+## 2. THE IDEA
+
+1.  **Automation**: BusyBox performs tasks on the internet, mainly on social media platforms (YouTube, Facebook, Instagram, TikTok, Snapchat).
+2.  **Stealth**: The system is transparent to platforms. It executes natural movements (like a human) using a real browser. Everything is visible on the screen: mouse movements, scrolling, clicking.
+3.  **The Exchange Economy (Assets)**:
+    *   You gain "assets" for free (e.g., 1000 likes, 1000 subscribers).
+    *   The mechanism is automatic. Your BusyBox clicks for others, others click for you.
+
+### 📖 Example: Alice and Bob
+
+*   **Alice** is an indie game developer. She needs **1000 likes** for her new game's fanpage to gain traction.
+*   **Bob** is a tech reviewer. He needs **2000 watch minutes** on his YouTube channel to enable monetization.
+
+**How it works:**
+1.  Alice's BusyBox announces to the private network: "I need 1000 likes."
+2.  1,000 other BusyBoxes (with appropriate geolocation) respond and click "Like."
+3.  Meanwhile, Alice's BusyBox (and others) watches Bob's channel in the background.
+4.  **Result**: Alice gets likes, Bob gets watch time, and everyone earns assets. **Win-Win.**
+
+### Key Principles
+
+*   **Availability**: A BusyBox in Indonesia won't click a local Polish fanpage (unless language settings match).
+*   **Efficiency**: One BusyBox can perform work for 100 other users daily without getting tired.
+*   **Security**: Full encryption, double firewall, NO API usage (visual operation only).
+
+## 3. CORE PRINCIPLES
+
+### Independence (Zero API)
+The program **does NOT use** social media platform APIs. This is crucial for project survival.
+> *"I once created software that died because it relied on Facebook's API. Facebook changed the API, and the program stopped working."*
+BusyBox uses a normal website and a standard browser (Chrome/Chromium), seeing exactly what a human user sees.
+
+### Visibility
+The user sees actions performed by BusyBox in real-time. Everything happens on the screen (locally or remotely via a browser).
+
+### Profiling
+The system recognizes text and images, reacting to content to appropriately "profile" the account for social media algorithms.
+
+## 4. INSTALLATION
+
+1.  **VirtualBox / VMware**: Download and import the ready-made VM image.
+2.  **Docker**: Container for advanced users.
+3.  **Hardware**: Can be installed on Raspberry Pi (24/7 operation, low power consumption).
+
+## 5. GLOSSARY
+
+*   **Asset**: A value unit in the exchange system (Like, View, Subscription, Follow).
+*   **Automation Target**: A portal or platform (FB, YT, TT, etc.).
+*   **Alice / Bob**: Personas representing typical system users.
+
+---
+
+**Contact & Community**:
+*   [Discord](https://discord.gg/USeAcPxEBY)
+*   [Project Website](http://busybox.cc)
+
+Copyright © 2026 Busy Box Custom Computer

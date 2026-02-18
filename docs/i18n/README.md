@@ -9,6 +9,7 @@
 | Language | Code | Status | Location |
 |----------|------|--------|---------|
 | 🇬🇧 English | `en` | ✅ **Active (primary)** | `docs/` (root) |
+| 🇵🇱 Polish | `pl` | ✅ **Active** | `docs/i18n/pl/` |
 | 🇪🇸 Spanish | `es` | 🔲 Planned | `docs/i18n/es/` |
 | 🇩🇪 German | `de` | 🔲 Planned | `docs/i18n/de/` |
 | 🇫🇷 French | `fr` | 🔲 Planned | `docs/i18n/fr/` |
