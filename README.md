@@ -15,6 +15,19 @@
 
 ---
 
+## 📚 Documentation Index (Developer Track)
+
+| Document | Description |
+|----------|-------------|
+| [VISION.md](VISION.md) | Philosophy, goals, architecture overview |
+| [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Deep dive: displays, processes, plugins, config |
+| [process/PROCESS-FLOW.md](process/PROCESS-FLOW.md) | Step-by-step: installation → runtime → what's on screen |
+| [plugins/PLUGINS.md](plugins/PLUGINS.md) | Plugin system, CV engine, writing new plugins |
+| [i18n/README.md](i18n/README.md) | Multi-language documentation plan |
+| [reference/initiv.md](reference/initiv.md) | `initiv` installation script reference |
+
+---
+
 ## 📋 Overview
 
 **BusyBox 🤖 by busy4me ™️** is an open-source automation platform that runs continuously on Linux machines, handling routine online tasks through a virtual assistant. It provides internet-based control via web, smartphone, and tablet interfaces, operating securely behind firewalls without exposed ports.
