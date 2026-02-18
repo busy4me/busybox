@@ -19,11 +19,14 @@
 
 | Document | Description |
 |----------|-------------|
-| [VISION.md](VISION.md) | Philosophy, goals, architecture overview |
+| [WHITEPAPER.md](WHITEPAPER.md) | **Start Here** — White Paper (PL), vision & business model |
+| [VISION.md](VISION.md) | Philosophy, goals, architecture overview, session history |
+| [PLAN.md](PLAN.md) | Implementation plan, priorities, open decisions |
 | [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Deep dive: displays, processes, plugins, config |
+| [architecture/AUTH-FLOW.md](architecture/AUTH-FLOW.md) | 6-digit pairing design (OAuth RFC 8628) |
 | [process/PROCESS-FLOW.md](process/PROCESS-FLOW.md) | Step-by-step: installation → runtime → what's on screen |
 | [plugins/PLUGINS.md](plugins/PLUGINS.md) | Plugin system, CV engine, writing new plugins |
-| [i18n/README.md](i18n/README.md) | Multi-language documentation plan |
+| [i18n/README.md](i18n/README.md) | Multi-language documentation plan (12 languages) |
 | [reference/initiv.md](reference/initiv.md) | `initiv` installation script reference |
 
 ---
