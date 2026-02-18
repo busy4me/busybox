@@ -137,6 +137,31 @@ This documentation is currently available in:
 
 ---
 
+## Session History
+
+All AI-assisted development sessions for this project:
+
+| Session | Date | Topic |
+|---------|------|-------|
+| s001 | 2025-11-12 | Initial setup |
+| s002 | 2025-11-20 | Session notes & planning |
+| s003 | 2025-11-21 | First busybox installation |
+| s004 | 2025-11-21 | Install documentation |
+| s005 | 2025-11-22 | Roadmap notes |
+| s006 | 2025-11-23 | Multi-runner & DevOps CI setup |
+| s007 | 2025-12-16 | Debian 12 base image optimization |
+| s008 | 2025-12-18 | `initiv` reboot test (Stage 1/2 flow) |
+| s106 | 2026-02-07 | Project summary & v1.1.23-beta status |
+| s119 | 2026-02-10 | Pipeline trigger analysis |
+| s120 | 2026-02-11 | Beta release & repo rename |
+| s126 | 2026-02-12 | GitHub Actions runners restoration (lab1) |
+| s131 | 2026-02-18 | Live VM process analysis & /docs foundation |
+| s132 | 2026-02-18 | Authentication flow design (6-digit pairing) |
+
+→ Full plan and next steps: [PLAN.md](PLAN.md)
+
+---
+
 **Author**: Dariusz Porczyński  
 **Last Updated**: 2026-02-18  
 **Version**: 1.1.23-beta
