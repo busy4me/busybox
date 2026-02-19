@@ -38,18 +38,16 @@ ssh -A "$LAB1_HOST" \
     "ssh -p $VM_PORT $VM_TARGET 'systemctl stop busybox.service 2>/dev/null || true; sleep 1'"
 log "Service stopped ✓"
 
-# 3. Sync code via rsync through jump host
+# 3. Sync code via tar|ssh pipeline (avoids rsync version/jump-host issues)
 log "Syncing code..."
-rsync -az --delete \
-    --exclude '.git' \
-    --exclude '__pycache__' \
-    --exclude '*.pyc' \
-    --exclude 'data/' \
-    --exclude 'log/' \
-    --exclude 'tmp/' \
-    -e "ssh -A -o StrictHostKeyChecking=no -J $LAB1_HOST" \
-    "$LOCAL_SRC/" \
-    "$VM_TARGET:$BUSYBOX_DIR/"
+tar -czf - \
+    --exclude '.git' --exclude '__pycache__' --exclude '*.pyc' \
+    --exclude 'data' --exclude 'log' --exclude 'tmp' \
+    --no-xattrs 2>/dev/null \
+    -C "$LOCAL_SRC" . \
+| ssh -A -o StrictHostKeyChecking=no "$LAB1_HOST" \
+    "ssh -o StrictHostKeyChecking=no -p $VM_PORT $VM_TARGET \
+     'mkdir -p $BUSYBOX_DIR && tar -xzf - -C $BUSYBOX_DIR'"
 log "Code synced ✓"
 
 # 4. Fix permissions on VM
