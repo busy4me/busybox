@@ -46,12 +46,12 @@ Next boot: Chrome session already active → automatic
 |-----------|------|----------|------|---------|
 | `busybox.cc` relay API | 🟠 CLOUD | Go + Redis | ~300 lines | 🔥 |
 | `busybox.cc/pair` mobile page | 🟠 CLOUD | HTML/JS | ~200 lines | 🔥 |
-| `welcome-screen` daemon (VM) | 🟣 PRODUCT | Bash + Python tkinter | ~150 lines | 🔥 |
-| `credential-form` (VM) | 🟣 PRODUCT | Python tkinter | ~80 lines | 🔥 |
+| `welcome-screen` (NoVNC overlay) | 🟣 PRODUCT | HTML/CSS/JS | ~200 lines | 🔥 |
+| `credential-form` (HTML modal) | 🟣 PRODUCT | HTML/JS | ~100 lines | 🔥 |
 | `busyman` CV action API (VM) | 🔵 VISION | Python | ~300 lines | 🔥 |
 | `login-flow/facebook` (VM) | 🔵 VISION | Bash + busyman | ~100 lines | 🔥 |
-| `login-flow/youtube` (VM) | 🔵 VISION | Bash + busyman | ~100 lines | High |
-| `login-flow/instagram` (VM) | 🔵 VISION | Bash + busyman | ~100 lines | High |
+| NoVNC Integration (websockify) | 🟢 CORE OS | systemd/bash | ~50 lines | 🔥 |
+| Update `autostart` (:0 Chrome) | 🟢 CORE OS | Bash | ~10 lines | 🔥 |
 | Fix `initiv` deadlock | 🟢 CORE OS | Bash | ~10 lines | 🔥 |
 | Enable `busybox.service` | 🟢 CORE OS | systemd | ~20 lines | 🔥 |
 

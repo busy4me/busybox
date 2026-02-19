@@ -99,14 +99,34 @@ Solution:
 Future: NoVNC → user watches :98 stream from any web browser via HTTPS
 ```
 
-### Port Map
+### Web-based UI Architecture (New)
 
-| Service | Protocol | Bind Address | Port | Description |
-|---------|----------|--------------|------|-------------|
-| TigerVNC | TCP | 127.0.0.1 | 5998 | VNC server (display :98) |
-| SSH | TCP | 0.0.0.0 | 22 | SSH access (in VM) |
-| SSH (host) | TCP | 0.0.0.0 | 2201 | VirtualBox NAT forward to VM:22 |
-| NoVNC | TCP | 0.0.0.0 | 443 | **Planned** — HTTPS web access |
+The system is evolving from a native X11 setup to a pure Web-based Desktop model.
+
+```
+Core Principle: "Web-First"
+Everything the user sees is rendered via HTML/Canvas.
+```
+
+| Component | Architecture |
+|-----------|--------------|
+| **Display :0** | Chrome (Kiosk/App mode) running NoVNC client |
+| **Backend** | `websockify` bridging port 6080 (Web) ↔ 5998 (VNC) |
+| **Welcome Screen** | HTML overlay (`div#welcome`) inside NoVNC client |
+| **Taskbar** | HTML overlay (`div#taskbar`) replacing `tint2` |
+| **Dialogs** | HTML Modals replacing `zenity` |
+
+### Window Management Hacks
+
+To create a clean experience on the backend (Display :98):
+- **Y-Shift**: Chrome window is positioned at Y = -81. This hides the title bar, tabs, and address bar off-screen.
+- **Transparency**: Windows are manipulated using `transset` (opacity 0) during resizing/moving operations to prevent visual glitching ("eye-stabbing").
+
+### Multi-Display Scaling
+
+- **Display :98** (Backend) runs at high resolution (e.g. 1920x1080) for full content visibility.
+- **Display :0** (Frontend) runs at physical resolution (e.g. 800x600).
+- **NoVNC** handles client-side scaling (CSS/Canvas) to fit the backend image into the frontend viewport perfectly.
 
 ---
 
