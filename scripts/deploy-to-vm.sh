@@ -56,7 +56,7 @@ ssh -A "$LAB1_HOST" \
 log "Test deps installed ✓"
 # 5. Fix permissions on VM
 ssh -A "$LAB1_HOST" \
-    "ssh -p $VM_PORT $VM_TARGET 'chown -R busybox:busybox $BUSYBOX_DIR && chmod -R u+x $BUSYBOX_DIR/plugins $BUSYBOX_DIR/locate $BUSYBOX_DIR/busybox 2>/dev/null || true'"
+    "ssh -p $VM_PORT $VM_TARGET 'chown -R busybox:busybox $BUSYBOX_DIR && chmod +x $BUSYBOX_DIR/show-test-results $BUSYBOX_DIR/locate $BUSYBOX_DIR/busybox 2>/dev/null || true && chmod -R u+x $BUSYBOX_DIR/plugins 2>/dev/null || true'"
 log "Permissions fixed ✓"
 
 # 5. Run tests or restart service
