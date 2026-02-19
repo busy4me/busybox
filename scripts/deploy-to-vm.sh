@@ -50,7 +50,11 @@ tar -czf - \
      'mkdir -p $BUSYBOX_DIR && tar -xzf - -C $BUSYBOX_DIR'"
 log "Code synced ✓"
 
-# 4. Fix permissions on VM
+# 4. Ensure test dependencies installed in venv
+ssh -A "$LAB1_HOST" \
+    "ssh -p $VM_PORT $VM_TARGET '/opt/venv/bin/pip install -q pytest pytest-mock 2>&1 | tail -1'"
+log "Test deps installed ✓"
+# 5. Fix permissions on VM
 ssh -A "$LAB1_HOST" \
     "ssh -p $VM_PORT $VM_TARGET 'chown -R busybox:busybox $BUSYBOX_DIR && chmod -R u+x $BUSYBOX_DIR/plugins $BUSYBOX_DIR/locate $BUSYBOX_DIR/busybox 2>/dev/null || true'"
 log "Permissions fixed ✓"

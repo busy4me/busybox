@@ -1,0 +1,62 @@
+#!/bin/bash
+# show-test-results — Display test results overlay on DISPLAY :98
+# Reads /tmp/busybox-unit-tests.xml and /tmp/busybox-health.xml, shows xterm window
+DISPLAY="${DISPLAY:-:98}"
+XAUTH="/home/busybox/.Xauthority"
+UNIT_XML="/tmp/busybox-unit-tests.xml"
+HEALTH_XML="/tmp/busybox-health.xml"
+RESULT_FILE="/tmp/busybox-test-display.txt"
+WIN_TITLE="🤖 Busybox Test Results"
+
+parse_xml() {  # parse_xml FILE → prints "PASS/FAIL name" lines
+    local f="$1"
+    [ -f "$f" ] || { echo "  (no results file: $f)"; return; }
+    local tests failures
+    tests=$(grep -o 'tests="[0-9]*"' "$f" | head -1 | grep -o '[0-9]*')
+    failures=$(grep -o 'failures="[0-9]*"' "$f" | head -1 | grep -o '[0-9]*')
+    local passed=$(( ${tests:-0} - ${failures:-0} ))
+    echo "  Tests: $tests | Passed: $passed | Failed: ${failures:-0}"
+    # extract testcase names + failures
+    while IFS= read -r line; do
+        if echo "$line" | grep -q '<testcase'; then
+            name=$(echo "$line" | grep -o 'name="[^"]*"' | head -1 | sed 's/name="//;s/"//')
+            if echo "$line" | grep -q '/>'; then
+                echo "  ✅ $name"
+            fi
+        elif echo "$line" | grep -q '<failure'; then
+            echo "  ❌ (see above)"
+        fi
+    done < "$f"
+}
+
+{
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  🤖 BUSYBOX TEST RESULTS — $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    echo "[ UNIT TESTS — Busyman/locate (pytest) ]"
+    parse_xml "$UNIT_XML"
+    echo ""
+    echo "[ HEALTH CHECK — Live Busybox VM ]"
+    parse_xml "$HEALTH_XML"
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  Press Q or close window to dismiss"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+} > "$RESULT_FILE"
+
+# Kill any existing result window
+pkill -f "xterm.*Test.Results" 2>/dev/null || true
+sleep 0.3
+
+# Open xterm in top-right corner of :98 (800x600 display → position 450,10, size 340x580)
+DISPLAY="$DISPLAY" XAUTHORITY="$XAUTH" xterm \
+    -title "$WIN_TITLE" \
+    -geometry "58x32+440+5" \
+    -bg "#0d1117" \
+    -fg "#e6edf3" \
+    -fa "Monospace" -fs 9 \
+    -e "cat $RESULT_FILE; echo ''; read -rsn1 -p '' key" \
+    &
+
+echo "Test results displayed on DISPLAY $DISPLAY"

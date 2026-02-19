@@ -2,7 +2,7 @@ name: Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
     paths-ignore:
       - 'docs/**'
       - '**.md'
@@ -13,23 +13,120 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: busybox-tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  test:
+
+  # ── Job 1: Static checks (fast, no VM needed) ──────────────────────────────
+  static-checks:
+    name: Static Checks
     runs-on: [self-hosted, github-runner1-lab1]
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    - name: Check shell scripts syntax
-      run: |
-        find opt/busybox -type f -name "*.sh" -exec bash -n {} \;
-    - name: Verify executable permissions
-      run: |
-        find opt/busybox -type f -name "*.sh" -exec test -x {} \; -print
-    - name: Run basic tests
-      run: |
-        echo "✅ All tests passed"
-    - name: Display version
-      run: |
-        cat VERSION
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Shell syntax check
+        run: find opt/busybox -type f -name "*.sh" -exec bash -n {} \; && echo "✅ All shell scripts syntax OK"
+
+      - name: Executable permissions check
+        run: |
+          MISSING=$(find opt/busybox -type f -name "*.sh" ! -executable -print)
+          if [ -n "$MISSING" ]; then echo "❌ Missing +x: $MISSING"; exit 1; fi
+          echo "✅ All shell scripts executable"
+
+      - name: Version file present
+        run: test -f VERSION && echo "✅ VERSION=$(cat VERSION)"
+
+  # ── Job 2: Unit tests (pytest on live VM, no reinstall) ────────────────────
+  unit-tests:
+    name: Unit Tests (Busyman)
+    runs-on: [self-hosted, github-runner1-lab1]
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy code to dev VM
+        run: bash scripts/deploy-to-vm.sh
+        env:
+          LAB1_HOST: root@lab1.netol.io
+          VM_PORT: "2201"
+
+      - name: Run pytest on VM (generate JUnit XML)
+        run: |
+          bash scripts/deploy-to-vm.sh --test
+          # Collect XML from VM to runner workspace
+          ssh -A -o StrictHostKeyChecking=no root@lab1.netol.io \
+            "scp -o StrictHostKeyChecking=no -P 2201 root@localhost:/tmp/busybox-unit-tests.xml /tmp/busybox-unit-tests.xml" 2>/dev/null || true
+          scp -o StrictHostKeyChecking=no root@lab1.netol.io:/tmp/busybox-unit-tests.xml ./test-results-unit.xml 2>/dev/null || \
+            echo "<?xml version='1.0'?><testsuites><testsuite name='unit' tests='0'/></testsuites>" > ./test-results-unit.xml
+        env:
+          LAB1_HOST: root@lab1.netol.io
+          VM_PORT: "2201"
+
+      - name: Upload unit test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: test-results-unit.xml
+          retention-days: 30
+
+      - name: Publish unit test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: test-results-unit.xml
+          check_name: "Unit Tests — Busyman (pytest)"
+          comment_mode: off
+
+  # ── Job 3: Health check (live Busybox VM state) ────────────────────────────
+  health-check:
+    name: Health Check (Live VM)
+    runs-on: [self-hosted, github-runner1-lab1]
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    needs: unit-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Busybox health check
+        run: |
+          bash scripts/health-check.sh --xml ./test-results-health.xml
+        env:
+          LAB1_HOST: root@lab1.netol.io
+          VM_PORT: "2201"
+          XML_OUTPUT: ./test-results-health.xml
+
+      - name: Upload health check results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: health-check-results
+          path: test-results-health.xml
+          retention-days: 30
+
+      - name: Publish health check results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: test-results-health.xml
+          check_name: "Health Check — Live Busybox VM"
+          comment_mode: off
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🤖 Busybox Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Suite | File |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Unit Tests (pytest) | \`test-results-unit.xml\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Health Check (live VM) | \`test-results-health.xml\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch**: \`${{ github.ref_name }}\` | **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
