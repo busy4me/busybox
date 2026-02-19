@@ -62,9 +62,17 @@ log "Permissions fixed ✓"
 # 5. Run tests or restart service
 if [ "$RUN_TESTS" -eq 1 ]; then
     log "Running tests..."
+    TEST_RC=0
     ssh -A "$LAB1_HOST" \
         "ssh -p $VM_PORT $VM_TARGET 'cd $BUSYBOX_DIR && /opt/venv/bin/pytest tests/ -v 2>&1'" \
-        && log "Tests PASSED ✓" || { log "Tests FAILED ✗"; exit 1; }
+        && log "Tests PASSED ✓" || { TEST_RC=$?; log "Tests FAILED ✗"; }
+    # Show results overlay on VM display :98 (runs as busybox user, non-blocking)
+    log "Showing results on DISPLAY :98..."
+    ssh -A "$LAB1_HOST" \
+        "ssh -p $VM_PORT $VM_TARGET \
+         'su - busybox -s /bin/bash -c \"DISPLAY=:98 XAUTHORITY=/home/busybox/.Xauthority $BUSYBOX_DIR/show-test-results\" &'" \
+        2>/dev/null || log "show-test-results skipped (display not available)"
+    [ "$TEST_RC" -eq 0 ] || exit "$TEST_RC"
 else
     log "Restarting busybox service..."
     ssh -A "$LAB1_HOST" \
