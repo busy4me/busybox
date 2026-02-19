@@ -54,6 +54,22 @@ Next boot: Chrome session already active → automatic
 | Update `autostart` (:0 Chrome) | 🟢 CORE OS | Bash | ~10 lines | 🔥 |
 | Fix `initiv` deadlock | 🟢 CORE OS | Bash | ~10 lines | 🔥 |
 | Enable `busybox.service` | 🟢 CORE OS | systemd | ~20 lines | 🔥 |
+| **Dev Environment Setup** | 🟢 CORE OS | VBox/Bash | — | 🔥 |
+| **Unit Tests (Busyman)** | 🔵 VISION | pytest | ~200 lines | High |
+
+### Development Strategy (New)
+
+To avoid overloading `lab1` with full 85-minute installations:
+
+1.  **CI Trigger Control**: Use `[skip ci]` for docs/minor changes. Update DevOps workflow to ignore `docs/`.
+2.  **Golden Image (`busybox-dev-stage1`)**:
+    *   Pre-installed OS + Python + Dependencies (Stage 0 & 1 complete).
+    *   Dev workflow: Restore snapshot → Inject code (`rsync`) → Run tests.
+    *   Target test time: < 5 minutes.
+3.  **Testing Levels**:
+    *   **L1 Unit**: `pytest` for Busyman logic (local/CI).
+    *   **L2 Integration**: Hot-reload code on running VM + verify service status.
+    *   **L3 Full**: Full `initiv` install (only on release candidates).
 
 ### Team Structure
 
