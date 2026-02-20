@@ -21,5 +21,5 @@ if [ $(echo $DISPLAY) = ":96" ]; then
   export DISPLAY=:96 && screen -dmS frame00$DISPLAY '/opt/${PROJECT}/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":0" ]; then
-  export DISPLAY=:0 && vncviewer -passwd $HOME/.vnc/passwd localhost:5998 &
+  (sleep 3s && google-chrome --window-position=0,-100 --window-size=800,700 --no-first-run --no-default-browser-check --disable-default-apps --disable-features=ClipboardAPI http://localhost:8080) &
 fi
