@@ -42,16 +42,23 @@ echo "   Target: $LAB1_HOST → VM:$VM_PORT"; echo ""
 vm "echo reachable" > /dev/null 2>&1 || { echo "❌ FATAL: Cannot reach VM"; exit 1; }
 
 echo "[ VNC & Display ]"
-run "vnc_service"     "vncserver.service is active"         "systemctl is-active vncserver.service"
+run "vnc_service"     "vncserver@:98.service is active"     "systemctl is-active vncserver@:98.service"
 run "xtigervnc_proc"  "Xtigervnc :98 process running"       "pgrep -u $BB_USER Xtigervnc > /dev/null"
 run "vnc_port_5998"   "VNC port 5998 listening"             "ss -tlnp | grep -q 5998"
 run "display_xdpyinfo" "DISPLAY :98 has active X clients"   "DISPLAY=:98 XAUTHORITY=/home/$BB_USER/.Xauthority xdpyinfo > /dev/null 2>&1" "bb"
 
 echo ""
+echo "[ NoVNC Web App ]"
+run "flask_service"   "busyman-flask.service is active"     "systemctl is-active busyman-flask.service"
+run "websockify_svc"  "busyman-websockify.service is active" "systemctl is-active busyman-websockify.service"
+run "flask_port"      "Flask listening on port 8080"        "ss -tlnp | grep -q ':8080'"
+run "websockify_port" "websockify listening on port 6080"   "ss -tlnp | grep -q ':6080'"
+
+echo ""
 echo "[ Chrome & Browser ]"
 run "chrome_proc"     "Chrome process running"              "pgrep -u $BB_USER -x 'chrome\\|google-chrome' > /dev/null || pgrep -u $BB_USER -f google-chrome > /dev/null"
 run "chrome_window"   "Chrome window visible on :98"        "DISPLAY=:98 XAUTHORITY=/home/$BB_USER/.Xauthority wmctrl -l | grep -qi chrome" "bb"
-run "vncviewer_proc"  "vncviewer running on :0"             "pgrep -u $BB_USER vncviewer > /dev/null"
+run "chrome_display0" "Chrome running on :0 (NoVNC webapp)" "pgrep -u $BB_USER -f 'chrome.*localhost:8080' > /dev/null"
 
 echo ""
 echo "[ Automation — Screen Sessions ]"
