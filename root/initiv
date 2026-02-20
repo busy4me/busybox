@@ -34,6 +34,7 @@ _ASSETS_URL="https://github.com/busy4me/busybox/releases/download"
 _ASSETS_TAG="assets-v1.0.0"
 _USER="busybox" # default user name
 #_PASS="busy" # default user password
+_RESOLUTION="800x600" # default display resolution (grub, console, xorg)
 _THEME=dark # default installation theme, used in __xt and __anime functions
 _BG=black # default background color, used by xterm option -bg
 _FG=grey # default foreground color, used by xterm option -fg
@@ -793,7 +794,7 @@ cat > /home/$_USER/.vncserver  << 'EOF'
 PATH="$PATH:/usr/bin/"
 DISPLAY="98"
 DEPTH="16"
-GEOMETRY="800x600"
+GEOMETRY="$_RESOLUTION"
 NAME="vncserver"
 
 while getopts ':d: :g:' opt
@@ -968,9 +969,9 @@ EOF
   rm -R /home/${_USER}/.config/openbox/autostart
   cat > /home/${_USER}/.config/openbox/autostart << EOF
 # Programs that will run after Openbox windows manager has started
-xrandr --output default --mode 800x600 &
-xrandr --output Virtual1 --mode 800x600 &
-xrandr --output VGA-1 --mode 800x600 &
+xrandr --output default --mode $_RESOLUTION &
+xrandr --output Virtual1 --mode $_RESOLUTION &
+xrandr --output VGA-1 --mode $_RESOLUTION &
 feh --bg-scale /opt/${_USER}/data/images/wall03.png &
 xset -dpms &
 xset s off &
@@ -1221,9 +1222,9 @@ cat > $_GRUB << EOF
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR="${PROJECT}"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false video=800x600"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false video=$_RESOLUTION"
 GRUB_CMDLINE_LINUX=""
-GRUB_GFXMODE=800x600
+GRUB_GFXMODE=$_RESOLUTION
 GRUB_GFXPAYLOAD_LINUX=keep
 GRUB_BACKGROUND="$_SPLASH"
 GRUB_COLOR_NORMAL="black/black"
@@ -1235,13 +1236,12 @@ EOF
 	echoconfirm "grub updated OK"
 
 	# xorg #####################################
-	echoinfo " ... configure xorg, set 800x600 resolution .............."
+	echoinfo " ... configure xorg, set $_RESOLUTION resolution .............."
 	mkdir -p /etc/X11/xorg.conf.d
-	cat > /etc/X11/xorg.conf.d/10-monitor.conf << 'EOFXORG'
+	cat > /etc/X11/xorg.conf.d/10-monitor.conf << EOFXORG
 Section "Monitor"
     Identifier "Virtual1"
-    Modeline "800x600"  38.22  800 832 912 1024  600 601 604 622  -HSync +Vsync
-    Option "PreferredMode" "800x600"
+    Option "PreferredMode" "$_RESOLUTION"
 EndSection
 
 Section "Screen"
@@ -1250,7 +1250,7 @@ Section "Screen"
     DefaultDepth 24
     SubSection "Display"
         Depth 24
-        Modes "800x600"
+        Modes "$_RESOLUTION"
     EndSubSection
 EndSection
 EOFXORG
