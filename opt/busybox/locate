@@ -142,6 +142,7 @@ def find_element ():
             print ("offset offy=",offy)
             element_y = element_y + offy
         print (success,"found element:",img,element,"center:","x=",element_x,"y=",element_y)
+        print(f"COORDS: ({element_x}, {element_y})")  # parseable format for busyman API
         print (yellow, "[", action, "] ", "\b", end='')
     except:
         if verbose == "true":
