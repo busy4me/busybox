@@ -1,0 +1,19 @@
+{
+  "profile": {
+    "exit_type": "Normal",
+    "exited_cleanly": true,
+    "content_settings": {
+      "exceptions": {
+        "clipboard": {
+          "http://localhost:8080,*": {
+            "setting": 2
+          }
+        }
+      }
+    }
+  },
+  "session": {
+    "restore_on_startup": 5,
+    "startup_urls": ["http://localhost:8080"]
+  }
+}

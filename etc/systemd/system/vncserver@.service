@@ -1,0 +1,14 @@
+[Unit]
+Description=Remote desktop service (VNC) for display %i
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=busybox
+ExecStart=/usr/bin/vncserver %i -localhost=1 -SecurityTypes=None -geometry 800x600 -depth 16
+ExecStop=/usr/bin/vncserver -kill %i
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

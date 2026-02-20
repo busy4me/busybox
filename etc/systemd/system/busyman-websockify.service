@@ -1,0 +1,16 @@
+[Unit]
+Description=Busyman Websockify VNC Proxy
+After=network.target vncserver@:98.service
+Requires=vncserver@:98.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/opt/venv/bin/websockify --web=/opt/busybox/novnc 6080 localhost:5998
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=Busyman Flask Web Application
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/busybox/webapp/api
+ExecStart=/opt/venv/bin/python3 /opt/busybox/webapp/api/app.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
