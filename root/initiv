@@ -1221,7 +1221,7 @@ cat > $_GRUB << EOF
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=0
 GRUB_DISTRIBUTOR="${PROJECT}"
-GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet fsck.mode=skip loglevel=0 splash rd.udev.log_priority=3 rd.systemd.show_status=false video=800x600"
 GRUB_CMDLINE_LINUX=""
 GRUB_GFXMODE=800x600
 GRUB_GFXPAYLOAD_LINUX=keep
@@ -1233,6 +1233,28 @@ COLOR_HIGHLIGHT="black/black"
 EOF
 	update-grub 2>/dev/null
 	echoconfirm "grub updated OK"
+
+	# xorg #####################################
+	echoinfo " ... configure xorg, set 800x600 resolution .............."
+	mkdir -p /etc/X11/xorg.conf.d
+	cat > /etc/X11/xorg.conf.d/10-monitor.conf << 'EOFXORG'
+Section "Monitor"
+    Identifier "Virtual1"
+    Modeline "800x600"  38.22  800 832 912 1024  600 601 604 622  -HSync +Vsync
+    Option "PreferredMode" "800x600"
+EndSection
+
+Section "Screen"
+    Identifier "Default Screen"
+    Monitor "Virtual1"
+    DefaultDepth 24
+    SubSection "Display"
+        Depth 24
+        Modes "800x600"
+    EndSubSection
+EndSection
+EOFXORG
+	echoconfirm "xorg monitor config created OK"
 
 	############################################
 	# system options ###########################
