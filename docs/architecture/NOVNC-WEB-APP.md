@@ -3,7 +3,7 @@
 **Project**: Busyman Web Interface  
 **Type**: Web-based VNC Client with Dynamic Menu  
 **Created**: 2026-02-20  
-**Status**: 🔨 In Development (Faza 1 — POC)  
+**Status**: ✅ COMPLETE — v1.0.0 deployed, production ready  
 **Author**: Dariusz Porczyński
 
 ---
@@ -590,6 +590,78 @@ DISPLAY=:0 google-chrome --new-window --window-position=0,-100 http://localhost:
 
 ---
 
-**Status**: 📝 Architecture defined, ready for implementation  
-**Next**: Create Flask backend + HTML template + CSS
+## 🚀 Deployment & Production Notes
+
+### Systemd Services (Auto-start on Boot)
+
+**Created 3 systemd services** for automatic startup:
+
+1. **`vncserver@:98.service`** — VNC server on DISPLAY :98
+2. **`busyman-flask.service`** — Flask webapp (port 8080)
+3. **`busyman-websockify.service`** — WebSocket proxy (port 6080)
+
+**Location**: `/etc/systemd/system/`
+
+**Enable on boot**:
+```bash
+systemctl enable vncserver@:98.service busyman-flask.service busyman-websockify.service
+```
+
+### Migration Notes (Old → New VNC Service)
+
+**IMPORTANT**: Old `vncserver.service` (created by `initiv`) conflicts with new template service.
+
+**Migration steps**:
+```bash
+# 1. Stop and disable old service
+systemctl stop vncserver.service
+systemctl disable vncserver.service
+
+# 2. Kill existing VNC session
+su - busybox -c "vncserver -kill :98"
+
+# 3. Enable and start new service
+systemctl enable vncserver@:98.service
+systemctl start vncserver@:98.service
+```
+
+**Differences**:
+- **Old**: `/home/busybox/.vncserver` script (no `-SecurityTypes None`, no `-localhost=1`)
+- **New**: Direct `vncserver` command with secure flags (`-SecurityTypes None -localhost=1`)
+
+**Status check**:
+```bash
+systemctl status vncserver@:98.service busyman-flask.service busyman-websockify.service
+```
+
+### Openbox Autostart Permissions
+
+**CRITICAL**: Autostart file must have correct ownership and executable permissions:
+
+```bash
+chown busybox:busybox /home/busybox/.config/openbox/autostart
+chmod +x /home/busybox/.config/openbox/autostart
+```
+
+**Reason**: File deployed via SCP can have wrong UID/GID (e.g., 502:staff from macOS). Openbox won't execute autostart without +x permission.
+
+### Chrome on DISPLAY :0 (NoVNC Webapp)
+
+**Flags** to prevent dialogs:
+- `--user-data-dir=/home/busybox/.config/google-chrome-busyman` — isolated profile
+- `--disable-session-crashed-bubble` — no crash recovery dialog
+- `--disable-restore-session-state` — no "Restore pages?" dialog
+- `--no-default-browser-check` — no default browser prompt
+- `--no-first-run` — skip first-run wizard
+- `--disable-features=Translate` — no translation bar
+
+**Preferences JSON**: `/home/busybox/.config/google-chrome-busyman/Default/Preferences`
+- Pre-configured clipboard permissions for `localhost:8080`
+- Session restore settings disabled
+
+---
+
+**Status**: ✅ Production ready, all services auto-start on boot  
+**Last Updated**: 2026-02-20  
+**Deployment**: VM `Busybox-1.1.2-beta` on lab1
 
