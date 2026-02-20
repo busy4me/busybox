@@ -67,6 +67,10 @@ def handle_action():
         elif action == 'menu:floating':
             return jsonify({'status': 'ok', 'command': 'show_floating_menu'})
         
+        elif action == 'system:restart_vnc':
+            subprocess.Popen(['systemctl', 'restart', 'vncserver@:98.service'])  # non-blocking
+            return jsonify({'status': 'ok', 'message': 'VNC server restarting'})
+        
         elif action.startswith('plugin:'):
             # Example: plugin:fb:login → call Busyman API
             parts = action.split(':')
@@ -88,6 +92,43 @@ def handle_action():
 def health():
     """Health check endpoint."""
     return jsonify({'status': 'ok', 'version': '1.0.0'})
+
+@app.route('/api/settings', methods=['GET', 'POST'])
+def handle_settings():
+    """Get or update application settings."""
+    db = get_db()
+    try:
+        if request.method == 'GET':
+            key = request.args.get('key') # GET single setting or all settings
+            if key:
+                row = db.execute('SELECT * FROM settings WHERE key=?', (key,)).fetchone()
+                db.close()
+                if row:
+                    return jsonify(dict(row))
+                else:
+                    return jsonify({'error': 'setting_not_found', 'key': key}), 404
+            else: # Return all settings
+                rows = db.execute('SELECT * FROM settings ORDER BY key').fetchall()
+                db.close()
+                return jsonify([dict(row) for row in rows])
+        elif request.method == 'POST': # Update setting(s)
+            data = request.json
+            key = data.get('key')
+            value = data.get('value')
+            if not key or value is None:
+                return jsonify({'error': 'missing_key_or_value'}), 400
+            db.execute('''INSERT INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP''', (key, value)) # Update settings table
+            if key == 'vnc_resolution': # Special handling: update menu item label for vnc_resolution
+                db.execute('UPDATE menu_items SET label = ? WHERE action = ?', (f'Resolution: {value}', 'info:resolution'))
+                logger.info(f"Updated resolution menu item label: {value}")
+            db.commit()
+            db.close()
+            logger.info(f"Setting updated: {key} = {value}")
+            return jsonify({'status': 'ok', 'key': key, 'value': value})
+    except Exception as e:
+        logger.error(f"Settings operation failed: {e}")
+        db.close()
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Development server

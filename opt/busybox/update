@@ -193,6 +193,26 @@ tint2() {
   fi
 }
 
+chrome_profile() {
+  echo "Setting up Chrome profile for NoVNC webapp..."
+  local PROFILE_DIR="/home/busybox/.config/google-chrome-busyman/Default"
+  local TEMPLATE="$_SERVER/$_BRANCH/home/busybox/.config/google-chrome-busyman/Default/Preferences.template"
+  mkdir -p "$PROFILE_DIR" # Create directory structure
+  chown -R busybox:busybox /home/busybox/.config/google-chrome-busyman
+  if [ ! -f "$PROFILE_DIR/Preferences" ]; then # Deploy template ONLY if Preferences doesn't exist (first-run)
+    echo " ... deploying Chrome Preferences template"
+    wget -nv --no-check-certificate "$TEMPLATE" -O "$PROFILE_DIR/Preferences" | logline
+    chown busybox:busybox "$PROFILE_DIR/Preferences"
+  else
+    echo " ... Chrome Preferences already exists, skipping template"
+  fi
+  if grep -q '"exited_cleanly":false' "$PROFILE_DIR/Preferences" 2>/dev/null; then # Always reset crashed flag if dialog appears
+    echo " ... resetting crashed flag in Preferences"
+    sed -i 's/"exited_cleanly":false/"exited_cleanly":true/g' "$PROFILE_DIR/Preferences"
+    sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/g' "$PROFILE_DIR/Preferences"
+  fi
+}
+
 openbox_config() {
   wget -nv --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/openbox/rc.xml -O /home/busybox/.config/openbox/rc.xml | logline
   chown busybox:busybox /home/busybox/.config/openbox/rc.xml
@@ -430,6 +450,9 @@ case $1 in
   --openbox|openbox)
     openbox_autostart
     openbox_config
+  ;;
+  --chrome|chrome)
+    chrome_profile
   ;;
   --fb|fb)
     download_fb_files

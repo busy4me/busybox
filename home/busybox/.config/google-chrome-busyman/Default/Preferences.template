@@ -1,0 +1,26 @@
+{
+  "session": {
+    "restore_on_startup": 1,
+    "startup_urls": ["http://localhost:8080"]
+  },
+  "profile": {
+    "exit_type": "Normal",
+    "exited_cleanly": true
+  },
+  "sessions": {
+    "event_log": []
+  },
+  "browser": {
+    "check_default_browser": false,
+    "show_home_button": false
+  },
+  "content_settings": {
+    "exceptions": {
+      "clipboard": {
+        "http://localhost:8080,*": {
+          "setting": 2
+        }
+      }
+    }
+  }
+}

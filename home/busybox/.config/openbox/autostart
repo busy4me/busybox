@@ -7,7 +7,7 @@ xset -dpms &
 xset s off &
 xcompmgr &
 if [ $(echo $DISPLAY) = ":98" ]; then
-  (sleep 3s && google-chrome --window-position=0,0 --window-size=900,600 --no-first-run --no-default-browser-check https://facebook.com) &
+  (sleep 3s && google-chrome --window-position=0,0 --window-size=1920,1080 --no-first-run --no-default-browser-check https://facebook.com) &
   export DISPLAY=:98 && screen -dmS frame00$DISPLAY '/opt/busybox/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":97" ]; then

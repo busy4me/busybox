@@ -59,12 +59,10 @@ export class MenuManager {
     this.menuContainer.addEventListener('click', async (e) => {
       const menuItem = e.target.closest('.menu-item');
       if (!menuItem) return;
-      
-      // Visual feedback
-      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active')); // Visual feedback
       menuItem.classList.add('active');
-      
       const action = menuItem.dataset.action;
+      if (action === 'info:resolution') { document.getElementById('floating-menu').classList.add('active'); return; } // Special handling for info actions (open floating menu directly)
       await this.handleAction(action);
     });
   }
