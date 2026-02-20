@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Busyman</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Source+Code+Pro&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <!-- Left Sidebar Menu (10% width, 140px min) -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <h2>Busyman</h2>
+    </div>
+    <div id="menu-items">
+      <!-- Populated by menu.js -->
+      <div class="menu-item-skeleton">Loading...</div>
+    </div>
+  </div>
+  
+  <!-- Main Window (90% width) -->
+  <div id="main-window">
+    <div id="novnc-container">
+      <div id="screen">
+        <!-- NoVNC canvas will be injected here -->
+      </div>
+      <div id="novnc-status">
+        <span class="status-indicator">●</span>
+        <span class="status-text">Connecting to VNC...</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Hidden Floating Menu (slides from bottom-left) -->
+  <div id="floating-menu">
+    <div class="menu-header">
+      <h3>⚙️ Settings</h3>
+      <button class="close-btn" aria-label="Close settings">×</button>
+    </div>
+    <div class="menu-content">
+      <div class="setting-group">
+        <label for="vnc-resolution">VNC Resolution:</label>
+        <select id="vnc-resolution">
+          <option value="1920x1080" selected>1920×1080 (Full HD)</option>
+          <option value="1280x720">1280×720 (HD)</option>
+          <option value="1024x768">1024×768 (XGA)</option>
+        </select>
+      </div>
+      
+      <div class="setting-group">
+        <label for="display-mode">Display Mode:</label>
+        <select id="display-mode">
+          <option value="scale" selected>Scale to fit</option>
+          <option value="native">Native (scroll)</option>
+        </select>
+      </div>
+      
+      <div class="setting-group">
+        <label for="quality">Quality:</label>
+        <input type="range" id="quality" min="0" max="9" value="6">
+        <span id="quality-value">6</span>
+      </div>
+      
+      <button id="apply-settings" class="btn-primary">Apply Changes</button>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
