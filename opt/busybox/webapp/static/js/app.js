@@ -43,22 +43,33 @@ class BusymanApp {
     });
   }
 
-  initNoVNC() {
-    // Placeholder for NoVNC initialization
-    // Will be implemented after cloning noVNC library
+  async initNoVNC() {
+    const statusDiv = document.getElementById('novnc-status');
     const statusText = document.querySelector('.status-text');
     const statusIndicator = document.querySelector('.status-indicator');
-    
-    statusText.textContent = 'NoVNC library not loaded yet';
-    statusIndicator.classList.add('error');
-    
-    console.log('NoVNC initialization placeholder - library not cloned yet');
-    
-    // TODO: After cloning noVNC:
-    // import RFB from './novnc/core/rfb.js';
-    // const rfb = new RFB(document.getElementById('screen'), 'ws://localhost:6080');
-    // rfb.scaleViewport = true;
-    // rfb.resizeSession = true;
+    try {
+      const {default: RFB} = await import('/novnc/core/rfb.js');  // Import NoVNC RFB module
+      const rfb = new RFB(document.getElementById('screen'), 'ws://localhost:6080');
+      rfb.scaleViewport = true;  // Scale viewport to fit container
+      rfb.resizeSession = false;  // Don't resize remote session
+      rfb.addEventListener('connect', () => {
+        statusDiv.style.display = 'none';  // Hide status on successful connect
+        console.log('NoVNC connected successfully');
+      });
+      rfb.addEventListener('disconnect', () => {
+        statusDiv.style.display = 'flex';  // Show status on disconnect
+        statusText.textContent = 'VNC Disconnected';
+        statusIndicator.classList.remove('connected');
+        statusIndicator.classList.add('error');
+        console.log('NoVNC disconnected');
+      });
+      this.vncClient = rfb;  // Store for settings adjustments
+    } catch (error) {
+      statusDiv.style.display = 'flex';  // Show status on error
+      statusText.textContent = 'Failed to load NoVNC';
+      statusIndicator.classList.add('error');
+      console.error('NoVNC initialization error:', error);
+    }
   }
 
   async init() {

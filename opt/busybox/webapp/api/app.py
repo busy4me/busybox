@@ -3,7 +3,7 @@
 Busyman Web App — Flask Backend
 Serves NoVNC web interface + API for dynamic menu
 """
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 import sqlite3, os, subprocess, logging
 
 # Configure logging
@@ -15,6 +15,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, 'db', 'busyman.db')
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
+NOVNC_DIR = '/opt/busybox/novnc'  # NoVNC library location
 
 app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 app.config['JSON_SORT_KEYS'] = False
@@ -29,6 +30,11 @@ def get_db():
 def index():
     """Serve main HTML page."""
     return render_template('index.html')
+
+@app.route('/novnc/<path:filename>')
+def serve_novnc(filename):
+    """Serve NoVNC static files."""
+    return send_from_directory(NOVNC_DIR, filename)
 
 @app.route('/api/menu')
 def get_menu():
