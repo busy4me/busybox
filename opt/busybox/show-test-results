@@ -1,7 +1,7 @@
 #!/bin/bash
-# show-test-results — Display test results overlay on DISPLAY :98
+# show-test-results — Display test results overlay on DISPLAY :0 (VirtualBox GUI screen)
 # Reads /tmp/busybox-unit-tests.xml and /tmp/busybox-health.xml, shows xterm window
-DISPLAY="${DISPLAY:-:98}"
+DISPLAY="${DISPLAY:-:0}"
 XAUTH="/home/busybox/.Xauthority"
 UNIT_XML="/tmp/busybox-unit-tests.xml"
 HEALTH_XML="/tmp/busybox-health.xml"
@@ -49,14 +49,19 @@ parse_xml() {  # parse_xml FILE → prints "PASS/FAIL name" lines
 pkill -f "xterm.*Test.Results" 2>/dev/null || true
 sleep 0.3
 
-# Open xterm in top-right corner of :98 (800x600 display → position 450,10, size 340x580)
+# Open xterm centered on screen (1280x768 → position 10,10, size 80x30 for full visibility)
 DISPLAY="$DISPLAY" XAUTHORITY="$XAUTH" xterm \
     -title "$WIN_TITLE" \
-    -geometry "58x32+440+5" \
+    -geometry "80x30+10+10" \
     -bg "#0d1117" \
     -fg "#e6edf3" \
-    -fa "Monospace" -fs 9 \
+    -fa "Monospace" -fs 10 \
     -e "cat $RESULT_FILE; echo ''; read -rsn1 -p '' key" \
     &
+
+# Wait for window to appear and raise it above fullscreen vncviewer
+sleep 1
+DISPLAY="$DISPLAY" XAUTHORITY="$XAUTH" wmctrl -F -a "$WIN_TITLE" 2>/dev/null || \
+    DISPLAY="$DISPLAY" XAUTHORITY="$XAUTH" wmctrl -l | grep "Test Results" | awk '{print $1}' | xargs -I{} wmctrl -i -a {} 2>/dev/null || true
 
 echo "Test results displayed on DISPLAY $DISPLAY"

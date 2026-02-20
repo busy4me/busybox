@@ -66,11 +66,11 @@ if [ "$RUN_TESTS" -eq 1 ]; then
     ssh -A "$LAB1_HOST" \
         "ssh -p $VM_PORT $VM_TARGET 'cd $BUSYBOX_DIR && /opt/venv/bin/pytest tests/ -v 2>&1'" \
         && log "Tests PASSED ✓" || { TEST_RC=$?; log "Tests FAILED ✗"; }
-    # Show results overlay on VM display :98 (runs as busybox user, non-blocking)
-    log "Showing results on DISPLAY :98..."
+    # Show results overlay on VM display :0 (visible on VirtualBox GUI screen, runs as busybox user, non-blocking)
+    log "Showing results on DISPLAY :0..."
     ssh -A "$LAB1_HOST" \
         "ssh -p $VM_PORT $VM_TARGET \
-         'nohup su - busybox -s /bin/bash -c \"DISPLAY=:98 XAUTHORITY=/home/busybox/.Xauthority $BUSYBOX_DIR/show-test-results\" </dev/null >/dev/null 2>&1 &'" \
+         'nohup su - busybox -s /bin/bash -c \"DISPLAY=:0 XAUTHORITY=/home/busybox/.Xauthority $BUSYBOX_DIR/show-test-results\" </dev/null >/dev/null 2>&1 &'" \
         2>/dev/null || log "show-test-results skipped (display not available)"
     [ "$TEST_RC" -eq 0 ] || exit "$TEST_RC"
 else
