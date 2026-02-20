@@ -1,7 +1,7 @@
 [Unit]
 Description=Busyman Websockify VNC Proxy
 After=network.target vncserver@:98.service
-Requires=vncserver@:98.service
+Wants=vncserver@:98.service
 
 [Service]
 Type=simple
