@@ -118,9 +118,9 @@ def handle_settings():
             if not key or value is None:
                 return jsonify({'error': 'missing_key_or_value'}), 400
             db.execute('''INSERT INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP''', (key, value)) # Update settings table
-            if key == 'vnc_resolution': # Special handling: update menu item label for vnc_resolution
-                db.execute('UPDATE menu_items SET label = ? WHERE action = ?', (f'Resolution: {value}', 'info:resolution'))
-                logger.info(f"Updated resolution menu item label: {value}")
+            if key == 'test_param_a': # Special handling: update menu item label for vnc_resolution
+                db.execute('UPDATE menu_items SET label = ? WHERE action = ?', (f'Test Value: {value}', 'info:resolution'))
+                logger.info(f"Updated test param menu item label: {value}")
             db.commit()
             db.close()
             logger.info(f"Setting updated: {key} = {value}")

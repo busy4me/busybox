@@ -25,18 +25,18 @@ class BusymanApp {
 
     // Apply settings button
     document.getElementById('apply-settings').addEventListener('click', async () => {
-      const resolution = document.getElementById('vnc-resolution').value;
+      const resolution = document.getElementById('test-param-a').value;
       const displayMode = document.getElementById('display-mode').value;
       const quality = document.getElementById('quality').value;
-      if (resolution === this.initialSettings.vnc_resolution && displayMode === this.initialSettings.display_mode && quality === this.initialSettings.quality) { alert('No changes detected. Please modify settings before applying.'); return; } // Validation: check if anything changed
+      if (resolution === this.initialSettings.test_param_a && displayMode === this.initialSettings.display_mode && quality === this.initialSettings.quality) { alert('No changes detected. Please modify settings before applying.'); return; } // Validation: check if anything changed
       try { // Save all settings to database
         const promises = [
-          fetch('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({key: 'vnc_resolution', value: resolution})}),
+          fetch('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({key: 'test_param_a', value: resolution})}),
           fetch('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({key: 'display_mode', value: displayMode})}),
           fetch('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({key: 'quality', value: quality})})
         ];
         await Promise.all(promises);
-        this.initialSettings = {vnc_resolution: resolution, display_mode: displayMode, quality}; // Update initial settings
+        this.initialSettings = {test_param_a: resolution, display_mode: displayMode, quality}; // Update initial settings
         console.log('Settings saved successfully:', {resolution, displayMode, quality});
         this.floatingMenu.classList.remove('active'); // Close floating menu (menu will auto-refresh within 5s via polling)
       } catch (error) {

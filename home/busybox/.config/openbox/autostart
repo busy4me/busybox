@@ -22,11 +22,12 @@ if [ $(echo $DISPLAY) = ":96" ]; then
   export DISPLAY=:96 && screen -dmS frame00$DISPLAY '/opt/${PROJECT}/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":0" ]; then
-  xrandr --output Virtual1 --mode 1920x1080 & # Match NoVNC aspect ratio (16:9)
+  xrandr --output Virtual1 --mode 800x600 & # Frontend display - NoVNC scales backend (1920x1080) to fit
   CHROME_PROFILE="$HOME/.config/google-chrome-busyman/Default"
   if [ -f "$CHROME_PROFILE/Preferences.template" ]; then # Reset Preferences to prevent "Restore pages?" dialog
     rm -f "$CHROME_PROFILE/Preferences"
     cp "$CHROME_PROFILE/Preferences.template" "$CHROME_PROFILE/Preferences"
   fi
-  (sleep 3s && google-chrome --user-data-dir=$HOME/.config/google-chrome-busyman --disable-session-crashed-bubble --disable-restore-session-state --no-default-browser-check --no-first-run --disable-features=Translate http://localhost:8080) &
+  rm -rf "$CHROME_PROFILE/Sessions"/* "$CHROME_PROFILE/Session Storage"/* # Clear old sessions to prevent tab restore
+  (sleep 3s && google-chrome --user-data-dir=$HOME/.config/google-chrome-busyman --window-position=0,0 --window-size=800,600 --start-maximized --disable-session-crashed-bubble --disable-restore-session-state --no-default-browser-check --no-first-run --disable-features=Translate http://localhost:8080) &
 fi
