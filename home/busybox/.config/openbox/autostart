@@ -1,7 +1,12 @@
 # Programs that will run after Openbox windows manager has started
 PROJECT="busybox"
-xrandr --output default --mode 800x600 &
-xrandr --output Virtual1 --mode 800x600 &
+if [ $(echo $DISPLAY) = ":0" ]; then # DISPLAY :0 needs 1920x1080 to match NoVNC aspect ratio (16:9)
+  xrandr --output default --mode 1920x1080 &
+  xrandr --output Virtual1 --mode 1920x1080 &
+else # Other displays keep 800x600
+  xrandr --output default --mode 800x600 &
+  xrandr --output Virtual1 --mode 800x600 &
+fi
 feh --bg-scale /opt/${PROJECT}/data/images/wall03.png &
 xset -dpms &
 xset s off &
