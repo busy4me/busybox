@@ -1,31 +1,28 @@
 # Programs that will run after Openbox windows manager has started
 PROJECT="busybox"
-if [ $(echo $DISPLAY) = ":0" ]; then # DISPLAY :0 needs 1920x1080 to match NoVNC aspect ratio (16:9)
-  xrandr --output default --mode 1920x1080 &
-  xrandr --output Virtual1 --mode 1920x1080 &
-else # Other displays keep 800x600
-  xrandr --output default --mode 800x600 &
-  xrandr --output Virtual1 --mode 800x600 &
-fi
 feh --bg-scale /opt/${PROJECT}/data/images/wall03.png &
 xset -dpms &
 xset s off &
 xcompmgr &
 if [ $(echo $DISPLAY) = ":98" ]; then
+  xrandr --output Virtual1 --mode 1920x1080 & # Full HD for automation workspace
   (sleep 3s && google-chrome --window-position=0,0 --window-size=1920,1080 --no-first-run --no-default-browser-check https://facebook.com) &
   export DISPLAY=:98 && screen -dmS frame00$DISPLAY '/opt/busybox/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":97" ]; then
+  xrandr --output Virtual1 --mode 1920x1080 &
   (sleep 2s && tint2 -c /home/busybox/.config/tint2/mask01) &
   (sleep 2s && tint2 -c /home/busybox/.config/tint2/panel01) &
   export DISPLAY=:97 && screen -dmS frame00$DISPLAY '/opt/${PROJECT}/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":96" ]; then
+  xrandr --output Virtual1 --mode 1920x1080 &
   (sleep 2s && tint2 -c /home/busybox/.config/tint2/mask01) &
   (sleep 2s && tint2 -c /home/busybox/.config/tint2/panel01) &
   export DISPLAY=:96 && screen -dmS frame00$DISPLAY '/opt/${PROJECT}/frame00' &
 fi
 if [ $(echo $DISPLAY) = ":0" ]; then
+  xrandr --output Virtual1 --mode 1920x1080 & # Match NoVNC aspect ratio (16:9)
   CHROME_PROFILE="$HOME/.config/google-chrome-busyman/Default"
   if [ -f "$CHROME_PROFILE/Preferences.template" ]; then # Reset Preferences to prevent "Restore pages?" dialog
     rm -f "$CHROME_PROFILE/Preferences"
