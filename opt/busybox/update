@@ -58,7 +58,7 @@ __download_files_from_github() { # download all files from GitHub using API (no 
     echo -e "\e[91m   * ERROR: Failed to fetch file list from GitHub API\e[0m" | logline
     return 1
   fi
-  local files=$(echo "$tree_json" | awk -v target="$target_dir/" '/"path":/ {path=$2; gsub(/[",]/, "", path)} /"type":/ && /"blob"/ && path ~ target {print path}')
+  local files=$(printf '%s\n' "$tree_json" | awk -v target="$target_dir/" '/"path":/ {path=$2; gsub(/[",]/, "", path)} /"type":/ && /"blob"/ && path ~ target {print path}')
   local backup_dir="/var/backups/busybox/$(date +%Y-%m-%d--%H-%M-%S)"
   mkdir -p "$backup_dir"
   echo -e "\e[32m Backup ...\e[0m" | logline
