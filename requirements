@@ -1,0 +1,18 @@
+# Busybox Python Dependencies
+# This file is used by initiv to install packages in /opt/venv
+# 
+# Core dependencies (all branches)
+numpy>=1.20
+config>=0.5
+pyyaml>=5.4
+opencv-contrib-python>=4.0
+imutils>=0.5
+tzupdate>=2.0
+pyautogui>=0.9
+sentry-sdk>=1.0
+sentry-sdk[opentelemetry]
+
+# Web UI dependencies (dev branch only)
+# Installed conditionally based on branch detection
+flask>=3.0
+websockify>=0.11
