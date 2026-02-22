@@ -26,7 +26,7 @@ _INITIV_1_SERVICE=initiv-1 # trigger 'initiv -S 1' installation process, visible
 _SERVER="https://raw.githubusercontent.com/busy4me/busybox"
 __detect_branch() { # detect branch: env var > marker file > default main
   local branch="$BUSYBOX_BRANCH"
-  [ -z "$branch" ] && [ -f "/opt/busybox/.branch" ] && branch=$(cat "/opt/busybox/.branch" 2>/dev/null)
+  [ -z "$branch" ] && [ -f "/opt/busybox-branch" ] && branch=$(cat "/opt/busybox-branch" 2>/dev/null)
   echo "${branch:-main}"
 }
 _BRANCH=$(__detect_branch)
