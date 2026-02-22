@@ -809,24 +809,37 @@ sed -i 's/vncconfig/#vncconfig/g' /etc/X11/Xvnc-session
 __install_novnc_services () {
   echofunc "${FUNCNAME[0]}""<<${FUNCNAME[1]}""<<${FUNCNAME[2]}"
   echoinfo " ... installing NoVNC systemd services ..."
-  # Download systemd service files from repository
   wget -nv --no-check-certificate $_SERVER/$_BRANCH/etc/systemd/system/vncserver@.service -O /etc/systemd/system/vncserver@.service
   wget -nv --no-check-certificate $_SERVER/$_BRANCH/etc/systemd/system/busyman-flask.service -O /etc/systemd/system/busyman-flask.service
   wget -nv --no-check-certificate $_SERVER/$_BRANCH/etc/systemd/system/busyman-websockify.service -O /etc/systemd/system/busyman-websockify.service
-  # Reload systemd daemon
+  if [ "$_BRANCH" == "dev" ] || [ -d /root/busybox/opt/busybox/webapp ]; then
+    echoinfo " ... downloading NoVNC library v1.5.0 ..."
+    cd /tmp
+    wget -nv https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz 2>&1 | logline
+    tar xzf v1.5.0.tar.gz
+    rm -rf /opt/busybox/novnc
+    mv noVNC-1.5.0 /opt/busybox/novnc
+    rm v1.5.0.tar.gz
+    echoconfirm "NoVNC library installed"
+  fi
   systemctl daemon-reload
-  # Enable services (will start after reboot)
   systemctl enable vncserver@:98.service
   systemctl enable busyman-flask.service
   systemctl enable busyman-websockify.service
   echoinfo "NoVNC services installed: vncserver@:98, busyman-flask, busyman-websockify"
   echowarning "Services will start automatically after reboot"
-  # Deploy Chrome Preferences template (prevents restore dialog)
   echoinfo " ... deploying Chrome Preferences template ..."
   mkdir -p /home/$_USER/.config/google-chrome-busyman/Default
   wget -nv --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/google-chrome-busyman/Default/Preferences.template -O /home/$_USER/.config/google-chrome-busyman/Default/Preferences
   chown -R $_USER:$_USER /home/$_USER/.config/google-chrome-busyman
   echoinfo "Chrome profile template deployed"
+  if [ -d /opt/busybox/webapp/db ]; then
+    echoinfo " ... initializing webapp database ..."
+    cd /opt/busybox/webapp/db
+    bash init_db.sh 2>&1 | logline
+    chown -R $_USER:$_USER /opt/busybox/webapp
+    echoconfirm "Webapp database initialized"
+  fi
 }
 
 ## -- Function -- __install_stuff5 --------------------------------------------------------------------
@@ -858,23 +871,31 @@ __install_stuff5 () {
   fi
   rm -r /opt/venv 2>/dev/null
   mkdir /opt/venv
-  chown ${_USER}:${_USER} /opt/venv                                #####################################
-  runuser -l ${_USER} -c "/usr/bin/python3 -m venv /opt/venv"      # create virtual env for $_USER     #
-  declare -a stuff5=(                                                         #####################################
-    "numpy"
-    "config"
-    "pyyaml"
-    "opencv-contrib-python"
-    "imutils"
-    "tzupdate"
-    "pyautogui"
-    "sentry-sdk"
-    "sentry-sdk[opentelemetry]"
+  chown ${_USER}:${_USER} /opt/venv
+  runuser -l ${_USER} -c "/usr/bin/python3 -m venv /opt/venv"
+  if [ -f /root/busybox/requirements ]; then
+    echoinfo "Installing packages from requirements file..."
+    runuser -l ${_USER} -c '/opt/venv/bin/pip install --upgrade pip' 2>&1 | logline
+    runuser -l ${_USER} -c '/opt/venv/bin/pip install -r /root/busybox/requirements' 2>&1 | logline
+    echoconfirm "Python packages installed from requirements file"
+  else
+    echowarning "requirements file not found, using legacy package list"
+    declare -a stuff5=(
+      "numpy"
+      "config"
+      "pyyaml"
+      "opencv-contrib-python"
+      "imutils"
+      "tzupdate"
+      "pyautogui"
+      "sentry-sdk"
+      "sentry-sdk[opentelemetry]"
     )
-  for _PACKAGE in ${stuff5[@]}; do
-	echoinfo 'install as USER='${_USER}' package: '$_PACKAGE' ................................ wait ...'
-	runuser -l ${_USER} -c '/opt/venv/bin/python -m pip install --upgrade '${_PACKAGE}''
-  done
+    for _PACKAGE in ${stuff5[@]}; do
+      echoinfo "install as USER=${_USER} package: $_PACKAGE ................................ wait ..."
+      runuser -l ${_USER} -c '/opt/venv/bin/python -m pip install --upgrade '${_PACKAGE}''
+    done
+  fi
   echoconfirm "${FUNCNAME[0]} done"
 }
 
