@@ -48,6 +48,37 @@ logline() {
   done
 }
 
+__download_files_from_github() { # download all files from GitHub using API (no git needed)
+  local target_dir="$1" # e.g., "opt/busybox"
+  local dest_dir="$2" # e.g., "/opt/busybox"
+  echo -e "\e[94m * INFO\e[96m: Downloading file list from GitHub API (branch: $_BRANCH)... \e[0m" | logline
+  local api_url="https://api.github.com/repos/busy4me/busybox/git/trees/$_BRANCH?recursive=1"
+  local tree_json=$(wget -qO- "$api_url" 2>/dev/null)
+  if [ -z "$tree_json" ]; then
+    echo -e "\e[91m   * ERROR: Failed to fetch file list from GitHub API\e[0m" | logline
+    return 1
+  fi
+  local files=$(echo "$tree_json" | grep "\"path\": \"$target_dir/" | grep "\"type\": \"blob\"" | sed 's/.*"path": "\([^"]*\)".*/\1/')
+  local backup_dir="/var/backups/busybox/$(date +%Y-%m-%d--%H-%M-%S)"
+  mkdir -p "$backup_dir"
+  echo -e "\e[32m Backup ...\e[0m" | logline
+  cp -R "$dest_dir"/* "$backup_dir" 2>/dev/null || true
+  find "$dest_dir" -type f -delete 2>/dev/null # delete files but keep directories
+  local count=0
+  while IFS= read -r file_path; do
+    if [ -z "$file_path" ]; then continue; fi
+    local local_path="${file_path#$target_dir/}"
+    local full_dest="$dest_dir/$local_path"
+    mkdir -p "$(dirname "$full_dest")"
+    wget -nv --no-check-certificate "https://raw.githubusercontent.com/busy4me/busybox/$_BRANCH/$file_path" -O "$full_dest" 2>&1 | logline
+    count=$((count + 1))
+  done <<< "$files"
+  echo -e "\e[92m    * OK\e[32m: Downloaded $count files from branch $_BRANCH\e[0m" | logline
+  chmod +x "$dest_dir"/* 2>/dev/null
+  chmod +x "$dest_dir"/*.* 2>/dev/null
+  chmod -x "$dest_dir"/*.cfg 2>/dev/null
+}
+
 update_preferences() { # update root and busyuser bash preference files
   SSH_DIR="/root/.ssh" # Preserve existing SSH keys by backing up and restoring
   BACKUP_KEYS="/tmp/authorized_keys.backup.root"
@@ -221,48 +252,10 @@ openbox_config() {
   openbox --reconfigure
 }
 
-download_busybox_files() { # download busybox files
-  declare -a _FILES=(
-  "${PROJECT}.cfg"
-  "${PROJECT}.py"
-  "${PROJECT}.sh"
-  "${PROJECT}.yml"
-  "${PROJECT}Config.py"
-  "frame00"
-  "update"
-  "windows-init"
-  "windows-normal"
-  "chrome-init"
-  "locate"
-  "menu-init"
-  "stratum"
-  "compare_logs_reboot.sh"
-  "change_hostname.sh"
-  "change_hostname_uuid.sh"
-  "stream_to_facebook.sh"
-  "stream_to_twitch.sh"
-  "system-meminfo.sh"
-  "tint2rc00"
-  "tint2-data"
-  "windows-check.sh"
-  "windows-uneeded-close.sh"
-  "xterm.sh"
-  "xterm-transparent"
-  "zenity"
-  "mouse-move"
-  )
-  BCK_DIR="/var/backups/$PROJECT/$(date +%Y-%m-%d--%H-%M-%S)"
-  mkdir $BCK_DIR
-  cp -R /opt/$PROJECT/* $BCK_DIR 2>/dev/null
-  rm /opt/var-backups-* 2>/dev/null
-  ln -s ${BCK_DIR} /opt/var-backups/${PROJECT}
+download_busybox_files() { # download busybox files using GitHub API (supports all files including webapp/)
   cd /opt/$PROJECT
-  rm /opt/$PROJECT/* 2>/dev/null
-  echo -e "\e[35m Download new files... \n\ wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/busybox/* \e[0m"
-  for _FILE in ${_FILES[@]}; do
-    wget -nv --no-check-certificate $_SERVER/$_BRANCH/opt/${PROJECT}/$_FILE -O /opt/${PROJECT}/$_FILE | logline
-  done
-  wget -nv --no-check-certificate $_SERVER/$_BRANCH/var/www/html/index.html -O /var/www/html/index.html
+  __download_files_from_github "opt/busybox" "/opt/busybox"
+  wget -nv --no-check-certificate $_SERVER/$_BRANCH/var/www/html/index.html -O /var/www/html/index.html 2>&1 | logline
   ln -s ./${PROJECT}.sh ./bm 2>/dev/null
   ln -s ./${PROJECT}.sh ./busy 2>/dev/null
   ln -s ./${PROJECT}.sh ./${PROJECT} 2>/dev/null
