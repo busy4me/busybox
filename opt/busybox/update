@@ -53,12 +53,15 @@ __download_files_from_github() { # download all files from GitHub using API (no 
   local dest_dir="$2" # e.g., "/opt/busybox"
   echo -e "\e[94m * INFO\e[96m: Downloading file list from GitHub API (branch: $_BRANCH)... \e[0m" | logline
   local api_url="https://api.github.com/repos/busy4me/busybox/git/trees/$_BRANCH?recursive=1"
-  local tree_json=$(wget -qO- "$api_url" 2>/dev/null)
-  if [ -z "$tree_json" ]; then
+  local tmp_json="/tmp/busybox-tree-$$.json"
+  wget -qO "$tmp_json" "$api_url" 2>/dev/null
+  if [ ! -f "$tmp_json" ] || [ ! -s "$tmp_json" ]; then
     echo -e "\e[91m   * ERROR: Failed to fetch file list from GitHub API\e[0m" | logline
+    rm -f "$tmp_json"
     return 1
   fi
-  local files=$(printf '%s\n' "$tree_json" | awk -v target="$target_dir/" '/"path":/ {path=$2; gsub(/[",]/, "", path)} /"type":/ && /"blob"/ && path ~ target {print path}')
+  local files=$(awk -v target="$target_dir/" '/"path":/ {path=$2; gsub(/[",]/, "", path)} /"type":/ && /"blob"/ && path ~ target {print path}' "$tmp_json")
+  rm -f "$tmp_json"
   local backup_dir="/var/backups/busybox/$(date +%Y-%m-%d--%H-%M-%S)"
   mkdir -p "$backup_dir"
   echo -e "\e[32m Backup ...\e[0m" | logline
