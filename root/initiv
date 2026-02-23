@@ -875,6 +875,12 @@ __install_stuff5 () {
     mkdir -p /opt/venv
     chown ${_USER}:${_USER} /opt/venv
     runuser -l ${_USER} -c "/usr/bin/python3 -m venv /opt/venv"
+    # Ensure pip is installed in venv (some Debian versions don't include it by default)
+    if [ ! -f /opt/venv/bin/pip ]; then
+      echowarning "pip not found in venv, installing via ensurepip"
+      runuser -l ${_USER} -c "/opt/venv/bin/python3 -m ensurepip --upgrade" 2>&1 | tee -a /var/log/busybox.log
+    fi
+    echoconfirm "Virtual environment created with pip"
   else
     echoinfo "Virtual environment already exists at /opt/venv, preserving"
   fi
