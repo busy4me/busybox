@@ -815,7 +815,7 @@ __install_novnc_services () {
   if [ "$_BRANCH" == "dev" ] || [ -d /root/busybox/opt/busybox/webapp ]; then
     echoinfo " ... downloading NoVNC library v1.5.0 ..."
     cd /tmp
-    wget -nv https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz 2>&1 | logline
+    wget -nv https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz 2>&1 | tee -a /var/log/busybox.log
     tar xzf v1.5.0.tar.gz
     rm -rf /opt/busybox/novnc
     mv noVNC-1.5.0 /opt/busybox/novnc
@@ -836,7 +836,7 @@ __install_novnc_services () {
   if [ -d /opt/busybox/webapp/db ]; then
     echoinfo " ... initializing webapp database ..."
     cd /opt/busybox/webapp/db
-    bash init_db.sh 2>&1 | logline
+    bash init_db.sh 2>&1 | tee -a /var/log/busybox.log
     chown -R $_USER:$_USER /opt/busybox/webapp
     echoconfirm "Webapp database initialized"
   fi
