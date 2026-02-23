@@ -873,13 +873,21 @@ __install_stuff5 () {
   mkdir /opt/venv
   chown ${_USER}:${_USER} /opt/venv
   runuser -l ${_USER} -c "/usr/bin/python3 -m venv /opt/venv"
-  if [ -f /root/busybox/requirements ]; then
-    echoinfo "Installing packages from requirements file..."
-    runuser -l ${_USER} -c '/opt/venv/bin/pip install --upgrade pip' 2>&1 | logline
-    runuser -l ${_USER} -c '/opt/venv/bin/pip install -r /root/busybox/requirements' 2>&1 | logline
+  # Try multiple locations for requirements file (repo structure vs deployed)
+  local requirements_file=""
+  if [ -f /opt/busybox/requirements ]; then
+    requirements_file="/opt/busybox/requirements"
+  elif [ -f /root/busybox/opt/busybox/requirements ]; then
+    requirements_file="/root/busybox/opt/busybox/requirements"
+  elif [ -f /root/busybox/requirements ]; then
+    requirements_file="/root/busybox/requirements"
+  fi
+  if [ -n "$requirements_file" ]; then
+    echoinfo "Installing packages from requirements file: $requirements_file"
+    runuser -l ${_USER} -c "/opt/venv/bin/pip install -r $requirements_file" 2>&1 | logline
     echoconfirm "Python packages installed from requirements file"
   else
-    echowarning "requirements file not found, using legacy package list"
+    echowarning "requirements file not found in any location, using legacy package list"
     declare -a stuff5=(
       "numpy"
       "config"
