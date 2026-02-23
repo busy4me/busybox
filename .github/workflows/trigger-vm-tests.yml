@@ -1,7 +1,14 @@
 name: Trigger VM Tests
 
 on:
-  workflow_dispatch:  # manual only — full reinstall via deb12/initiv, use tests.yml for fast tests
+  push:
+    branches: [ main, dev ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+  workflow_dispatch:
 
 jobs:
   trigger-vm-tests:
