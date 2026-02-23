@@ -816,11 +816,15 @@ __install_novnc_services () {
     echoinfo " ... downloading NoVNC library v1.5.0 ..."
     cd /tmp
     wget -nv https://github.com/novnc/noVNC/archive/refs/tags/v1.5.0.tar.gz 2>&1 | tee -a /var/log/busybox.log
-    tar xzf v1.5.0.tar.gz
-    rm -rf /opt/busybox/novnc
-    mv noVNC-1.5.0 /opt/busybox/novnc
-    rm v1.5.0.tar.gz
-    echoconfirm "NoVNC library installed"
+    if [ ! -f "v1.5.0.tar.gz" ]; then
+      echoerror "Failed to download NoVNC library"
+    else
+      tar xzf v1.5.0.tar.gz
+      rm -rf /opt/busybox/novnc
+      mv noVNC-1.5.0 /opt/busybox/novnc
+      rm v1.5.0.tar.gz
+      echoconfirm "NoVNC library installed"
+    fi
   fi
   systemctl daemon-reload
   systemctl enable vncserver@:98.service
