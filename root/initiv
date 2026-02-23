@@ -891,7 +891,7 @@ __install_stuff5 () {
   if [ -n "$requirements_file" ]; then
     echoinfo "Installing packages from requirements file: $requirements_file"
     # Use --upgrade to ensure packages are current if requirements changed
-    runuser -l ${_USER} -c "/opt/venv/bin/pip install --upgrade -r $requirements_file" 2>&1 | logline
+    runuser -l ${_USER} -c "/opt/venv/bin/pip install --upgrade -r $requirements_file" 2>&1 | tee -a /var/log/busybox.log
     echoconfirm "Python packages installed/upgraded from requirements file"
   else
     echowarning "requirements file not found in any location, using legacy package list"
