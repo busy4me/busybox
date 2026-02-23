@@ -819,11 +819,17 @@ __install_novnc_services () {
     if [ ! -f "v1.5.0.tar.gz" ]; then
       echoerror "Failed to download NoVNC library"
     else
-      tar xzf v1.5.0.tar.gz
-      rm -rf /opt/busybox/novnc
-      mv noVNC-1.5.0 /opt/busybox/novnc
+      if tar xzf v1.5.0.tar.gz; then
+        rm -rf /opt/busybox/novnc
+        if mv noVNC-1.5.0 /opt/busybox/novnc; then
+          echoconfirm "NoVNC library installed to /opt/busybox/novnc"
+        else
+          echoerror "Failed to move noVNC-1.5.0 to /opt/busybox/novnc"
+        fi
+      else
+        echoerror "Failed to extract NoVNC tarball"
+      fi
       rm v1.5.0.tar.gz
-      echoconfirm "NoVNC library installed"
     fi
   fi
   systemctl daemon-reload
