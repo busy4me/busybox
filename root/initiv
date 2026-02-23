@@ -869,10 +869,15 @@ __install_stuff5 () {
 	  apt-get install -y -qq --no-install-recommends $_PACKAGE
 	done
   fi
-  rm -r /opt/venv 2>/dev/null
-  mkdir /opt/venv
-  chown ${_USER}:${_USER} /opt/venv
-  runuser -l ${_USER} -c "/usr/bin/python3 -m venv /opt/venv"
+  # Create venv only if it doesn't exist (preserve across reboots)
+  if [ ! -d /opt/venv ]; then
+    echoinfo "Creating new virtual environment at /opt/venv"
+    mkdir -p /opt/venv
+    chown ${_USER}:${_USER} /opt/venv
+    runuser -l ${_USER} -c "/usr/bin/python3 -m venv /opt/venv"
+  else
+    echoinfo "Virtual environment already exists at /opt/venv, preserving"
+  fi
   # Try multiple locations for requirements file (repo structure vs deployed)
   local requirements_file=""
   if [ -f /opt/busybox/requirements ]; then
@@ -882,10 +887,12 @@ __install_stuff5 () {
   elif [ -f /root/busybox/requirements ]; then
     requirements_file="/root/busybox/requirements"
   fi
+  # Install or upgrade packages from requirements file
   if [ -n "$requirements_file" ]; then
     echoinfo "Installing packages from requirements file: $requirements_file"
-    runuser -l ${_USER} -c "/opt/venv/bin/pip install -r $requirements_file" 2>&1 | logline
-    echoconfirm "Python packages installed from requirements file"
+    # Use --upgrade to ensure packages are current if requirements changed
+    runuser -l ${_USER} -c "/opt/venv/bin/pip install --upgrade -r $requirements_file" 2>&1 | logline
+    echoconfirm "Python packages installed/upgraded from requirements file"
   else
     echowarning "requirements file not found in any location, using legacy package list"
     declare -a stuff5=(
