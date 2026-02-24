@@ -847,7 +847,6 @@ __install_novnc_services () {
   mkdir -p /home/$_USER/.config/google-chrome-busyman/Default
   wget -nv --no-check-certificate $_SERVER/$_BRANCH/home/busybox/.config/google-chrome-busyman/Default/Preferences.template -O /home/$_USER/.config/google-chrome-busyman/Default/Preferences
   chown -R $_USER:$_USER /home/$_USER/.config/google-chrome-busyman
-  echoinfo "Chrome profile template deployed"
   if [ -d /opt/busybox/webapp/db ]; then
     echoinfo " ... initializing webapp database ..."
     cd /opt/busybox/webapp/db
@@ -1046,6 +1045,25 @@ EOF
   ls -la /opt/$PROJECT
   echo "Start /opt/${PROJECT}/update..."
   /bin/bash /opt/${PROJECT}/update -t full
+  
+  # Initialize webapp database after update (ensures webapp directory exists)
+  if [ -d /opt/busybox/webapp/db ]; then
+    echoinfo " ... initializing webapp database ..."
+    cd /opt/busybox/webapp/db
+    if [ -f init_db.sh ]; then
+      bash init_db.sh 2>&1 | tee -a /var/log/busybox.log
+      if [ $? -eq 0 ]; then
+        echoconfirm "Webapp database initialized successfully"
+      else
+        echoerror "Webapp database initialization failed"
+      fi
+    else
+      echoerror "init_db.sh not found in /opt/busybox/webapp/db"
+    fi
+    sync
+    chown -R $_USER:$_USER /opt/busybox/webapp
+  fi
+
   getent group ${_USER}
   # add tasks to crontab, compare logs in every 10 min and reboot if notting happened
   #  echo -e "\e[44m ................... update crontab \e[0m"
