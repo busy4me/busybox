@@ -822,7 +822,12 @@ __install_novnc_services () {
       if tar xzf v1.5.0.tar.gz; then
         rm -rf /opt/busybox/novnc
         if mv noVNC-1.5.0 /opt/busybox/novnc; then
-          echoconfirm "NoVNC library installed to /opt/busybox/novnc"
+          if [ -d /opt/busybox/novnc ]; then
+            echoconfirm "NoVNC library installed to /opt/busybox/novnc"
+          else
+            echoerror "Move reported success but directory /opt/busybox/novnc is missing!"
+            ls -la /opt/busybox/ >> $_LOGFILE 2>&1
+          fi
         else
           echoerror "Failed to move noVNC-1.5.0 to /opt/busybox/novnc"
         fi
@@ -847,6 +852,7 @@ __install_novnc_services () {
     echoinfo " ... initializing webapp database ..."
     cd /opt/busybox/webapp/db
     bash init_db.sh 2>&1 | tee -a /var/log/busybox.log
+    sync
     chown -R $_USER:$_USER /opt/busybox/webapp
     echoconfirm "Webapp database initialized"
   fi
