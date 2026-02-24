@@ -1023,8 +1023,17 @@ Exec=default
 Icon=
 Type=Application
 EOF
+  # Preserve NoVNC directory during reinstall
+  if [ -d /opt/$PROJECT/novnc ]; then
+    echoinfo "Preserving /opt/$PROJECT/novnc..."
+    mv /opt/$PROJECT/novnc /tmp/novnc_safe
+  fi
   rm -Rf /opt/$PROJECT
   mkdir /opt/$PROJECT
+  if [ -d /tmp/novnc_safe ]; then
+    mv /tmp/novnc_safe /opt/$PROJECT/novnc
+    echoinfo "Restored /opt/$PROJECT/novnc"
+  fi
   mkdir /opt/$PROJECT/log
   ln -s /var/log/${PROJECT}.log /opt/${PROJECT}/${PROJECT}.log
   export PATH=$PATH:/opt/$PROJECT
