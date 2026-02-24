@@ -5,6 +5,21 @@ All notable changes to BusyBox project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0-beta] - 2026-02-24
+
+### Added
+- **NoVNC Web Desktop**: Complete web-based desktop architecture using Flask, websockify, and NoVNC 1.5.0
+- **Dynamic Settings Menu**: Webapp menu for changing VNC resolution, display mode (scale/clip), and quality with persistence (SQLite)
+- **Systemd Services**: New service architecture: `vncserver@:98`, `busyman-flask`, `busyman-websockify`
+- **Smart VM Management**: New CI/CD policy using snapshots ("success"/"failed") and disk-space-aware cleanup
+
+### Fixed
+- **Database Initialization**: Fixed `0 bytes` database issue by moving initialization to `__install_project` and adding `sync`
+- **NoVNC Installation**: Fixed race condition where `initiv` update wiped NoVNC directory; added preservation logic
+- **CI/CD Reliability**: Resolved false negatives in tests (`pip list` buffering) and false positives in workflow (stale marker files)
+- **Xorg Stability**: Reverted `video` kernel parameter removal to prevent Xorg freeze/deadlock on VirtualBox
+- **Dependencies**: Fixed `sqlite3` checks and enabled WAL mode for better database concurrency
+
 ## [1.1.23-beta] - 2026-02-10
 
 ### Fixed
