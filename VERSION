@@ -1,4 +1,4 @@
 # BusyBox version and assets configuration
-VERSION=1.2.0-beta
+VERSION=1.3.0-beta
 ASSETS_URL=https://github.com/busy4me/busybox/releases/download
 ASSETS_TAG=assets-v1.0.0
