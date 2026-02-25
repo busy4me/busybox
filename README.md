@@ -19,15 +19,15 @@
 
 | Document | Description |
 |----------|-------------|
-| [WHITEPAPER.md](WHITEPAPER.md) | **Start Here** — White Paper (PL), vision & business model |
-| [VISION.md](VISION.md) | Philosophy, goals, architecture overview, session history |
-| [PLAN.md](PLAN.md) | Implementation plan, priorities, open decisions |
-| [architecture/ARCHITECTURE.md](architecture/ARCHITECTURE.md) | Deep dive: displays, processes, plugins, config |
-| [architecture/AUTH-FLOW.md](architecture/AUTH-FLOW.md) | 6-digit pairing design (OAuth RFC 8628) |
-| [process/PROCESS-FLOW.md](process/PROCESS-FLOW.md) | Step-by-step: installation → runtime → what's on screen |
-| [plugins/PLUGINS.md](plugins/PLUGINS.md) | Plugin system, CV engine, writing new plugins |
-| [i18n/README.md](i18n/README.md) | Multi-language documentation plan (12 languages) |
-| [reference/initiv.md](reference/initiv.md) | `initiv` installation script reference |
+| [WHITEPAPER.md](docs/WHITEPAPER.md) | **Start Here** — White Paper (PL), vision & business model |
+| [VISION.md](docs/VISION.md) | Philosophy, goals, architecture overview, session history |
+| [PLAN.md](docs/PLAN.md) | Implementation plan, priorities, open decisions |
+| [architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) | Deep dive: displays, processes, plugins, config |
+| [architecture/AUTH-FLOW.md](docs/architecture/AUTH-FLOW.md) | 6-digit pairing design (OAuth RFC 8628) |
+| [process/PROCESS-FLOW.md](docs/process/PROCESS-FLOW.md) | Step-by-step: installation → runtime → what's on screen |
+| [plugins/PLUGINS.md](docs/plugins/PLUGINS.md) | Plugin system, CV engine, writing new plugins |
+| [i18n/README.md](docs/i18n/README.md) | Multi-language documentation plan (12 languages) |
+| [reference/initiv.md](docs/reference/initiv.md) | `initiv` installation script reference |
 
 ---
 
@@ -198,9 +198,9 @@ update -h                  # Display help
 
 ### Local Documentation
 
-- [Reference Documentation](reference/README.md) - Command and script references
-  - [initiv](reference/initiv.md) - Installation and bootstrap script
-  - [Commands](reference/commands/) - Individual command references
+- [Reference Documentation](docs/reference/README.md) - Command and script references
+  - [initiv](docs/reference/initiv.md) - Installation and bootstrap script
+  - [Commands](docs/reference/commands/) - Individual command references
 
 ### Online Resources
 
