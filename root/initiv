@@ -762,6 +762,21 @@ __install_stuff3 () {
 	_PACKAGE="google-chrome-stable"
 	echoinfo "install package: $_PACKAGE ............................. wait ..."
 	apt-get install -y -qq --no-install-recommends $_PACKAGE
+	# Install emoji font for proper emoji rendering in Chrome
+	_PACKAGE="fonts-noto-color-emoji"
+	echoinfo "install package: $_PACKAGE ............................. wait ..."
+	apt-get install -y -qq --no-install-recommends $_PACKAGE
+	# Configure fontconfig for emoji support
+	cat > /etc/fonts/conf.d/99-emoji.conf << 'EOFEMOJI'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <alias><family>sans-serif</family><prefer><family>Noto Color Emoji</family></prefer></alias>
+  <alias><family>serif</family><prefer><family>Noto Color Emoji</family></prefer></alias>
+  <alias><family>monospace</family><prefer><family>Noto Color Emoji</family></prefer></alias>
+</fontconfig>
+EOFEMOJI
+	fc-cache -fv > /dev/null 2>&1
 	echoconfirm "${FUNCNAME[0]} done"
 }
 

@@ -1,132 +1,186 @@
-// app.js — Main Application Entry Point
+// app.js — Main Application Entry Point v2.0 (Floating Menu + Drag)
 
-import { MenuManager } from './menu.js';
+import { MenuManager } from "./menu.js";
 
 class BusymanApp {
   constructor() {
     this.menuManager = new MenuManager();
-    this.floatingMenu = document.getElementById('floating-menu');
-    this.closeBtn = document.querySelector('.close-btn');
-    this.initialSettings = {}; // Store initial settings for change detection
+    this.floatingMenu = document.getElementById("floating-menu");
+    this.settingsPanel = document.getElementById("settings-panel");
+    this.closeBtn = document.querySelector(".close-btn");
+    this.minimizeBtn = document.getElementById("minimize-btn");
+    this.initialSettings = {};
+    this.isDragging = false;
+    this.dragOffset = { x: 0, y: 0 };
   }
 
-  initFloatingMenu() {
-    // Close button handler
-    this.closeBtn.addEventListener('click', () => {
-      this.floatingMenu.classList.remove('active');
+  initDraggable() {
+    const handle = document.getElementById("menu-drag-handle");
+    handle.addEventListener("mousedown", (e) => {
+      if (e.target.closest(".minimize-btn")) return;
+      this.isDragging = true;
+      this.floatingMenu.classList.add("dragging");
+      const rect = this.floatingMenu.getBoundingClientRect();
+      this.dragOffset.x = e.clientX - rect.left;
+      this.dragOffset.y = e.clientY - rect.top;
+      e.preventDefault();
     });
-
-    // Close on Escape key
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.floatingMenu.classList.contains('active')) {
-        this.floatingMenu.classList.remove('active');
+    document.addEventListener("mousemove", (e) => {
+      if (!this.isDragging) return;
+      let newX = e.clientX - this.dragOffset.x;
+      let newY = e.clientY - this.dragOffset.y;
+      const maxX = window.innerWidth - this.floatingMenu.offsetWidth - 10;
+      const maxY = window.innerHeight - this.floatingMenu.offsetHeight - 10;
+      newX = Math.max(10, Math.min(newX, maxX));
+      newY = Math.max(10, Math.min(newY, maxY));
+      this.floatingMenu.style.left = newX + "px";
+      this.floatingMenu.style.top = newY + "px";
+    });
+    document.addEventListener("mouseup", () => {
+      if (this.isDragging) {
+        this.isDragging = false;
+        this.floatingMenu.classList.remove("dragging");
+        this.saveMenuPosition();
       }
     });
+  }
 
-    // Apply settings button
-    document.getElementById('apply-settings').addEventListener('click', async () => {
-      const resolution = document.getElementById('test-param-a').value;
-      const displayMode = document.getElementById('display-mode').value;
-      const quality = document.getElementById('quality').value;
-      if (resolution === this.initialSettings.test_param_a && displayMode === this.initialSettings.display_mode && quality === this.initialSettings.quality) { alert('No changes detected. Please modify settings before applying.'); return; } // Validation: check if anything changed
-      try { // Save all settings to database
-        const promises = [
-          fetch('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({key: 'test_param_a', value: resolution})}),
-          fetch('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({key: 'display_mode', value: displayMode})}),
-          fetch('/api/settings', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({key: 'quality', value: quality})})
-        ];
-        await Promise.all(promises);
-        this.initialSettings = {test_param_a: resolution, display_mode: displayMode, quality}; // Update initial settings
-        console.log('Settings saved successfully:', {resolution, displayMode, quality});
-        this.floatingMenu.classList.remove('active'); // Close floating menu (menu will auto-refresh within 5s via polling)
-      } catch (error) {
-        console.error('Failed to save settings:', error);
-        alert('Failed to save settings. Please try again.');
+  saveMenuPosition() {
+    const pos = { left: this.floatingMenu.style.left, top: this.floatingMenu.style.top };
+    localStorage.setItem("busyman_menu_pos", JSON.stringify(pos));
+  }
+
+  loadMenuPosition() {
+    try {
+      const saved = localStorage.getItem("busyman_menu_pos");
+      if (saved) {
+        const pos = JSON.parse(saved);
+        this.floatingMenu.style.left = pos.left;
+        this.floatingMenu.style.top = pos.top;
+      }
+    } catch (e) { console.warn("Could not load menu position:", e); }
+  }
+
+  initMinimize() {
+    const isMinimized = localStorage.getItem("busyman_menu_minimized") === "true";
+    if (isMinimized) this.floatingMenu.classList.add("minimized");
+    this.updateMinimizeBtn();
+    this.minimizeBtn.addEventListener("click", () => {
+      this.floatingMenu.classList.toggle("minimized");
+      const minimized = this.floatingMenu.classList.contains("minimized");
+      localStorage.setItem("busyman_menu_minimized", minimized);
+      this.updateMinimizeBtn();
+    });
+  }
+
+  updateMinimizeBtn() {
+    const isMin = this.floatingMenu.classList.contains("minimized");
+    this.minimizeBtn.textContent = isMin ? "+" : "−";
+    this.minimizeBtn.setAttribute("aria-label", isMin ? "Expand" : "Minimize");
+  }
+
+  initSettingsPanel() {
+    this.closeBtn.addEventListener("click", () => this.settingsPanel.classList.remove("active"));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.settingsPanel.classList.contains("active")) {
+        this.settingsPanel.classList.remove("active");
       }
     });
-
-    // Quality slider live update
-    document.getElementById('quality').addEventListener('input', (e) => {
-      document.getElementById('quality-value').textContent = e.target.value;
-    });
-
-    // Restart VNC button
-    document.getElementById('restart-vnc').addEventListener('click', async () => {
-      if (!confirm('Restart VNC Server? This will disconnect all VNC clients for ~5 seconds.')) return;
+    document.getElementById("apply-settings").addEventListener("click", async () => {
+      const resolution = document.getElementById("test-param-a").value;
+      const displayMode = document.getElementById("display-mode").value;
+      const quality = document.getElementById("quality").value;
+      if (resolution === this.initialSettings.test_param_a && 
+          displayMode === this.initialSettings.display_mode && 
+          quality === this.initialSettings.quality) {
+        alert("No changes detected.");
+        return;
+      }
       try {
-        const response = await fetch('/api/action', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'system:restart_vnc'})});
-        const result = await response.json();
-        if (result.status === 'ok') { alert('VNC server restarting...'); this.floatingMenu.classList.remove('active'); }
-        else { alert('Failed to restart VNC: ' + (result.error || 'Unknown error')); }
+        await Promise.all([
+          fetch("/api/settings", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({key: "test_param_a", value: resolution})}),
+          fetch("/api/settings", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({key: "display_mode", value: displayMode})}),
+          fetch("/api/settings", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({key: "quality", value: quality})})
+        ]);
+        this.initialSettings = {test_param_a: resolution, display_mode: displayMode, quality};
+        this.settingsPanel.classList.remove("active");
       } catch (error) {
-        console.error('Failed to restart VNC:', error);
-        alert('Failed to restart VNC. Please try again.');
+        console.error("Failed to save settings:", error);
+        alert("Failed to save settings.");
       }
+    });
+    document.getElementById("quality").addEventListener("input", (e) => {
+      document.getElementById("quality-value").textContent = e.target.value;
+    });
+    document.getElementById("restart-vnc").addEventListener("click", async () => {
+      if (!confirm("Restart VNC Server?")) return;
+      try {
+        const res = await fetch("/api/action", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({action: "system:restart_vnc"})});
+        const result = await res.json();
+        if (result.status === "ok") { alert("VNC restarting..."); this.settingsPanel.classList.remove("active"); }
+        else { alert("Failed: " + (result.error || "Unknown error")); }
+      } catch (error) { alert("Failed to restart VNC."); }
     });
   }
 
   async initNoVNC() {
-    const statusDiv = document.getElementById('novnc-status');
-    const statusText = document.querySelector('.status-text');
-    const statusIndicator = document.querySelector('.status-indicator');
+    const statusDiv = document.getElementById("novnc-status");
+    const statusText = document.querySelector(".status-text");
+    const statusIndicator = document.querySelector(".status-indicator");
     try {
-      const {default: RFB} = await import('/novnc/core/rfb.js');  // Import NoVNC RFB module
-      const rfb = new RFB(document.getElementById('screen'), 'ws://localhost:6080');
-      rfb.scaleViewport = true;  // Scale viewport to fit container
-      rfb.resizeSession = false;  // Don't resize remote session
-      rfb.addEventListener('connect', () => {
-        statusDiv.style.display = 'none';  // Hide status on successful connect
-        console.log('NoVNC connected successfully');
+      const {default: RFB} = await import("/novnc/core/rfb.js");
+      const rfb = new RFB(document.getElementById("screen"), "ws://localhost:6080");
+      rfb.scaleViewport = true;
+      rfb.resizeSession = false;
+      rfb.addEventListener("connect", () => {
+        statusDiv.style.display = "none";
+        console.log("NoVNC connected");
       });
-      rfb.addEventListener('disconnect', () => {
-        statusDiv.style.display = 'flex';  // Show status on disconnect
-        statusText.textContent = 'VNC Disconnected';
-        statusIndicator.classList.remove('connected');
-        statusIndicator.classList.add('error');
-        console.log('NoVNC disconnected');
+      rfb.addEventListener("disconnect", () => {
+        statusDiv.style.display = "flex";
+        statusText.textContent = "VNC Disconnected";
+        statusIndicator.classList.remove("connected");
+        statusIndicator.classList.add("error");
       });
-      this.vncClient = rfb;  // Store for settings adjustments
+      this.vncClient = rfb;
     } catch (error) {
-      statusDiv.style.display = 'flex';  // Show status on error
-      statusText.textContent = 'Failed to load NoVNC';
-      statusIndicator.classList.add('error');
-      console.error('NoVNC initialization error:', error);
+      statusDiv.style.display = "flex";
+      statusText.textContent = "Failed to load NoVNC";
+      statusIndicator.classList.add("error");
+      console.error("NoVNC error:", error);
     }
   }
 
   async loadSettings() {
     try {
-      const response = await fetch('/api/settings');
-      const settings = await response.json();
-      settings.forEach(setting => { // Populate form fields with current values
-        const element = document.getElementById(setting.key.replace('_', '-'));
-        if (element) {
-          element.value = setting.value;
-          this.initialSettings[setting.key] = setting.value; // Store initial value
-          if (setting.key === 'quality') { document.getElementById('quality-value').textContent = setting.value; } // Update quality display
+      const res = await fetch("/api/settings");
+      const settings = await res.json();
+      settings.forEach(s => {
+        const el = document.getElementById(s.key.replace("_", "-"));
+        if (el) {
+          el.value = s.value;
+          this.initialSettings[s.key] = s.value;
+          if (s.key === "quality") document.getElementById("quality-value").textContent = s.value;
         }
       });
-      console.log('Settings loaded:', settings);
-    } catch (error) { console.error('Failed to load settings:', error); }
+    } catch (e) { console.error("Failed to load settings:", e); }
   }
 
   async init() {
-    console.log('Busyman Web App starting...');
-    await this.loadSettings(); // Load current settings from database
-    this.menuManager.start(); // Start menu polling
-    this.initFloatingMenu(); // Initialize floating menu
-    this.initNoVNC(); // Initialize NoVNC
-    console.log('Busyman Web App ready');
+    console.log("Busyman v2.0 starting...");
+    this.loadMenuPosition();
+    this.initDraggable();
+    this.initMinimize();
+    await this.loadSettings();
+    this.menuManager.start();
+    this.initSettingsPanel();
+    this.initNoVNC();
+    console.log("Busyman v2.0 ready");
   }
 }
 
-// Start app when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    const app = new BusymanApp();
-    app.init();
-  });
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => new BusymanApp().init());
 } else {
-  const app = new BusymanApp();
-  app.init();
+  new BusymanApp().init();
 }
