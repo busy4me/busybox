@@ -187,8 +187,8 @@ done
 }
 
 BR01_run () {
-  $BR01 --window-size="900,768" \
-  --window-position="140,0" \
+  $BR01 --window-size="1408,1158" \
+  --window-position="0,-82" \
   --incognito \
   --disable-notifications \
   --mute-audio \
